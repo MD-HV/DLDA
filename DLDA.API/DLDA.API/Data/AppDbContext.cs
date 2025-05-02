@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace DLDA.API
+namespace DLDA.API.Data
 {
     public class AppDbContext : DbContext
     {
