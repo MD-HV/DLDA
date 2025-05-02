@@ -10,7 +10,7 @@ namespace DLDA.API.Models
         //Användarnamn för users
         public string Username { get; set; }
         //Epostadress för användaren
-        public string Email { get; set; }
+        public string? Email { get; set; }
         //Hash för lösenord
         public string PasswordHash { get; set; }
         //Vilken roll användaren har, om det är en patient eller skötare
