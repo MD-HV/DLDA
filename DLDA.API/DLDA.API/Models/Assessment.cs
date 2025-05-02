@@ -2,10 +2,10 @@
 
 namespace DLDA.API.Models
 {
-    [PrimaryKey(nameof(AssessmentId))]
+    [PrimaryKey(nameof(AssessmentID))]
     public class Assessment
     {
-        public int AssessmentId { get; set; }
+        public int AssessmentID { get; set; }
         public string Type { get; set; }
         public string ScaleType { get; set; }
         public DateTime CreatedAt { get; set; }

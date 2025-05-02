@@ -2,6 +2,7 @@
 
 namespace DLDA.API.Models
 {
+    [PrimaryKey(nameof(QuestionID))]
     public class Question
     {
         // Primärnyckel
