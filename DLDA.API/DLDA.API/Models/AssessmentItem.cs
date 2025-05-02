@@ -2,6 +2,7 @@
 
 namespace DLDA.API.Models
 {
+    [PrimaryKey(nameof(ItemID))]
     public class AssessmentItem
     {
         // Primärnyckel
