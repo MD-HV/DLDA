@@ -1,4 +1,4 @@
-using DLDA.API;
+using DLDA.API.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
