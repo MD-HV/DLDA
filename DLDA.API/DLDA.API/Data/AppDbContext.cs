@@ -9,9 +9,6 @@ namespace DLDA.API.Data
         {
         }
 
-        protected AppDbContext()
-        {
-        }
         public DbSet<User> Users { get; set; }
         public DbSet<Assessment> Assessments { get; set; }
         public DbSet<Question> Questions { get; set; }
