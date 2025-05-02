@@ -24,7 +24,7 @@ namespace DLDA.API.Models
         public bool Flag { get; set; }
 
         // Navigationsegenskaper
-        public Assessment Assessment { get; set; }
-        public Question Question { get; set; }
+        public Assessment? Assessment { get; set; }
+        public Question? Question { get; set; }
     }
 }

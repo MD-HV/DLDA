@@ -16,6 +16,13 @@ namespace DLDA.API.Models
         //Vilken roll användaren har, om det är en patient eller skötare
         public string Role { get; set; }
         //När användaren skapades
+        public int UserId { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+
+        public ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
     }
 }
