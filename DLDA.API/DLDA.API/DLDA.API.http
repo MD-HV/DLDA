@@ -1,6 +1,6 @@
 @DLDA.API_HostAddress = http://localhost:5261
 
-GET {{DLDA.API_HostAddress}}/weatherforecast/
+GET {{DLDA.API_HostAddress}}
 Accept: application/json
 
 ###

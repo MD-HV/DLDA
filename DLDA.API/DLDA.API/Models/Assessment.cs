@@ -5,9 +5,9 @@ namespace DLDA.API.Models
     [PrimaryKey(nameof(AssessmentID))]
     public class Assessment
     {
-        public int AssessmentId { get; set; }
-        public string Type { get; set; }
-        public string ScaleType { get; set; }
+        public int AssessmentID { get; set; }
+        public string? Type { get; set; } 
+        public string? ScaleType { get; set; }
         public DateTime CreatedAt { get; set; }
         //Tid som skattningen senast uppdaterades
         public DateTime UpdatedAt { get; set; }
