@@ -31,6 +31,30 @@ public class UserController : ControllerBase
             }).ToList();
     }
 
+    // GET: api/User/patients?search=anna
+    // Hämtar alla patienter, och filtrerar på namn om söksträng anges
+    [HttpGet("patients")]
+    public ActionResult<IEnumerable<UserDto>> GetPatients([FromQuery] string? search)
+    {
+        var query = _context.Users
+            .Where(u => u.Role.ToLower() == "patient");
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(u => u.Username.ToLower().Contains(search.ToLower()));
+        }
+
+        return query
+            .Select(u => new UserDto
+            {
+                UserID = u.UserID,
+                Username = u.Username,
+                Email = u.Email,
+                Role = u.Role
+            }).ToList();
+    }
+
+
     // GET: api/User/5
     // Hämtar en specifik användare
     [HttpGet("{id}")]
