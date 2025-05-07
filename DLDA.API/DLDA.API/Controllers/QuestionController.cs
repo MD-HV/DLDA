@@ -30,6 +30,26 @@ public class QuestionController : ControllerBase
             }).ToList();
     }
 
+    // GET: api/Question/category/{category}
+    // Hämta alla frågor som tillhör en viss kategori (t.ex. "1. Lärande och att tillämpa kunskap")
+    [HttpGet("category/{category}")]
+    public ActionResult<IEnumerable<QuestionDto>> GetQuestionsByCategory(string category)
+    {
+        var questions = _context.Questions
+            .Where(q => q.Category.ToLower() == category.ToLower())
+            .Select(q => new QuestionDto
+            {
+                QuestionID = q.QuestionID,
+                QuestionText = q.QuestionText,
+                Category = q.Category,
+                IsActive = q.IsActive
+            }).ToList();
+
+        if (!questions.Any()) return NotFound($"Inga frågor hittades för kategori: {category}");
+
+        return Ok(questions);
+    }
+
     // GET: api/Question/5
     // Hämtar en specifik fråga
     [HttpGet("{id}")]
