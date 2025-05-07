@@ -24,8 +24,8 @@ public class QuestionController : ControllerBase
             .Select(q => new QuestionDto
             {
                 QuestionID = q.QuestionID,
-                QuestionText = q.QuestionText,
-                Category = q.Category,
+                QuestionText = q.QuestionText ?? "",
+                Category = q.Category ?? "",
                 IsActive = q.IsActive
             }).ToList();
     }
@@ -35,13 +35,16 @@ public class QuestionController : ControllerBase
     [HttpGet("category/{category}")]
     public ActionResult<IEnumerable<QuestionDto>> GetQuestionsByCategory(string category)
     {
+        if (string.IsNullOrWhiteSpace(category))
+            return BadRequest("Kategori får inte vara tom.");
+
         var questions = _context.Questions
-            .Where(q => q.Category.ToLower() == category.ToLower())
+            .Where(q => (q.Category ?? "").ToLower() == category.ToLower())
             .Select(q => new QuestionDto
             {
                 QuestionID = q.QuestionID,
-                QuestionText = q.QuestionText,
-                Category = q.Category,
+                QuestionText = q.QuestionText ?? "",
+                Category = q.Category ?? "",
                 IsActive = q.IsActive
             }).ToList();
 
@@ -61,8 +64,8 @@ public class QuestionController : ControllerBase
         return new QuestionDto
         {
             QuestionID = q.QuestionID,
-            QuestionText = q.QuestionText,
-            Category = q.Category,
+            QuestionText = q.QuestionText ?? "",
+            Category = q.Category ?? "",
             IsActive = q.IsActive
         };
     }

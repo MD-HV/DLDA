@@ -17,6 +17,12 @@ namespace DLDA.API.Models
         // Skattningsvärde (0 = inget problem, 4 = mycket stort problem)
         public int AnswerValue { get; set; }
 
+        // Patientens svar
+        public int? PatientAnswer { get; set; } // döpte om till PatientAnswer för att vara mer beskrivande
+
+        // Personalens svar
+        public int? StaffAnswer { get; set; } // La till StaffAnswer för att spara personalens svar
+
         // När frågan besvarades
         public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
 

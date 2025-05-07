@@ -9,10 +9,10 @@ namespace DLDA.API.Models
         public int QuestionID { get; set; }
 
         // Själva frågetexten
-        public string QuestionText { get; set; } = string.Empty;
+        public string? QuestionText { get; set; } = string.Empty;
 
         // Grupp/kategori för frågan (t.ex. SelfCare, Mobility)
-        public string Category { get; set; } = string.Empty;
+        public string? Category { get; set; } = string.Empty;
 
         // Om frågan är aktiv
         public bool IsActive { get; set; }

@@ -16,7 +16,7 @@ public class AssessmentItemController : ControllerBase
     }
 
     // GET: api/AssessmentItem
-    // Returnerar alla bedömningsposter (frågesvar)
+    // Returnerar alla bedömningsposter med både patient- och personalsvar
     [HttpGet]
     public ActionResult<IEnumerable<AssessmentItemDto>> GetItems()
     {
@@ -26,13 +26,14 @@ public class AssessmentItemController : ControllerBase
                 ItemID = ai.ItemID,
                 AssessmentID = ai.AssessmentID,
                 QuestionID = ai.QuestionID,
-                AnswerValue = ai.AnswerValue,
+                PatientAnswer = ai.PatientAnswer,
+                StaffAnswer = ai.StaffAnswer,
                 Flag = ai.Flag
             }).ToList();
     }
 
     // GET: api/AssessmentItem/5
-    // Hämtar ett enskilt bedömningsitem
+    // Hämtar ett specifikt bedömningsitem
     [HttpGet("{id}")]
     public ActionResult<AssessmentItemDto> GetItem(int id)
     {
@@ -44,13 +45,14 @@ public class AssessmentItemController : ControllerBase
             ItemID = item.ItemID,
             AssessmentID = item.AssessmentID,
             QuestionID = item.QuestionID,
-            AnswerValue = item.AnswerValue,
+            PatientAnswer = item.PatientAnswer,
+            StaffAnswer = item.StaffAnswer,
             Flag = item.Flag
         };
     }
 
     // POST: api/AssessmentItem
-    // Skapar en ny post (frågesvar) i en bedömning
+    // Skapar ett nytt bedömningsitem (kan innehålla antingen eller båda svaren)
     [HttpPost]
     public IActionResult CreateItem(AssessmentItemDto dto)
     {
@@ -58,34 +60,50 @@ public class AssessmentItemController : ControllerBase
         {
             AssessmentID = dto.AssessmentID,
             QuestionID = dto.QuestionID,
-            AnswerValue = dto.AnswerValue,
+            PatientAnswer = dto.PatientAnswer ?? -1,
+            StaffAnswer = dto.StaffAnswer,
             Flag = dto.Flag,
             AnsweredAt = DateTime.UtcNow
         };
+
         _context.AssessmentItems.Add(item);
         _context.SaveChanges();
+
         return CreatedAtAction(nameof(GetItem), new { id = item.ItemID }, dto);
     }
 
-    // PUT: api/AssessmentItem/5
-    // Uppdaterar ett befintligt bedömningssvar
-    [HttpPut("{id}")]
-    public IActionResult UpdateItem(int id, AssessmentItemDto dto)
+    // PUT: api/AssessmentItem/patient/5
+    // Uppdaterar en patients svar
+    [HttpPut("patient/{id}")]
+    public IActionResult UpdatePatientAnswer(int id, [FromBody] int answer)
     {
-        if (id != dto.ItemID) return BadRequest();
-
         var item = _context.AssessmentItems.Find(id);
         if (item == null) return NotFound();
 
-        item.AnswerValue = dto.AnswerValue;
-        item.Flag = dto.Flag;
-
+        item.PatientAnswer = answer;
+        item.AnsweredAt = DateTime.UtcNow;
         _context.SaveChanges();
+
+        return NoContent();
+    }
+
+    // PUT: api/AssessmentItem/staff/5
+    // Uppdaterar en personals svar
+    [HttpPut("staff/{id}")]
+    public IActionResult UpdateStaffAnswer(int id, [FromBody] int answer)
+    {
+        var item = _context.AssessmentItems.Find(id);
+        if (item == null) return NotFound();
+
+        item.StaffAnswer = answer;
+        item.AnsweredAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
         return NoContent();
     }
 
     // DELETE: api/AssessmentItem/5
-    // Raderar ett frågesvar
+    // Raderar ett bedömningsitem
     [HttpDelete("{id}")]
     public IActionResult DeleteItem(int id)
     {
@@ -94,6 +112,7 @@ public class AssessmentItemController : ControllerBase
 
         _context.AssessmentItems.Remove(item);
         _context.SaveChanges();
+
         return NoContent();
     }
 }
