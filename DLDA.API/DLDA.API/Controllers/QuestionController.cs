@@ -15,8 +15,12 @@ public class QuestionController : ControllerBase
         _context = context;
     }
 
+    // --------------------------
+    // [ADMIN] – Hantera frågedefinitioner
+    // --------------------------
+
     // GET: api/Question
-    // Returnerar alla frågor i frågebanken
+    // Returnerar alla frågor i databasen
     [HttpGet]
     public ActionResult<IEnumerable<QuestionDto>> GetQuestions()
     {
@@ -31,7 +35,7 @@ public class QuestionController : ControllerBase
     }
 
     // GET: api/Question/category/{category}
-    // Hämta alla frågor som tillhör en viss kategori (t.ex. "1. Lärande och att tillämpa kunskap")
+    // Returnerar alla frågor i vald kategori
     [HttpGet("category/{category}")]
     public ActionResult<IEnumerable<QuestionDto>> GetQuestionsByCategory(string category)
     {
@@ -54,7 +58,7 @@ public class QuestionController : ControllerBase
     }
 
     // GET: api/Question/5
-    // Hämtar en specifik fråga
+    // Hämtar en fråga via ID
     [HttpGet("{id}")]
     public ActionResult<QuestionDto> GetQuestion(int id)
     {
@@ -88,7 +92,7 @@ public class QuestionController : ControllerBase
     }
 
     // PUT: api/Question/5
-    // Uppdaterar en existerande fråga
+    // Uppdaterar en befintlig fråga
     [HttpPut("{id}")]
     public IActionResult UpdateQuestion(int id, QuestionDto dto)
     {
@@ -115,5 +119,174 @@ public class QuestionController : ControllerBase
         _context.Questions.Remove(question);
         _context.SaveChanges();
         return NoContent();
+    }
+
+    // --------------------------
+    // [QUIZ – PATIENT]
+    // --------------------------
+
+    // GET: api/Question/quiz/patient/next/{assessmentId}
+    // Hämtar nästa obesvarade fråga för patienten
+    [HttpGet("quiz/patient/next/{assessmentId}")]
+    public IActionResult GetNextUnansweredPatientQuestion(int assessmentId)
+    {
+        var nextItem = _context.AssessmentItems
+            .Include(i => i.Question)
+            .Where(i => i.AssessmentID == assessmentId && !i.PatientAnswer.HasValue)
+            .OrderBy(i => i.QuestionID)
+            .FirstOrDefault();
+
+        if (nextItem == null)
+            return Ok(new { Done = true });
+
+        return Ok(new
+        {
+            QuestionID = nextItem.QuestionID,
+            QuestionText = nextItem.Question?.QuestionText,
+            Category = nextItem.Question?.Category,
+            ItemID = nextItem.ItemID
+        });
+    }
+
+    // POST: api/Question/quiz/patient/submit
+    // Skickar in patientens svar
+    [HttpPost("quiz/patient/submit")]
+    public IActionResult SubmitPatientAnswer([FromBody] SubmitAnswerDto dto)
+    {
+        var item = _context.AssessmentItems.Find(dto.ItemID);
+        if (item == null) return NotFound();
+
+        item.PatientAnswer = dto.Answer;
+        item.AnsweredAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
+        return Ok();
+    }
+
+    // POST: api/Question/quiz/patient/skip
+    // Markerar att patienten hoppat över frågan
+    [HttpPost("quiz/patient/skip")]
+    public IActionResult SkipPatientQuestion([FromBody] SkipQuestionDto dto)
+    {
+        var item = _context.AssessmentItems.Find(dto.ItemID);
+        if (item == null) return NotFound();
+
+        item.PatientAnswer = null;
+        item.AnsweredAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
+        return Ok();
+    }
+
+    // GET: api/Question/quiz/patient/progress/{assessmentId}/{questionId}
+    // Visar fråga X av Y
+    [HttpGet("quiz/patient/progress/{assessmentId}/{questionId}")]
+    public IActionResult GetPatientQuestionProgress(int assessmentId, int questionId)
+    {
+        var allItems = _context.AssessmentItems
+            .Where(i => i.AssessmentID == assessmentId)
+            .Include(i => i.Question)
+            .OrderBy(i => i.QuestionID)
+            .ToList();
+
+        var index = allItems.FindIndex(i => i.QuestionID == questionId);
+        if (index == -1) return NotFound();
+
+        var item = allItems[index];
+
+        return Ok(new
+        {
+            QuestionNumber = index + 1,
+            TotalQuestions = allItems.Count,
+            QuestionText = item.Question?.QuestionText,
+            Category = item.Question?.Category
+        });
+    }
+
+    // --------------------------
+    // [QUIZ – PERSONAL]
+    // --------------------------
+
+    // GET: api/Question/quiz/staff/next/{assessmentId}
+    // Hämtar nästa obesvarade fråga för personalen
+    [HttpGet("quiz/staff/next/{assessmentId}")]
+    public IActionResult GetNextUnansweredStaffQuestion(int assessmentId)
+    {
+        var nextItem = _context.AssessmentItems
+            .Include(i => i.Question)
+            .Where(i => i.AssessmentID == assessmentId && !i.StaffAnswer.HasValue)
+            .OrderBy(i => i.QuestionID)
+            .FirstOrDefault();
+
+        if (nextItem == null)
+            return Ok(new { Done = true });
+
+        return Ok(new
+        {
+            QuestionID = nextItem.QuestionID,
+            QuestionText = nextItem.Question?.QuestionText,
+            Category = nextItem.Question?.Category,
+            ItemID = nextItem.ItemID,
+            PatientAnswer = nextItem.PatientAnswer,
+            Flag = nextItem.Flag
+        });
+    }
+
+    // POST: api/Question/quiz/staff/submit
+    // Skickar in personalsvar + flagga
+    [HttpPost("quiz/staff/submit")]
+    public IActionResult SubmitStaffAnswer([FromBody] SubmitStaffAnswerDto dto)
+    {
+        var item = _context.AssessmentItems.Find(dto.ItemID);
+        if (item == null) return NotFound();
+
+        item.StaffAnswer = dto.Answer;
+        item.AnsweredAt = DateTime.UtcNow;
+        item.Flag = dto.Flag ?? false;
+        _context.SaveChanges();
+
+        return Ok();
+    }
+
+    // POST: api/Question/quiz/staff/skip
+    // Personal markerar fråga som överhoppad
+    [HttpPost("quiz/staff/skip")]
+    public IActionResult SkipStaffQuestion([FromBody] SkipQuestionDto dto)
+    {
+        var item = _context.AssessmentItems.Find(dto.ItemID);
+        if (item == null) return NotFound();
+
+        item.StaffAnswer = null;
+        item.AnsweredAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
+        return Ok();
+    }
+
+    // GET: api/Question/quiz/staff/progress/{assessmentId}/{questionId}
+    // Visar fråga X av Y samt patientens svar
+    [HttpGet("quiz/staff/progress/{assessmentId}/{questionId}")]
+    public IActionResult GetStaffQuestionProgress(int assessmentId, int questionId)
+    {
+        var allItems = _context.AssessmentItems
+            .Where(i => i.AssessmentID == assessmentId)
+            .Include(i => i.Question)
+            .OrderBy(i => i.QuestionID)
+            .ToList();
+
+        var index = allItems.FindIndex(i => i.QuestionID == questionId);
+        if (index == -1) return NotFound();
+
+        var item = allItems[index];
+
+        return Ok(new
+        {
+            QuestionNumber = index + 1,
+            TotalQuestions = allItems.Count,
+            QuestionText = item.Question?.QuestionText,
+            Category = item.Question?.Category,
+            PatientAnswer = item.PatientAnswer,
+            Flag = item.Flag
+        });
     }
 }

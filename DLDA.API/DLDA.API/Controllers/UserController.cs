@@ -16,6 +16,10 @@ public class UserController : ControllerBase
         _context = context;
     }
 
+    // --------------------------
+    // [ADMIN] – Hantera userdefinitioner
+    // --------------------------
+
     // GET: api/User
     // Returnerar alla användare
     [HttpGet]
