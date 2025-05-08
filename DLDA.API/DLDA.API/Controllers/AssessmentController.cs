@@ -97,6 +97,34 @@ public class AssessmentController : ControllerBase
             }).ToListAsync();
     }
 
+    // GET: api/Assessment/search
+    // Söker patienter via namn och returnerar deras bedömningar
+    [HttpGet("search")]
+    public async Task<ActionResult<IEnumerable<object>>> SearchAssessmentsByPatientName([FromQuery] string name)
+    {
+        var results = await _context.Assessments
+            .Include(a => a.User)
+            .Where(a => a.User.Username.ToLower().Contains(name.ToLower()))
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new
+            {
+                a.AssessmentID,
+                a.CreatedAt,
+                a.Type,
+                a.ScaleType,
+                a.IsComplete,
+                PatientName = a.User.Username,
+                UserId = a.UserId
+            })
+            .ToListAsync();
+
+        if (!results.Any())
+            return NotFound("Inga bedömningar hittades för angivet namn.");
+
+        return Ok(results);
+    }
+
+
     // PUT: api/Assessment/{id}
     // Uppdaterar en befintlig bedömning (endast för personal)
     [HttpPut("{id}")]
