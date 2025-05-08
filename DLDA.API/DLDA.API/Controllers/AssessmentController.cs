@@ -104,7 +104,7 @@ public class AssessmentController : ControllerBase
     {
         var results = await _context.Assessments
             .Include(a => a.User)
-            .Where(a => a.User.Username.ToLower().Contains(name.ToLower()))
+            .Where(a => a.User != null && a.User.Username.ToLower().Contains(name.ToLower()))
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new
             {
@@ -113,7 +113,7 @@ public class AssessmentController : ControllerBase
                 a.Type,
                 a.ScaleType,
                 a.IsComplete,
-                PatientName = a.User.Username,
+                PatientName = a.User!.Username,
                 UserId = a.UserId
             })
             .ToListAsync();
@@ -123,6 +123,7 @@ public class AssessmentController : ControllerBase
 
         return Ok(results);
     }
+
 
 
     // PUT: api/Assessment/{id}
