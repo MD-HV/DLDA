@@ -15,6 +15,8 @@ public class AssessmentItemController : ControllerBase
         _context = context;
     }
 
+    // Behöver lägga till en funktion som returnerar alla bedömningsposter med bara patientsvar
+
     // GET: api/AssessmentItem
     // Returnerar alla bedömningsposter med både patient- och personalsvar
     [HttpGet]
