@@ -15,8 +15,29 @@ public class AssessmentItemController : ControllerBase
         _context = context;
     }
 
-    // Behöver lägga till en funktion som returnerar alla bedömningsposter med bara patientsvar
+    // GET: api/AssessmentItem/patient/assessment/{assessmentId}
+    // Returnerar enbart patientens svar för en viss bedömning
+    [HttpGet("patient/assessment/{assessmentId}")]
+    public ActionResult<IEnumerable<object>> GetPatientAnswers(int assessmentId)
+    {
+    var items = _context.AssessmentItems
+        .Where(ai => ai.AssessmentID == assessmentId)
+        .Include(ai => ai.Question)
+        .OrderBy(ai => ai.QuestionID)
+        .Select(ai => new
+        {
+            ai.ItemID,
+            ai.AssessmentID,
+            ai.QuestionID,
+            QuestionText = ai.Question != null ? ai.Question.QuestionText : "",
+            PatientAnswer = ai.PatientAnswer,
+            Flag = ai.Flag
+        })
+        .ToList();
 
+    return Ok(items);
+    }
+    
     // GET: api/AssessmentItem
     // Returnerar alla bedömningsposter med både patient- och personalsvar
     [HttpGet]
