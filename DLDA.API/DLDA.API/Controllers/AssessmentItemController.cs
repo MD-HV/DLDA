@@ -15,31 +15,75 @@ public class AssessmentItemController : ControllerBase
         _context = context;
     }
 
+    // ----------------------
+    // [PATIENT] – Hämtning och uppdatering av egna svar
+    // ----------------------
+
+    // GET: api/AssessmentItem/patient/user/{userId}
+    // Returnerar en lista med bedömningar som tillhör en specifik patient
+    [HttpGet("patient/user/{userId}")]
+    public ActionResult<IEnumerable<object>> GetPatientAssessmentList(int userId)
+    {
+        var assessments = _context.Assessments
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new
+            {
+                a.AssessmentID,
+                a.CreatedAt,
+                a.Type,
+                a.ScaleType,
+                a.IsComplete
+            })
+            .ToList();
+
+        return Ok(assessments);
+    }
+
     // GET: api/AssessmentItem/patient/assessment/{assessmentId}
     // Returnerar enbart patientens svar för en viss bedömning
     [HttpGet("patient/assessment/{assessmentId}")]
     public ActionResult<IEnumerable<object>> GetPatientAnswers(int assessmentId)
     {
-    var items = _context.AssessmentItems
-        .Where(ai => ai.AssessmentID == assessmentId)
-        .Include(ai => ai.Question)
-        .OrderBy(ai => ai.QuestionID)
-        .Select(ai => new
-        {
-            ai.ItemID,
-            ai.AssessmentID,
-            ai.QuestionID,
-            QuestionText = ai.Question != null ? ai.Question.QuestionText : "",
-            PatientAnswer = ai.PatientAnswer,
-            Flag = ai.Flag
-        })
-        .ToList();
+        var items = _context.AssessmentItems
+            .Where(ai => ai.AssessmentID == assessmentId)
+            .Include(ai => ai.Question)
+            .OrderBy(ai => ai.QuestionID)
+            .Select(ai => new
+            {
+                ai.ItemID,
+                ai.AssessmentID,
+                ai.QuestionID,
+                QuestionText = ai.Question != null ? ai.Question.QuestionText : "",
+                PatientAnswer = ai.PatientAnswer,
+                Flag = ai.Flag
+            })
+            .ToList();
 
-    return Ok(items);
+        return Ok(items);
     }
-    
+
+    // PUT: api/AssessmentItem/patient/{id}
+    // Uppdaterar en patients eget svar
+    [HttpPut("patient/{id}")]
+    public IActionResult UpdatePatientAnswer(int id, [FromBody] int answer)
+    {
+        var item = _context.AssessmentItems.Find(id);
+        if (item == null) return NotFound();
+
+        item.PatientAnswer = answer;
+        item.AnsweredAt = DateTime.UtcNow;
+        _context.SaveChanges();
+
+        return NoContent();
+    }
+
+    // ----------------------
+    // [PERSONAL / ADMIN] – Full åtkomst till alla svar och åtgärder
+    // ----------------------
+
     // GET: api/AssessmentItem
-    // Returnerar alla bedömningsposter med både patient- och personalsvar
+    // Returnerar alla bedömningsposter (inklusive personal- och patientsvar)
     [HttpGet]
     public ActionResult<IEnumerable<AssessmentItemDto>> GetItems()
     {
@@ -52,10 +96,11 @@ public class AssessmentItemController : ControllerBase
                 PatientAnswer = ai.PatientAnswer,
                 StaffAnswer = ai.StaffAnswer,
                 Flag = ai.Flag
-            }).ToList();
+            })
+            .ToList();
     }
 
-    // GET: api/AssessmentItem/5
+    // GET: api/AssessmentItem/{id}
     // Hämtar ett specifikt bedömningsitem
     [HttpGet("{id}")]
     public ActionResult<AssessmentItemDto> GetItem(int id)
@@ -75,7 +120,7 @@ public class AssessmentItemController : ControllerBase
     }
 
     // POST: api/AssessmentItem
-    // Skapar ett nytt bedömningsitem (kan innehålla antingen eller båda svaren)
+    // Skapar ett nytt bedömningsitem (t.ex. när formuläret startas)
     [HttpPost]
     public IActionResult CreateItem(AssessmentItemDto dto)
     {
@@ -95,23 +140,8 @@ public class AssessmentItemController : ControllerBase
         return CreatedAtAction(nameof(GetItem), new { id = item.ItemID }, dto);
     }
 
-    // PUT: api/AssessmentItem/patient/5
-    // Uppdaterar en patients svar
-    [HttpPut("patient/{id}")]
-    public IActionResult UpdatePatientAnswer(int id, [FromBody] int answer)
-    {
-        var item = _context.AssessmentItems.Find(id);
-        if (item == null) return NotFound();
-
-        item.PatientAnswer = answer;
-        item.AnsweredAt = DateTime.UtcNow;
-        _context.SaveChanges();
-
-        return NoContent();
-    }
-
-    // PUT: api/AssessmentItem/staff/5
-    // Uppdaterar en personals svar
+    // PUT: api/AssessmentItem/staff/{id}
+    // Uppdaterar personals svar
     [HttpPut("staff/{id}")]
     public IActionResult UpdateStaffAnswer(int id, [FromBody] int answer)
     {
@@ -125,8 +155,8 @@ public class AssessmentItemController : ControllerBase
         return NoContent();
     }
 
-    // DELETE: api/AssessmentItem/5
-    // Raderar ett bedömningsitem
+    // DELETE: api/AssessmentItem/{id}
+    // Raderar ett bedömningsitem (om det t.ex. blivit fel)
     [HttpDelete("{id}")]
     public IActionResult DeleteItem(int id)
     {

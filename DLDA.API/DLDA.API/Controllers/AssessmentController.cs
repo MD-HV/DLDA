@@ -15,11 +15,18 @@ public class AssessmentController : ControllerBase
         _context = context;
     }
 
-    // Hämta alla bedömningar
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<AssessmentDto>>> GetAssessments()
+    // --------------------------
+    // [PATIENT] – Endast åtkomst till egna bedömningar
+    // --------------------------
+
+    // GET: api/Assessment/user/{userId}
+    // Returnerar alla bedömningar som tillhör en specifik användare
+    [HttpGet("user/{userId}")]
+    public async Task<ActionResult<IEnumerable<AssessmentDto>>> GetAssessmentsForUser(int userId)
     {
         return await _context.Assessments
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.CreatedAt)
             .Select(a => new AssessmentDto
             {
                 AssessmentID = a.AssessmentID,
@@ -30,7 +37,8 @@ public class AssessmentController : ControllerBase
             }).ToListAsync();
     }
 
-    // Hämta en specifik bedömning
+    // GET: api/Assessment/{id}
+    // Returnerar en specifik bedömning – kontroll av ägarskap måste ske i frontend/backend
     [HttpGet("{id}")]
     public async Task<ActionResult<AssessmentDto>> GetAssessment(int id)
     {
@@ -47,7 +55,8 @@ public class AssessmentController : ControllerBase
         };
     }
 
-    // Skapa en ny bedömning
+    // POST: api/Assessment
+    // Skapar en ny bedömning (används av både personal och patient)
     [HttpPost]
     public async Task<ActionResult> CreateAssessment(AssessmentDto dto)
     {
@@ -60,12 +69,36 @@ public class AssessmentController : ControllerBase
             UpdatedAt = DateTime.UtcNow,
             UserId = dto.UserId
         };
+
         _context.Assessments.Add(assessment);
         await _context.SaveChangesAsync();
+
         return CreatedAtAction(nameof(GetAssessment), new { id = assessment.AssessmentID }, dto);
     }
 
-    // Uppdatera en befintlig bedömning
+    // --------------------------
+    // [PERSONAL] – Full åtkomst till alla bedömningar
+    // --------------------------
+
+    // GET: api/Assessment
+    // Returnerar samtliga bedömningar i systemet (för personal/admin)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<AssessmentDto>>> GetAssessments()
+    {
+        return await _context.Assessments
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new AssessmentDto
+            {
+                AssessmentID = a.AssessmentID,
+                Type = a.Type,
+                ScaleType = a.ScaleType,
+                IsComplete = a.IsComplete,
+                UserId = a.UserId
+            }).ToListAsync();
+    }
+
+    // PUT: api/Assessment/{id}
+    // Uppdaterar en befintlig bedömning (endast för personal)
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateAssessment(int id, AssessmentDto dto)
     {
@@ -83,7 +116,8 @@ public class AssessmentController : ControllerBase
         return NoContent();
     }
 
-    // Ta bort en bedömning
+    // DELETE: api/Assessment/{id}
+    // Tar bort en bedömning (endast för personal/admin)
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAssessment(int id)
     {
