@@ -136,5 +136,131 @@ namespace DLDA.API.Controllers
             return Ok(result);
         }
 
+        // GET: api/statistics/progress-feedback/{userId}
+        // Returnerar positiv återkoppling till Patient baserat på förbättring sedan senaste test
+        [HttpGet("progress-feedback/{userId}")]
+        public ActionResult<object> GetProgressFeedback(int userId)
+        {
+            // Hämta alla bedömningar för användaren, sorterat nyast först
+            var assessments = _context.Assessments
+                .Where(a => a.UserId == userId)
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(2)
+                .ToList();
+
+            if (!assessments.Any())
+                return NotFound("Inga bedömningar hittades för användaren.");
+
+            var latest = assessments.First();
+            var latestItems = _context.AssessmentItems
+                .Where(i => i.AssessmentID == latest.AssessmentID && i.PatientAnswer.HasValue)
+                .Include(i => i.Question)
+                .ToList();
+
+            // Om det bara finns en bedömning: visa styrkor
+            if (assessments.Count == 1)
+            {
+                var strengths = latestItems
+                    .Where(i => i.PatientAnswer!.Value <= 1)
+                    .Select(i => i.Question!.QuestionText)
+                    .ToList();
+
+                return Ok(new
+                {
+                    Message = "Dina styrkor i den här bedömningen:",
+                    Questions = strengths
+                });
+            }
+
+            // Jämför med föregående bedömning
+            var previous = assessments[1];
+            var previousItems = _context.AssessmentItems
+                .Where(i => i.AssessmentID == previous.AssessmentID && i.PatientAnswer.HasValue)
+                .ToDictionary(i => i.QuestionID, i => i.PatientAnswer!.Value);
+
+            var improvements = latestItems
+                .Where(i => previousItems.ContainsKey(i.QuestionID) &&
+                            i.PatientAnswer < previousItems[i.QuestionID])
+                .Select(i => new
+                {
+                    Question = i.Question!.QuestionText,
+                    Previous = previousItems[i.QuestionID],
+                    Current = i.PatientAnswer!.Value
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                Message = improvements.Any()
+                    ? "Skillnader jämfört med föregående bedömning visar förbättring i följande områden:"
+                    : "Skattningarna är oförändrade jämfört med föregående bedömning.",
+                Improvements = improvements
+            });
+        }
+
+        // GET: api/statistics/patient-change-overview/{userId}
+        // Returnerar förändringar mellan två senaste bedömningar, uppdelat i tre kategorier
+        [HttpGet("patient-change-overview/{userId}")]
+        public ActionResult<object> GetPatientChangeOverviewGrouped(int userId)
+        {
+            var assessments = _context.Assessments
+                .Where(a => a.UserId == userId)
+                .OrderByDescending(a => a.CreatedAt)
+                .Take(2)
+                .ToList();
+
+            if (assessments.Count < 2)
+                return Ok("Det finns inte tillräckligt många bedömningar för att visa förändringar.");
+
+            var latest = assessments[0];
+            var previousAssessment = assessments[1];
+
+            var latestItems = _context.AssessmentItems
+                .Where(i => i.AssessmentID == latest.AssessmentID && i.PatientAnswer.HasValue)
+                .Include(i => i.Question)
+                .ToList();
+
+            var previousItems = _context.AssessmentItems
+                .Where(i => i.AssessmentID == previousAssessment.AssessmentID && i.PatientAnswer.HasValue)
+                .ToDictionary(i => i.QuestionID, i => i.PatientAnswer!.Value);
+
+            var improvements = new List<object>();
+            var deteriorations = new List<object>();
+            var unchanged = new List<object>();
+
+            foreach (var item in latestItems)
+            {
+                if (!previousItems.ContainsKey(item.QuestionID)) continue;
+
+                var previousValue = previousItems[item.QuestionID];
+                var currentValue = item.PatientAnswer!.Value;
+                var questionText = item.Question?.QuestionText ?? "(okänd fråga)";
+                var changeAmount = Math.Abs(currentValue - previousValue);
+
+                if (currentValue < previousValue)
+                {
+                    improvements.Add(new { Question = questionText, Previous = previousValue, Current = currentValue, Change = changeAmount });
+                }
+                else if (currentValue > previousValue)
+                {
+                    deteriorations.Add(new { Question = questionText, Previous = previousValue, Current = currentValue, Change = changeAmount });
+                }
+                else
+                {
+                    unchanged.Add(new { Question = questionText, Value = currentValue });
+                }
+            }
+
+            // Sortera förbättringar och försämringar efter störst förändring först
+            var sortedImprovements = improvements.OrderByDescending(i => ((dynamic)i).Change).ToList();
+            var sortedDeteriorations = deteriorations.OrderByDescending(i => ((dynamic)i).Change).ToList();
+
+            return Ok(new
+            {
+                Förbättringar = sortedImprovements,
+                Försämringar = sortedDeteriorations,
+                Oförändrat = unchanged
+            });
+        }
     }
 }
