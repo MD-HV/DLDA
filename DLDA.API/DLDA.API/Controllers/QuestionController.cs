@@ -20,7 +20,7 @@ public class QuestionController : ControllerBase
     // --------------------------
 
     // GET: api/Question
-    // Returnerar alla frågor i databasen
+    /// <summary>Hämtar alla frågor från databasen.</summary>
     [HttpGet]
     public ActionResult<IEnumerable<QuestionDto>> GetQuestions()
     {
@@ -35,7 +35,7 @@ public class QuestionController : ControllerBase
     }
 
     // GET: api/Question/category/{category}
-    // Returnerar alla frågor i vald kategori
+    /// <summary>Hämtar alla frågor i en viss kategori.</summary>
     [HttpGet("category/{category}")]
     public ActionResult<IEnumerable<QuestionDto>> GetQuestionsByCategory(string category)
     {
@@ -58,7 +58,7 @@ public class QuestionController : ControllerBase
     }
 
     // GET: api/Question/5
-    // Hämtar en fråga via ID
+    /// <summary>Hämtar en specifik fråga utifrån ID.</summary>
     [HttpGet("{id}")]
     public ActionResult<QuestionDto> GetQuestion(int id)
     {
@@ -75,7 +75,7 @@ public class QuestionController : ControllerBase
     }
 
     // POST: api/Question
-    // Skapar en ny fråga
+    /// <summary>Skapar en ny fråga.</summary>
     [HttpPost]
     public IActionResult CreateQuestion(QuestionDto dto)
     {
@@ -92,7 +92,7 @@ public class QuestionController : ControllerBase
     }
 
     // PUT: api/Question/5
-    // Uppdaterar en befintlig fråga
+    /// <summary>Uppdaterar en befintlig fråga.</summary>
     [HttpPut("{id}")]
     public IActionResult UpdateQuestion(int id, QuestionDto dto)
     {
@@ -109,7 +109,7 @@ public class QuestionController : ControllerBase
     }
 
     // DELETE: api/Question/5
-    // Tar bort en fråga från databasen
+    /// <summary>Raderar en fråga från databasen.</summary>
     [HttpDelete("{id}")]
     public IActionResult DeleteQuestion(int id)
     {
@@ -126,7 +126,7 @@ public class QuestionController : ControllerBase
     // --------------------------
 
     // GET: api/Question/quiz/patient/next/{assessmentId}
-    // Hämtar nästa obesvarade fråga för patienten
+    /// <summary>Hämtar nästa obesvarade fråga för patienten.</summary>
     [HttpGet("quiz/patient/next/{assessmentId}")]
     public IActionResult GetNextUnansweredPatientQuestion(int assessmentId)
     {
@@ -149,7 +149,7 @@ public class QuestionController : ControllerBase
     }
 
     // POST: api/Question/quiz/patient/submit
-    // Skickar in patientens svar
+    /// <summary>Sparar patientens svar och kommentar på en fråga.</summary>
     [HttpPost("quiz/patient/submit")]
     public IActionResult SubmitPatientAnswer([FromBody] SubmitAnswerDto dto)
     {
@@ -157,6 +157,7 @@ public class QuestionController : ControllerBase
         if (item == null) return NotFound();
 
         item.PatientAnswer = dto.Answer;
+        item.PatientComment = dto.Comment;
         item.AnsweredAt = DateTime.UtcNow;
         _context.SaveChanges();
 
@@ -164,7 +165,7 @@ public class QuestionController : ControllerBase
     }
 
     // POST: api/Question/quiz/patient/skip
-    // Markerar att patienten hoppat över frågan
+    /// <summary>Markerar att patienten hoppat över en fråga.</summary>
     [HttpPost("quiz/patient/skip")]
     public IActionResult SkipPatientQuestion([FromBody] SkipQuestionDto dto)
     {
@@ -179,7 +180,7 @@ public class QuestionController : ControllerBase
     }
 
     // GET: api/Question/quiz/patient/progress/{assessmentId}/{questionId}
-    // Visar fråga X av Y
+    /// <summary>Visar vilken fråga patienten är på i bedömningen.</summary>
     [HttpGet("quiz/patient/progress/{assessmentId}/{questionId}")]
     public IActionResult GetPatientQuestionProgress(int assessmentId, int questionId)
     {
@@ -208,7 +209,7 @@ public class QuestionController : ControllerBase
     // --------------------------
 
     // GET: api/Question/quiz/staff/next/{assessmentId}
-    // Hämtar nästa obesvarade fråga för personalen
+    /// <summary>Hämtar nästa obesvarade fråga för personalen.</summary>
     [HttpGet("quiz/staff/next/{assessmentId}")]
     public IActionResult GetNextUnansweredStaffQuestion(int assessmentId)
     {
@@ -228,12 +229,13 @@ public class QuestionController : ControllerBase
             Category = nextItem.Question?.Category,
             ItemID = nextItem.ItemID,
             PatientAnswer = nextItem.PatientAnswer,
+            PatientComment = nextItem.PatientComment,
             Flag = nextItem.Flag
         });
     }
 
     // POST: api/Question/quiz/staff/submit
-    // Skickar in personalsvar + flagga
+    /// <summary>Sparar personalsvar, kommentar och eventuell flagga.</summary>
     [HttpPost("quiz/staff/submit")]
     public IActionResult SubmitStaffAnswer([FromBody] SubmitStaffAnswerDto dto)
     {
@@ -241,15 +243,16 @@ public class QuestionController : ControllerBase
         if (item == null) return NotFound();
 
         item.StaffAnswer = dto.Answer;
-        item.AnsweredAt = DateTime.UtcNow;
+        item.StaffComment = dto.Comment;
         item.Flag = dto.Flag ?? false;
-        _context.SaveChanges();
+        item.AnsweredAt = DateTime.UtcNow;
 
+        _context.SaveChanges();
         return Ok();
     }
 
     // POST: api/Question/quiz/staff/skip
-    // Personal markerar fråga som överhoppad
+    /// <summary>Markerar att personalen hoppat över en fråga.</summary>
     [HttpPost("quiz/staff/skip")]
     public IActionResult SkipStaffQuestion([FromBody] SkipQuestionDto dto)
     {
@@ -264,7 +267,7 @@ public class QuestionController : ControllerBase
     }
 
     // GET: api/Question/quiz/staff/progress/{assessmentId}/{questionId}
-    // Visar fråga X av Y samt patientens svar
+    /// <summary>Visar vilken fråga personalen är på samt patientens svar och flagga.</summary>
     [HttpGet("quiz/staff/progress/{assessmentId}/{questionId}")]
     public IActionResult GetStaffQuestionProgress(int assessmentId, int questionId)
     {
@@ -286,6 +289,8 @@ public class QuestionController : ControllerBase
             QuestionText = item.Question?.QuestionText,
             Category = item.Question?.Category,
             PatientAnswer = item.PatientAnswer,
+            PatientComment = item.PatientComment,
+            StaffComment = item.StaffComment,
             Flag = item.Flag
         });
     }

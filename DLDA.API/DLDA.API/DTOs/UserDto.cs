@@ -1,5 +1,6 @@
 ﻿namespace DLDA.API.DTOs
 {
+    // Grundläggande info om användare.
     public class UserDto
     {
         public int UserID { get; set; }

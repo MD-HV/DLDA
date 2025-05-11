@@ -14,19 +14,22 @@ namespace DLDA.API.Models
         // Foreign key för koppling till Question
         public int QuestionID { get; set; }
 
-        // Skattningsvärde (0 = inget problem, 4 = mycket stort problem)
-        public int AnswerValue { get; set; }
+        // Patientens svar (0 = inget problem, 4 = mycket stort problem)
+        public int? PatientAnswer { get; set; }
 
-        // Patientens svar
-        public int? PatientAnswer { get; set; } // döpte om till PatientAnswer för att vara mer beskrivande
+        // Patientens kommentar till frågan
+        public string? PatientComment { get; set; }
 
         // Personalens svar
-        public int? StaffAnswer { get; set; } // La till StaffAnswer för att spara personalens svar
+        public int? StaffAnswer { get; set; }
 
-        // När frågan besvarades
+        // Personalens kommentar till frågan
+        public string? StaffComment { get; set; }
+
+        // När svaret lämnades (senaste svarstid)
         public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
 
-        // Flagga för vidare diskussion
+        // Flagga från personalen för vidare diskussion
         public bool Flag { get; set; }
 
         // Navigationsegenskaper

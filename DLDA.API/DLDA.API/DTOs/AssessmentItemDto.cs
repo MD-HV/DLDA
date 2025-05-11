@@ -1,14 +1,18 @@
 ﻿namespace DLDA.API.DTOs
 {
+    // Koppling mellan frågor och specifika bedömningar, med svar och kommentarer.   
     public class AssessmentItemDto
     {
         public int ItemID { get; set; }
         public int AssessmentID { get; set; }
         public int QuestionID { get; set; }
-        // public int AnswerValue { get; set; } Har bytt ut denna med PatientAnswer och StaffAnswer
 
-        public int? PatientAnswer { get; set; }  // Nytt fält
-        public int? StaffAnswer { get; set; }    // Nytt fält
+        public int? PatientAnswer { get; set; }
+        public string? PatientComment { get; set; }
+
+        public int? StaffAnswer { get; set; }
+        public string? StaffComment { get; set; }
+
         public bool Flag { get; set; }
     }
 }
