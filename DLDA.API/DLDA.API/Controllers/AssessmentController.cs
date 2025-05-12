@@ -20,12 +20,13 @@ public class AssessmentController : ControllerBase
     // --------------------------
 
     // GET: api/Assessment/user/{userId}
-    // Returnerar alla bedömningar som tillhör en specifik användare
+    // Returnerar alla bedömningar som tillhör en specifik användare + om den påbörjats
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<IEnumerable<AssessmentDto>>> GetAssessmentsForUser(int userId)
     {
         return await _context.Assessments
             .Where(a => a.UserId == userId)
+            .Include(a => a.AssessmentItems) // 👈 Behövs för att kunna kontrollera svar
             .OrderByDescending(a => a.CreatedAt)
             .Select(a => new AssessmentDto
             {
@@ -33,8 +34,10 @@ public class AssessmentController : ControllerBase
                 ScaleType = a.ScaleType,
                 IsComplete = a.IsComplete,
                 UserId = a.UserId,
-                CreatedAt = a.CreatedAt ?? DateTime.MinValue
-            }).ToListAsync();
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue,
+                HasStarted = a.AssessmentItems.Any(i => i.PatientAnswer != null) // 👈 Kontroll här
+            })
+            .ToListAsync();
     }
 
     // GET: api/Assessment/{id}
@@ -66,6 +69,8 @@ public class AssessmentController : ControllerBase
     {
         try
         {
+            Console.WriteLine($"[INFO] Skapar ny assessment för UserId={dto.UserId}");
+
             var assessment = new Assessment
             {
                 ScaleType = dto.ScaleType,
@@ -78,14 +83,22 @@ public class AssessmentController : ControllerBase
             _context.Assessments.Add(assessment);
             await _context.SaveChangesAsync(); // ✅ Här skapas ID:t
 
+            Console.WriteLine($"[INFO] Assessment sparad med ID={assessment.AssessmentID}");
+
             var questions = await _context.Questions
                 .Where(q => q.IsActive)
                 .OrderBy(q => q.QuestionID)
                 .ToListAsync();
 
-            if (!questions.Any())
-                return BadRequest("Inga aktiva frågor hittades att koppla till bedömningen.");
+            Console.WriteLine($"[INFO] Antal aktiva frågor hämtade: {questions.Count}");
 
+            if (!questions.Any())
+            {
+                Console.WriteLine("[WARN] Inga aktiva frågor hittades att koppla till bedömningen.");
+                return BadRequest("Inga aktiva frågor hittades att koppla till bedömningen.");
+            }
+
+            int index = 0;
             foreach (var question in questions)
             {
                 var item = new AssessmentItem
@@ -95,13 +108,17 @@ public class AssessmentController : ControllerBase
                     PatientAnswer = null,
                     StaffAnswer = null,
                     Flag = false,
-                    AnsweredAt = null // 🔄 Viktigt! Inte autoifyllt
+                    AnsweredAt = null,
+                    Order = index++
                 };
-
                 _context.AssessmentItems.Add(item);
             }
 
+            Console.WriteLine($"[INFO] Totalt {index} AssessmentItems skapades. Försöker spara...");
+
             await _context.SaveChangesAsync();
+
+            Console.WriteLine("[SUCCESS] AssessmentItems sparades korrekt.");
 
             return CreatedAtAction(nameof(GetAssessment), new { id = assessment.AssessmentID }, new AssessmentDto
             {
@@ -123,6 +140,7 @@ public class AssessmentController : ControllerBase
             return StatusCode(500, "Ett internt fel uppstod vid skapande av bedömning.");
         }
     }
+
 
     // GET: api/Assessment
     // Returnerar samtliga bedömningar i systemet (för personal/admin)

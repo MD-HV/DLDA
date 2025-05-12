@@ -2,7 +2,7 @@
 
 namespace DLDA.GUI.DTOs
 {
-    // Representerar själva bedömningen (typ, användare, skala osv.).
+    // Representerar själva bedömningen (typ, användare, skala osv.).  
     public class AssessmentDto
     {
         public int AssessmentID { get; set; }
@@ -10,5 +10,6 @@ namespace DLDA.GUI.DTOs
         public bool IsComplete { get; set; }
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool HasStarted { get; set; }
     }
 }

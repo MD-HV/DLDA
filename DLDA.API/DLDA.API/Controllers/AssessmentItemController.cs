@@ -65,15 +65,31 @@ public class AssessmentItemController : ControllerBase
     // PUT: api/AssessmentItem/patient/{id}
     // Uppdaterar en patients eget svar
     [HttpPut("patient/{id}")]
-    public IActionResult UpdatePatientAnswer(int id, [FromBody] int answer)
+    public IActionResult UpdatePatientAnswer(int id, [FromBody] PatientAnswerDto dto)
     {
         var item = _context.AssessmentItems.Find(id);
         if (item == null) return NotFound();
 
-        item.PatientAnswer = answer;
+        item.PatientAnswer = dto.Answer;
+        item.PatientComment = dto.Comment;
         item.AnsweredAt = DateTime.UtcNow;
-        _context.SaveChanges();
 
+        _context.SaveChanges();
+        return NoContent();
+    }
+
+    // PUT: api/AssessmentItem/skip/{itemId}
+    // Markerar en fråga som överhoppad (flag = true)
+    [HttpPut("skip/{itemId}")]
+    public IActionResult SkipQuestion(int itemId)
+    {
+        var item = _context.AssessmentItems.Find(itemId);
+        if (item == null) return NotFound();
+
+        item.Flag = true;
+        item.AnsweredAt = DateTime.UtcNow;
+
+        _context.SaveChanges();
         return NoContent();
     }
 
@@ -118,6 +134,40 @@ public class AssessmentItemController : ControllerBase
         };
     }
 
+    // GET: api/AssessmentItem/patient/assessment/{assessmentId}/question/{order}
+    // Hämtar ett specifikt bedömningsitem
+    [HttpGet("patient/assessment/{assessmentId}/question/{order}")]
+    public async Task<ActionResult<QuestionDto>> GetQuestionByOrder(int assessmentId, int order)
+    {
+        var item = await _context.AssessmentItems
+            .Include(i => i.Question)
+            .FirstOrDefaultAsync(i => i.AssessmentID == assessmentId && i.Order == order);
+
+        if (item == null || item.Question == null)
+            return NotFound();
+
+        var total = await _context.AssessmentItems
+            .CountAsync(i => i.AssessmentID == assessmentId);
+
+        var assessment = await _context.Assessments
+            .FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+
+        return Ok(new QuestionDto
+        {
+            ItemID = item.ItemID,
+            AssessmentID = item.AssessmentID,
+            QuestionID = item.Question.QuestionID,
+            QuestionText = item.Question.QuestionText!,
+            Category = item.Question.Category!,
+            IsActive = item.Question.IsActive,
+            Order = item.Order,
+            Total = total,
+            ScaleType = assessment?.ScaleType
+        });
+    }
+
+
+
     // POST: api/AssessmentItem
     // Skapar ett nytt bedömningsitem (t.ex. när formuläret startas)
     [HttpPost]
@@ -142,15 +192,16 @@ public class AssessmentItemController : ControllerBase
     // PUT: api/AssessmentItem/staff/{id}
     // Uppdaterar personals svar
     [HttpPut("staff/{id}")]
-    public IActionResult UpdateStaffAnswer(int id, [FromBody] int answer)
+    public IActionResult UpdateStaffAnswer(int id, [FromBody] StaffAnswerDto dto)
     {
         var item = _context.AssessmentItems.Find(id);
         if (item == null) return NotFound();
 
-        item.StaffAnswer = answer;
+        item.StaffAnswer = dto.Answer;
+        item.StaffComment = dto.Comment;
         item.AnsweredAt = DateTime.UtcNow;
-        _context.SaveChanges();
 
+        _context.SaveChanges();
         return NoContent();
     }
 

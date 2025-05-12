@@ -8,5 +8,6 @@
         public bool IsComplete { get; set; }
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool HasStarted { get; set; }
     }
 }

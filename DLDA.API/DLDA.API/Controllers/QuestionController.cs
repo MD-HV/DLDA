@@ -128,23 +128,34 @@ public class QuestionController : ControllerBase
     // GET: api/Question/quiz/patient/next/{assessmentId}
     /// <summary>Hämtar nästa obesvarade fråga för patienten.</summary>
     [HttpGet("quiz/patient/next/{assessmentId}")]
-    public IActionResult GetNextUnansweredPatientQuestion(int assessmentId)
+    public async Task<ActionResult<QuestionDto>> GetNextUnanswered(int assessmentId)
     {
-        var nextItem = _context.AssessmentItems
+        var item = await _context.AssessmentItems
             .Include(i => i.Question)
-            .Where(i => i.AssessmentID == assessmentId && !i.PatientAnswer.HasValue)
-            .OrderBy(i => i.QuestionID)
-            .FirstOrDefault();
+            .Where(i => i.AssessmentID == assessmentId && i.PatientAnswer == null && !i.Flag)
+            .OrderBy(i => i.Order)
+            .FirstOrDefaultAsync();
 
-        if (nextItem == null)
-            return Ok(new { Done = true });
+        if (item == null || item.Question == null)
+            return NotFound();
 
-        return Ok(new
+        var total = await _context.AssessmentItems
+            .CountAsync(i => i.AssessmentID == assessmentId);
+
+        var assessment = await _context.Assessments
+            .FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+
+        return Ok(new QuestionDto
         {
-            QuestionID = nextItem.QuestionID,
-            QuestionText = nextItem.Question?.QuestionText,
-            Category = nextItem.Question?.Category,
-            ItemID = nextItem.ItemID
+            ItemID = item.ItemID,
+            AssessmentID = item.AssessmentID,
+            QuestionID = item.Question.QuestionID,
+            QuestionText = item.Question.QuestionText ?? "",
+            Category = item.Question.Category ?? "",
+            IsActive = item.Question.IsActive,
+            Order = item.Order,
+            Total = total,
+            ScaleType = assessment?.ScaleType ?? "Numerisk"
         });
     }
 
@@ -204,8 +215,43 @@ public class QuestionController : ControllerBase
         });
     }
 
+    // GET: api/Question/quiz/patient/previous/{assessmentId}/{currentOrder}
+    [HttpGet("quiz/patient/previous/{assessmentId}/{currentOrder}")]
+    public async Task<ActionResult<QuestionDto>> GetPreviousQuestion(int assessmentId, int currentOrder)
+    {
+        if (currentOrder <= 0)
+            return NotFound("Ingen tidigare fråga.");
+
+        var item = await _context.AssessmentItems
+            .Include(i => i.Question)
+            .Where(i => i.AssessmentID == assessmentId && i.Order == currentOrder - 1)
+            .FirstOrDefaultAsync();
+
+        if (item == null || item.Question == null)
+            return NotFound();
+
+        var total = await _context.AssessmentItems
+            .CountAsync(i => i.AssessmentID == assessmentId);
+
+        var assessment = await _context.Assessments
+            .FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+
+        return Ok(new QuestionDto
+        {
+            ItemID = item.ItemID,
+            AssessmentID = item.AssessmentID,
+            QuestionID = item.Question.QuestionID,
+            QuestionText = item.Question.QuestionText ?? "",
+            Category = item.Question.Category ?? "",
+            IsActive = item.Question.IsActive,
+            Order = item.Order,
+            Total = total,
+            ScaleType = assessment?.ScaleType ?? "Numerisk"
+        });
+    }
+
     // --------------------------
-    // [QUIZ – PERSONAL]
+    // [QUIZ – STAFF]
     // --------------------------
 
     // GET: api/Question/quiz/staff/next/{assessmentId}

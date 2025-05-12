@@ -23,6 +23,9 @@ namespace DLDA.API.Models
         // Personalens svar
         public int? StaffAnswer { get; set; }
 
+        // Används för att veta i vilken ordning frågorna ska visas
+        public int Order { get; set; }
+
         // Personalens kommentar till frågan
         public string? StaffComment { get; set; }
 
