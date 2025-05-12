@@ -30,7 +30,7 @@ namespace DLDA.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssessmentID"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsComplete")
@@ -42,7 +42,7 @@ namespace DLDA.API.Migrations
                     b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UpdatedAt")
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("UserId")
@@ -63,7 +63,7 @@ namespace DLDA.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ItemID"));
 
-                    b.Property<DateTime>("AnsweredAt")
+                    b.Property<DateTime?>("AnsweredAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("AssessmentID")

@@ -1,0 +1,18 @@
+﻿@{
+    ViewData["Title"] = "Information";
+}
+
+<div class="container mt-5 text-center">
+    <h1 class="display-4">DLDA</h1>
+    <h4 class="mb-4">Hur jag upplever min funktion i vardagen</h4>
+
+    <img src="~/Images/dlda_intro.png" alt="DLDA illustration" class="img-fluid mb-4" style="max-width: 280px;" />
+
+    <p class="lead">
+        Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
+        Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
+        Tänk på hur det varit den senaste veckan.
+    </p>
+
+    <a class="btn btn-primary mt-4" asp-controller="PatientQuiz" asp-action="Index">Visa mina bedömningar</a>
+</div>

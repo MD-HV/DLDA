@@ -1,0 +1,88 @@
+﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
+@{
+    ViewData["Title"] = "Bedömningar för patient";
+}
+
+<div class="container mt-5">
+    <h3 class="mb-4">Bedömningar för patient</h3>
+
+    <p><strong>🔍 Debug UserId: @ViewBag.UserId</strong></p>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    @if (!Model.Any())
+    {
+        <p>Inga bedömningar har ännu genomförts.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Skattningsskala</th>
+                    <th>Status</th>
+                    <th>Åtgärder</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.AssessmentID</td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@item.ScaleType</td>
+                        <td>@(item.IsComplete ? "Klar" : "Pågående")</td>
+                        <td class="d-flex gap-2">
+                            @if (!item.IsComplete)
+                            {
+                                <a class="btn btn-sm btn-warning"
+                                   asp-controller="StaffQuiz"
+                                   asp-action="Resume"
+                                   asp-route-id="@item.AssessmentID">
+                                    Fortsätt
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-info"
+                                   asp-controller="Result"
+                                   asp-action="StaffView"
+                                   asp-route-id="@item.AssessmentID">
+                                    Visa resultat
+                                </a>
+                            }
+
+                            <!-- Delete-knapp -->
+                            <a class="btn btn-sm btn-danger"
+                               asp-controller="Assessment"
+                               asp-action="Delete"
+                               asp-route-id="@item.AssessmentID">
+                                🗑 Ta bort
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <form asp-controller="Assessment"
+          asp-action="CreateForPatient"
+          method="post"
+          class="d-inline">
+        <input type="hidden" name="userId" value="@ViewBag.UserId" />
+        <button type="submit" class="btn btn-success">Ny bedömning</button>
+    </form>
+
+    <a class="btn btn-secondary mt-3" asp-action="Index">Tillbaka till patientlista</a>
+</div>

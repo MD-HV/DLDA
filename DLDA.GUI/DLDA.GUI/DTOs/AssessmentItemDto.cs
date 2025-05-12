@@ -1,0 +1,20 @@
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace DLDA.GUI.DTOs
+{
+    // Koppling mellan frågor och specifika bedömningar, med svar och kommentarer.   
+    public class AssessmentItemDto
+    {
+        public int ItemID { get; set; }
+        public int AssessmentID { get; set; }
+        public int QuestionID { get; set; }
+
+        public int? PatientAnswer { get; set; }
+        public string? PatientComment { get; set; }
+
+        public int? StaffAnswer { get; set; }
+        public string? StaffComment { get; set; }
+
+        public bool Flag { get; set; }
+    }
+}

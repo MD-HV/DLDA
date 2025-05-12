@@ -27,7 +27,7 @@ namespace DLDA.API.Models
         public string? StaffComment { get; set; }
 
         // När svaret lämnades (senaste svarstid)
-        public DateTime AnsweredAt { get; set; } = DateTime.UtcNow;
+        public DateTime? AnsweredAt { get; set; } = DateTime.UtcNow;
 
         // Flagga från personalen för vidare diskussion
         public bool Flag { get; set; }

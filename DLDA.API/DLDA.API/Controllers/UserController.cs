@@ -21,7 +21,6 @@ public class UserController : ControllerBase
     // --------------------------
 
     // GET: api/User
-    // Returnerar alla användare
     [HttpGet]
     public ActionResult<IEnumerable<UserDto>> GetUsers()
     {
@@ -58,7 +57,6 @@ public class UserController : ControllerBase
             }).ToList();
     }
 
-
     // GET: api/User/5
     // Hämtar en specifik användare
     [HttpGet("{id}")]
@@ -85,13 +83,21 @@ public class UserController : ControllerBase
         {
             Username = dto.Username,
             Email = dto.Email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("ChangeMe123"), // Exempel
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password ?? "password"), // Om inget lösenord skickas: "password" används som default.
             Role = dto.Role,
             CreatedAt = DateTime.UtcNow
         };
+
         _context.Users.Add(user);
         _context.SaveChanges();
-        return CreatedAtAction(nameof(GetUser), new { id = user.UserID }, dto);
+
+        return CreatedAtAction(nameof(GetUser), new { id = user.UserID }, new UserDto
+        {
+            UserID = user.UserID,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role
+        });
     }
 
     // PUT: api/User/5
@@ -107,6 +113,13 @@ public class UserController : ControllerBase
         user.Username = dto.Username;
         user.Email = dto.Email;
         user.Role = dto.Role;
+
+        // Om nytt lösenord anges, uppdatera det
+        if (!string.IsNullOrWhiteSpace(dto.Password))
+        {
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        }
+
         _context.SaveChanges();
         return NoContent();
     }
@@ -123,4 +136,31 @@ public class UserController : ControllerBase
         _context.SaveChanges();
         return NoContent();
     }
+
+    // --------------------------
+    // [PERSONAL] –  hämta listor på patienter
+    // --------------------------
+
+    // GET api/user/5
+    // visa användarnamn och senaste bedömningens datum
+    [HttpGet("with-latest-assessment")]
+    public ActionResult<IEnumerable<PatientWithLatestAssessmentDto>> GetUsersWithLatestAssessment()
+    {
+        var result = _context.Users
+            .Where(u => u.Role.ToLower() == "patient")
+            .Select(u => new PatientWithLatestAssessmentDto
+            {
+                UserID = u.UserID,
+                Username = u.Username,
+                LastAssessmentDate = _context.Assessments
+                    .Where(a => a.UserId == u.UserID)
+                    .OrderByDescending(a => a.CreatedAt)
+                    .Select(a => (DateTime?)a.CreatedAt) // 👈 detta gör att null returneras om inget finns
+                    .FirstOrDefault()
+            })
+            .ToList();
+
+        return Ok(result);
+    }
+
 }

@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] = "Adminpanel";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Inloggad som admin</h2>
+
+    <div class="d-flex flex-column gap-3">
+
+        <a class="btn btn-primary" asp-controller="AdminQuestion" asp-action="Index">
+            Gå till frågor översikten
+        </a>
+
+        <a class="btn btn-success" asp-controller="AdminUser" asp-action="Index">
+            ➕ Lägg till ny användare (personal eller patient)
+        </a>
+
+    </div>
+</div>
+

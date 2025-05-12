@@ -31,7 +31,6 @@ public class AssessmentItemController : ControllerBase
             {
                 a.AssessmentID,
                 a.CreatedAt,
-                a.Type,
                 a.ScaleType,
                 a.IsComplete
             })

@@ -1,0 +1,48 @@
+﻿@model IEnumerable<DLDA.GUI.DTOs.AssessmentDto>
+
+@{
+    ViewData["Title"] = "Mina bedömningar";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Mina bedömningar</h2>
+
+    @if (!Model.Any())
+    {
+        <p>Du har ännu inte påbörjat någon bedömning.</p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Datum</th>
+                    <th>Typ</th>
+                    <th>Skattningsskala</th>
+                    <th>Status</th>
+                    <th>Åtgärd</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@item.ScaleType</td>
+                        <td>@(item.IsComplete ? "Klar" : "Pågående")</td>
+                        <td>
+                            @if (!item.IsComplete)
+                            {
+                                <a class="btn btn-sm btn-warning" asp-controller="PatientQuiz" asp-action="Resume" asp-route-id="@item.AssessmentID">Fortsätt</a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-info" asp-controller="Result" asp-action="PatientView" asp-route-id="@item.AssessmentID">Visa</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

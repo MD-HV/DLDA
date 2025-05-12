@@ -30,10 +30,10 @@ public class AssessmentController : ControllerBase
             .Select(a => new AssessmentDto
             {
                 AssessmentID = a.AssessmentID,
-                Type = a.Type,
                 ScaleType = a.ScaleType,
                 IsComplete = a.IsComplete,
-                UserId = a.UserId
+                UserId = a.UserId,
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue
             }).ToListAsync();
     }
 
@@ -48,37 +48,81 @@ public class AssessmentController : ControllerBase
         return new AssessmentDto
         {
             AssessmentID = assessment.AssessmentID,
-            Type = assessment.Type,
             ScaleType = assessment.ScaleType,
             IsComplete = assessment.IsComplete,
-            UserId = assessment.UserId
+            UserId = assessment.UserId,
+            CreatedAt = assessment.CreatedAt ?? DateTime.MinValue
         };
-    }
-
-    // POST: api/Assessment
-    // Skapar en ny bedömning (används av både personal och patient)
-    [HttpPost]
-    public async Task<ActionResult> CreateAssessment(AssessmentDto dto)
-    {
-        var assessment = new Assessment
-        {
-            Type = dto.Type,
-            ScaleType = dto.ScaleType,
-            IsComplete = dto.IsComplete,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            UserId = dto.UserId
-        };
-
-        _context.Assessments.Add(assessment);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetAssessment), new { id = assessment.AssessmentID }, dto);
     }
 
     // --------------------------
     // [PERSONAL] – Full åtkomst till alla bedömningar
     // --------------------------
+
+    // POST: api/Assessment
+    // Skapar en ny bedömning och kopplar alla aktiva frågor som AssessmentItems
+    [HttpPost]
+    public async Task<ActionResult<AssessmentDto>> CreateAssessment(AssessmentDto dto)
+    {
+        try
+        {
+            var assessment = new Assessment
+            {
+                ScaleType = dto.ScaleType,
+                IsComplete = dto.IsComplete,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                UserId = dto.UserId
+            };
+
+            _context.Assessments.Add(assessment);
+            await _context.SaveChangesAsync(); // ✅ Här skapas ID:t
+
+            var questions = await _context.Questions
+                .Where(q => q.IsActive)
+                .OrderBy(q => q.QuestionID)
+                .ToListAsync();
+
+            if (!questions.Any())
+                return BadRequest("Inga aktiva frågor hittades att koppla till bedömningen.");
+
+            foreach (var question in questions)
+            {
+                var item = new AssessmentItem
+                {
+                    AssessmentID = assessment.AssessmentID,
+                    QuestionID = question.QuestionID,
+                    PatientAnswer = null,
+                    StaffAnswer = null,
+                    Flag = false,
+                    AnsweredAt = null // 🔄 Viktigt! Inte autoifyllt
+                };
+
+                _context.AssessmentItems.Add(item);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetAssessment), new { id = assessment.AssessmentID }, new AssessmentDto
+            {
+                AssessmentID = assessment.AssessmentID,
+                ScaleType = assessment.ScaleType,
+                IsComplete = assessment.IsComplete,
+                UserId = assessment.UserId,
+                CreatedAt = assessment.CreatedAt ?? DateTime.MinValue
+            });
+        }
+        catch (DbUpdateException dbEx)
+        {
+            Console.WriteLine($"[DB ERROR] {dbEx.InnerException?.Message ?? dbEx.Message}");
+            return StatusCode(500, "Databasfel vid sparande av bedömning.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] {ex.Message}");
+            return StatusCode(500, "Ett internt fel uppstod vid skapande av bedömning.");
+        }
+    }
 
     // GET: api/Assessment
     // Returnerar samtliga bedömningar i systemet (för personal/admin)
@@ -90,10 +134,10 @@ public class AssessmentController : ControllerBase
             .Select(a => new AssessmentDto
             {
                 AssessmentID = a.AssessmentID,
-                Type = a.Type,
                 ScaleType = a.ScaleType,
                 IsComplete = a.IsComplete,
-                UserId = a.UserId
+                UserId = a.UserId,
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue
             }).ToListAsync();
     }
 
@@ -109,8 +153,7 @@ public class AssessmentController : ControllerBase
             .Select(a => new
             {
                 a.AssessmentID,
-                a.CreatedAt,
-                a.Type,
+                CreatedAt = a.CreatedAt ?? DateTime.MinValue,
                 a.ScaleType,
                 a.IsComplete,
                 PatientName = a.User!.Username,
@@ -124,8 +167,6 @@ public class AssessmentController : ControllerBase
         return Ok(results);
     }
 
-
-
     // PUT: api/Assessment/{id}
     // Uppdaterar en befintlig bedömning (endast för personal)
     [HttpPut("{id}")]
@@ -136,7 +177,6 @@ public class AssessmentController : ControllerBase
         var assessment = await _context.Assessments.FindAsync(id);
         if (assessment == null) return NotFound();
 
-        assessment.Type = dto.Type;
         assessment.ScaleType = dto.ScaleType;
         assessment.IsComplete = dto.IsComplete;
         assessment.UpdatedAt = DateTime.UtcNow;
@@ -154,7 +194,18 @@ public class AssessmentController : ControllerBase
         if (assessment == null) return NotFound();
 
         _context.Assessments.Remove(assessment);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Om raden redan är borta, behandla det som "OK"
+            return NoContent(); // eller: return NotFound();
+        }
+
         return NoContent();
     }
+
 }
