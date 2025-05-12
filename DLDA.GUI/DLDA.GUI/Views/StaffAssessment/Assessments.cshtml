@@ -45,6 +45,7 @@
                         <td class="d-flex gap-2">
                             @if (!item.IsComplete)
                             {
+                                <!-- OBS: Resume-funktionen finns inte än i StaffAssessmentController än :P-->
                                 <a class="btn btn-sm btn-warning"
                                    asp-controller="StaffQuiz"
                                    asp-action="Resume"
@@ -62,9 +63,8 @@
                                 </a>
                             }
 
-                            <!-- Delete-knapp -->
                             <a class="btn btn-sm btn-danger"
-                               asp-controller="Assessment"
+                               asp-controller="StaffAssessment"
                                asp-action="Delete"
                                asp-route-id="@item.AssessmentID">
                                 🗑 Ta bort
@@ -76,7 +76,8 @@
         </table>
     }
 
-    <form asp-controller="Assessment"
+    <!-- Skapar ny bedömning för patient -->
+    <form asp-controller="StaffAssessment"
           asp-action="CreateForPatient"
           method="post"
           class="d-inline">
@@ -84,5 +85,5 @@
         <button type="submit" class="btn btn-success">Ny bedömning</button>
     </form>
 
-    <a class="btn btn-secondary mt-3" asp-action="Index">Tillbaka till patientlista</a>
+    <a class="btn btn-secondary mt-3" asp-controller="StaffAssessment" asp-action="Index">Tillbaka till patientlista</a>
 </div>

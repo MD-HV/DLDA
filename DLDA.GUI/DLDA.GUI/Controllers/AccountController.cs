@@ -34,8 +34,8 @@ public class AccountController : Controller
         return user.Role.ToLower() switch
         {
             "admin" => RedirectToAction("Index", "Admin"),
-            "staff" => RedirectToAction("Index", "StaffQuiz"),
-            "patient" => RedirectToAction("Info", "PatientQuiz"),
+            "staff" => RedirectToAction("Index", "StaffAssessment"),
+            "patient" => RedirectToAction("Info", "PatientAssessment"),
             _ => RedirectToAction("Login")
         };
     }

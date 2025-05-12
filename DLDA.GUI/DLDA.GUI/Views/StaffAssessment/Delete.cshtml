@@ -13,10 +13,10 @@
         <li><strong>Skapad:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")</li>
     </ul>
 
-    <form asp-action="DeleteConfirmed" method="post">
+    <form asp-controller="StaffAssessment" asp-action="DeleteConfirmed" method="post">
         <input type="hidden" name="id" value="@Model.AssessmentID" />
         <input type="hidden" name="userId" value="@Model.UserId" />
         <button type="submit" class="btn btn-danger">🗑 Ja, ta bort</button>
-        <a asp-controller="StaffQuiz" asp-action="Assessments" asp-route-userId="@Model.UserId" class="btn btn-secondary ms-2">Avbryt</a>
+        <a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@Model.UserId" class="btn btn-secondary ms-2">Avbryt</a>
     </form>
 </div>

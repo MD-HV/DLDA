@@ -1,9 +1,11 @@
-﻿using DLDA.GUI.DTOs;
+﻿using DLDA.GUI.Authorization;
+using DLDA.GUI.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 
 namespace DLDA.GUI.Controllers
 {
+    [RoleAuthorize("staff")]
     public class StaffAssessmentController : Controller
     {
         private readonly HttpClient _httpClient;
@@ -13,19 +15,55 @@ namespace DLDA.GUI.Controllers
             _httpClient = httpClientFactory.CreateClient("DLDA");
         }
 
+        // GET: /StaffAssessment
+        // Visar indexvyn för personalens bedömningsmodul med alla patienter
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            try
+            {
+                // Hämta patienter med senaste bedömning från API:t
+                var patients = await _httpClient.GetFromJsonAsync<List<PatientWithLatestAssessmentDto>>("User/with-latest-assessment");
+                return View(patients ?? new List<PatientWithLatestAssessmentDto>());
+            }
+            catch (HttpRequestException ex)
+            {
+                TempData["Error"] = $"Kunde inte hämta patienter: {ex.Message}";
+                return View(new List<PatientWithLatestAssessmentDto>());
+            }
+        }
+
         // --------------------------
-        // [PERSONAL] – Full åtkomst till alla bedömningar
+        // [PERSONAL] – Bedömningsöversikt för specifik patient
         // --------------------------
 
-        // POST: /Assessment/CreateForPatient
-        // Skapar ny bedömning och redirectar tillbaka till Assessments (endast för personal)
+        // GET: /StaffAssessment/Assessments/{userId}
+        // Hämtar alla bedömningar för en specifik patient
+        public async Task<IActionResult> Assessments(int userId)
+        {
+            ViewBag.UserId = userId;
+
+            var response = await _httpClient.GetAsync($"Assessment/user/{userId}");
+            if (!response.IsSuccessStatusCode)
+                return View("Error");
+
+            var assessments = await response.Content.ReadFromJsonAsync<List<AssessmentDto>>();
+            return View("Assessments", assessments ?? new List<AssessmentDto>());
+        }
+
+        // --------------------------
+        // [PERSONAL] – Skapa ny bedömning
+        // --------------------------
+
+        // POST: /StaffAssessment/CreateForPatient
+        // Skapar ny bedömning och redirectar tillbaka till Assessments
         [HttpPost]
         public async Task<IActionResult> CreateForPatient(int userId)
         {
             var dto = new AssessmentDto
             {
                 UserId = userId,
-                ScaleType = "Numerisk", // Standardval – patient kan ev. ändra senare
+                ScaleType = "Numerisk",
                 IsComplete = false
             };
 
@@ -35,14 +73,18 @@ namespace DLDA.GUI.Controllers
             {
                 var error = await response.Content.ReadAsStringAsync();
                 TempData["Error"] = $"Misslyckades att skapa bedömning: {response.StatusCode} - {error}";
-                return RedirectToAction("Assessments", "StaffQuiz", new { userId });
+                return RedirectToAction("Assessments", new { userId });
             }
 
             TempData["Success"] = "Ny bedömning skapades.";
-            return RedirectToAction("Assessments", "StaffQuiz", new { userId });
+            return RedirectToAction("Assessments", new { userId });
         }
 
-        // GET: /Assessment/Delete/{id}
+        // --------------------------
+        // [PERSONAL] – Radera bedömning
+        // --------------------------
+
+        // GET: /StaffAssessment/Delete/{id}
         // Visar bekräftelsesidan
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -52,11 +94,11 @@ namespace DLDA.GUI.Controllers
                 return View("Error");
 
             var assessment = await response.Content.ReadFromJsonAsync<AssessmentDto>();
-            return View(assessment);
+            return View("Delete", assessment);
         }
 
-        // POST: /Assessment/DeleteConfirmed
-        // Utför raderingen
+        // POST: /StaffAssessment/DeleteConfirmed
+        // Utför raderingen av en bedömning
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id, int userId)
@@ -72,9 +114,7 @@ namespace DLDA.GUI.Controllers
                 TempData["Success"] = "Bedömning togs bort.";
             }
 
-            return RedirectToAction("Assessments", "StaffQuiz", new { userId });
+            return RedirectToAction("Assessments", new { userId });
         }
-
-
     }
 }

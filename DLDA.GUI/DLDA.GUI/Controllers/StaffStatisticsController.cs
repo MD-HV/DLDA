@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using DLDA.GUI.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 //  Övergripande statistik, Matchningsgrad, Diff-tabeller, Trendanalys över tid
 
@@ -6,6 +7,7 @@ namespace DLDA.GUI.Controllers
 {
     public class StaffStatisticsController : Controller
     {
+        [RoleAuthorize("staff")]
         public IActionResult Index()
         {
             return View();
