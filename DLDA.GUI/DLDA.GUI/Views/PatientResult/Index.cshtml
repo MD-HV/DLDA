@@ -25,7 +25,7 @@
         <tbody>
             @foreach (var q in Model.Questions)
             {
-                <tr>
+                <tr id="row_@q.ItemID">
                     <td>
                         <strong>Fråga @(@q.Order + 1)</strong><br />
                         @q.QuestionText
@@ -44,7 +44,6 @@
                                   asp-action="UpdateAnswer"
                                   method="post"
                                   class="d-flex flex-column gap-2">
-
                                 <input type="hidden" name="itemId" value="@q.ItemID" />
                                 <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
 
@@ -57,7 +56,8 @@
                                                    name="answer"
                                                    id="answer_@q.QuestionId@i"
                                                    value="@i"
-                                            @(q.PatientAnswer == i ? "checked" : "") />
+                                            @(q.PatientAnswer == i ? "checked" : "")
+                                                   onchange="rememberScroll('row_@q.ItemID'); this.form.submit()" />
                                             <label class="form-check-label" for="answer_@q.QuestionId@i">@i</label>
                                         </div>
                                     }
@@ -66,9 +66,8 @@
                                 <textarea name="comment"
                                           class="form-control"
                                           rows="2"
-                                          placeholder="Kommentar (frivilligt)">@q.PatientComment</textarea>
-
-                                <button type="submit" class="btn btn-sm btn-outline-primary w-auto mt-1">💾 Spara</button>
+                                          placeholder="Kommentar (frivilligt)"
+                                          onchange="rememberScroll('row_@q.ItemID'); this.form.submit()">@q.PatientComment</textarea>
                             </form>
                         }
                     </td>
@@ -93,3 +92,20 @@
         </a>
     }
 </div>
+
+@section Scripts {
+    <script>
+        function rememberScroll(id) {
+            sessionStorage.setItem('scrollTo', id);
+        }
+
+        window.addEventListener('load', function () {
+            const lastId = sessionStorage.getItem('scrollTo');
+            if (lastId) {
+                const el = document.getElementById(lastId);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                sessionStorage.removeItem('scrollTo');
+            }
+        });
+    </script>
+}

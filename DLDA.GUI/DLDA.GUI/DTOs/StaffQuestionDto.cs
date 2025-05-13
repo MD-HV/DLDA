@@ -3,6 +3,7 @@
     public class StaffQuestionDto
     {
         public int ItemID { get; set; }             // För PUT
+        public int UserID { get; set; }
         public int AssessmentID { get; set; }
         public int QuestionID { get; set; }
         public string QuestionText { get; set; } = string.Empty;

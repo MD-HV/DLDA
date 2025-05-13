@@ -33,6 +33,7 @@ public class AssessmentController : ControllerBase
                 AssessmentID = a.AssessmentID,
                 ScaleType = a.ScaleType,
                 IsComplete = a.IsComplete,
+                IsStaffComplete = a.IsStaffComplete,
                 UserId = a.UserId,
                 CreatedAt = a.CreatedAt ?? DateTime.MinValue,
                 HasStarted = a.AssessmentItems.Any(i => i.PatientAnswer != null || i.SkippedByPatient),

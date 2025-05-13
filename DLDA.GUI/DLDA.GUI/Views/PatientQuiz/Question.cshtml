@@ -6,11 +6,17 @@
     var prefix = scaleType == "smiley" ? "Smiley" : "Number";
 }
 
-<div class="container mt-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <small class="text-muted">Kategori: @Model.Category</small>
         <small class="text-muted">Fråga @(@Model.Order + 1) av @Model.Total</small>
     </div>
+
+    <div class="container mt-5">
+        <div class="alert alert-info">
+            <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
+            Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
+            <em>Tänk på hur det varit den senaste veckan.</em>
+        </div>
 
     <div class="bg-white rounded p-4 shadow-sm mb-4 border-start border-4 border-primary">
         <h3 class="fw-bold mb-0">Fråga @(@Model.Order + 1)</h3>

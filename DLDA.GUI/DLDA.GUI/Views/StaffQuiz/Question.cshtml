@@ -1,7 +1,6 @@
 ﻿@model DLDA.GUI.DTOs.StaffQuestionDto
 @{
     ViewData["Title"] = "Fråga";
-    var prefix = (Model.ScaleType ?? "Number").ToLower() == "smiley" ? "Smiley" : "Number";
 }
 
 <div class="container mt-5">
@@ -20,9 +19,11 @@
         <p><strong>Patientens kommentar:</strong> @(string.IsNullOrWhiteSpace(Model.PatientComment) ? "Ingen kommentar" : Model.PatientComment)</p>
     </div>
 
+    <!-- Nästa fråga (Submit) -->
     <form asp-action="SubmitAnswer" method="post">
         <input type="hidden" name="itemId" value="@Model.ItemID" />
         <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+        <input type="hidden" name="userId" value="@Model.UserID" />
 
         <div class="mb-3">
             <label class="form-label fw-semibold">Personalens bedömning</label>
@@ -30,9 +31,10 @@
                 @for (int i = 0; i <= 4; i++)
                 {
                     var inputId = $"s{i}";
-                    var imagePath = Url.Content($"~/Images/{prefix} {i}.png");
+                    var imagePath = Url.Content($"~/Images/Number {i}.png");
                     <div class="form-check text-center">
-                        <input type="radio" class="btn-check" name="answer" id="@inputId" value="@i" @(Model.StaffAnswer == i ? "checked" : "") />
+                        <input type="radio" class="btn-check" name="answer" id="@inputId" value="@i" @(Model.StaffAnswer == i ? "checked" : "") required />
+
                         <label class="btn" for="@inputId">
                             <img src="@imagePath" alt="Svar @i" width="60" />
                             <div class="small mt-1">@i</div>
@@ -48,7 +50,7 @@
         </div>
 
         <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" name="flag" id="flag" @(Model.Flag ? "checked" : "") />
+            <input class="form-check-input" type="checkbox" name="flag" id="flag" value="true" @(Model.Flag ? "checked" : "") />
             <label class="form-check-label" for="flag">
                 Diskutera vidare med patient
             </label>
@@ -56,7 +58,26 @@
 
         <div class="d-flex gap-3">
             <button type="submit" class="btn btn-primary">💾 Nästa fråga</button>
-            <a asp-controller="StaffAssessment" asp-action="Index" class="btn btn-outline-secondary">❌ Avsluta</a>
         </div>
     </form>
+
+    <!-- Extra kontroller -->
+    <div class="d-flex gap-3 mt-4">
+
+        <!-- Föregående fråga -->
+        <form asp-action="Previous" method="post">
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+            <input type="hidden" name="currentOrder" value="@Model.Order" />
+            <input type="hidden" name="userId" value="@Model.UserID" />
+            <button type="submit" class="btn btn-outline-secondary">⬅ Föregående</button>
+        </form>
+
+        <!-- Paus -->
+        <form asp-action="Pause" method="post">
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+            <input type="hidden" name="userId" value="@Model.UserID" />
+            <button type="submit" class="btn btn-outline-warning">⏸ Pausa</button>
+        </form>
+
+    </div>
 </div>

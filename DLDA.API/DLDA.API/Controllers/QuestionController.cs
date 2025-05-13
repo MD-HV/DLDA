@@ -301,9 +301,50 @@ public class QuestionController : ControllerBase
             PatientComment = item.PatientComment,
             StaffAnswer = item.StaffAnswer,
             StaffComment = item.StaffComment,
-            Flag = item.Flag
+            Flag = item.Flag,
+            UserID = assessment?.UserId ?? 0 // ✅ Lägg till detta!
         });
     }
+
+    // GET: api/Question/quiz/staff/previous/{assessmentId}/{currentOrder}
+    /// <summary>Hämtar föregående fråga för personalen.</summary>
+    [HttpGet("quiz/staff/previous/{assessmentId}/{currentOrder}")]
+    public async Task<ActionResult<StaffQuestionDto>> GetPreviousStaffQuestion(int assessmentId, int currentOrder)
+    {
+        if (currentOrder <= 0)
+            return NotFound("Ingen tidigare fråga.");
+
+        var item = await _context.AssessmentItems
+            .Include(i => i.Question)
+            .Where(i => i.AssessmentID == assessmentId && i.Order == currentOrder - 1)
+            .FirstOrDefaultAsync();
+
+        if (item == null || item.Question == null)
+            return NotFound();
+
+        var total = await _context.AssessmentItems.CountAsync(i => i.AssessmentID == assessmentId);
+        var assessment = await _context.Assessments.FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+
+        return Ok(new StaffQuestionDto
+        {
+            ItemID = item.ItemID,
+            AssessmentID = item.AssessmentID,
+            QuestionID = item.Question.QuestionID,
+            QuestionText = item.Question.QuestionText ?? "",
+            Category = item.Question.Category ?? "",
+            Order = item.Order,
+            Total = total,
+            ScaleType = assessment?.ScaleType ?? "Numerisk",
+            PatientAnswer = item.PatientAnswer,
+            PatientComment = item.PatientComment,
+            StaffAnswer = item.StaffAnswer,
+            StaffComment = item.StaffComment,
+            Flag = item.Flag,
+            UserID = assessment?.UserId ?? 0
+        });
+    }
+
+
 
 
     // POST: api/Question/quiz/staff/submit
@@ -319,41 +360,20 @@ public class QuestionController : ControllerBase
         item.Flag = dto.Flag ?? false;
         item.AnsweredAt = DateTime.UtcNow;
 
-        // 🔽 Hämta bedömning och kontrollera om alla frågor nu är besvarade
+        // 🔽 Hämta bedömnings-ID för vidare kontroll
         var assessmentId = item.AssessmentID;
 
         _context.SaveChanges();
 
+        // 🔍 Kontrollera om alla frågor är besvarade – men markera inte som klar automatiskt
         var allAnswered = _context.AssessmentItems
             .Where(i => i.AssessmentID == assessmentId)
             .All(i => i.StaffAnswer.HasValue);
 
         if (allAnswered)
         {
-            var assessment = _context.Assessments.Find(assessmentId);
-            if (assessment != null)
-            {
-                assessment.IsStaffComplete = true;
-                assessment.UpdatedAt = DateTime.UtcNow;
-                _context.SaveChanges();
-            }
+            Console.WriteLine($"[DEBUG] Alla frågor för assessment {assessmentId} är besvarade av personal – redo för manuell bekräftelse.");
         }
-
-        return Ok();
-    }
-
-
-    // POST: api/Question/quiz/staff/skip
-    /// <summary>Markerar att personalen hoppat över en fråga.</summary>
-    [HttpPost("quiz/staff/skip")]
-    public IActionResult SkipStaffQuestion([FromBody] SkipQuestionDto dto)
-    {
-        var item = _context.AssessmentItems.Find(dto.ItemID);
-        if (item == null) return NotFound();
-
-        item.StaffAnswer = null;
-        item.AnsweredAt = DateTime.UtcNow;
-        _context.SaveChanges();
 
         return Ok();
     }

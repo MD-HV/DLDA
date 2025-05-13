@@ -225,6 +225,7 @@ public class AssessmentItemController : ControllerBase
             UserId = assessment.UserId,
             Username = assessment.User?.Username ?? "Okänd", // ✅ Ny egenskap för att visa namn
             CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
+            IsStaffComplete = assessment.IsStaffComplete,
             Questions = items.Select(ai => new StaffResultRowDto
             {
                 ItemID = ai.ItemID,
@@ -348,4 +349,30 @@ public class AssessmentItemController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("assessment/{assessmentId}/staff-complete")]
+    public IActionResult CompleteStaffAssessment(int assessmentId)
+    {
+        var assessment = _context.Assessments
+            .Include(a => a.AssessmentItems)
+            .FirstOrDefault(a => a.AssessmentID == assessmentId);
+
+        if (assessment == null) return NotFound();
+
+        // Kontrollera om alla frågor har personalens svar
+        var unanswered = assessment.AssessmentItems
+            .Any(i => !i.StaffAnswer.HasValue);
+
+        if (unanswered)
+        {
+            return BadRequest("Alla frågor måste besvaras innan bedömningen kan markeras som klar.");
+        }
+
+        assessment.IsStaffComplete = true;
+        _context.SaveChanges();
+
+        return NoContent();
+    }
+
+
 }

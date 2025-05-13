@@ -36,6 +36,7 @@
         public int UserId { get; set; }
         public string? Username { get; set; }
         public DateTime CreatedAt { get; set; }
+        public bool IsStaffComplete { get; set; }
         public List<StaffResultRowDto> Questions { get; set; } = new();
 
     }

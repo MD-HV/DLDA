@@ -1,9 +1,11 @@
 ﻿@model DLDA.GUI.DTOs.StaffResultOverviewDto
 
+@{
+    var isLocked = Model.IsStaffComplete;
+}
+
 <div class="container mt-5">
     <h2>Sammanställning av personalens bedömning</h2>
-
-    
 
     @{
         var countMatch = Model.Questions.Count(q => q.Difference == 0);
@@ -22,10 +24,16 @@
         </ul>
     </div>
 
-
     <p><strong>Bedömning ID:</strong> @Model.AssessmentId</p>
     <p><strong>Patient:</strong> @Model.Username</p>
     <p><strong>Datum:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")</p>
+
+    @if (isLocked)
+    {
+        <div class="alert alert-info">
+            🔒 Denna bedömning är markerad som klar och kan inte längre redigeras.
+        </div>
+    }
 
     <table class="table table-bordered">
         <thead class="table-light">
@@ -41,32 +49,108 @@
         <tbody>
             @foreach (var q in Model.Questions.OrderBy(q => q.Order))
             {
-                <tr class="@GetRowColor(q.Difference, q.SkippedByPatient)">
+                <tr id="row_@q.ItemID" class="@GetRowColor(q.Difference, q.SkippedByPatient)">
+                    <form asp-controller="StaffResult"
+                          asp-action="UpdateStaffAnswer"
+                          method="post">
+                        <input type="hidden" name="itemId" value="@q.ItemID" />
+                        <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+
                     <td>@(q.Order + 1)</td>
-                    <td>@q.QuestionText</td>
+                    <td>
+                            @q.QuestionText
+                        <div class="text-muted small mt-1">
+                            <strong>Kommentar (patient):</strong><br />
+                                @(string.IsNullOrWhiteSpace(q.PatientComment) ? "Ingen kommentar" : q.PatientComment)
+                        </div>
+                    </td>
                     <td>@(q.PatientAnswer?.ToString() ?? "Ej besvarad")</td>
-                    <td>@(q.StaffAnswer?.ToString() ?? "Ej besvarad")</td>
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                                @for (int i = 0; i <= 4; i++)
+                                {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input"
+                                           type="radio"
+                                           name="answer"
+                                           id="answer_@q.ItemID@i"
+                                           value="@i"
+                                        @(q.StaffAnswer == i ? "checked" : "")
+                                        @(isLocked ? "disabled" : "")
+                                           onchange="rememberScroll('row_@q.ItemID'); this.form.submit()" />
+                                    <label class="form-check-label" for="answer_@q.ItemID@i">@i</label>
+                                </div>
+                                }
+                        </div>
+                        <textarea name="comment"
+                                  class="form-control form-control-sm mt-1"
+                                  rows="2"
+                                  placeholder="Kommentar (frivilligt)"
+                            @(isLocked ? "disabled" : "")
+                                  onchange="rememberScroll('row_@q.ItemID'); this.form.submit()">@q.StaffComment</textarea>
+                    </td>
                     <td>@(q.Difference >= 0 ? q.Difference.ToString() : "-")</td>
-                    <td>@(q.Flag ? "⚠️" : "")</td>
+                    <td class="text-center">
+                        <input type="checkbox"
+                               name="flag"
+                               id="flag_@q.ItemID"
+                               value="true"
+                               class="form-check-input"
+                            @(q.Flag ? "checked" : "")
+                            @(isLocked ? "disabled" : "")
+                               onchange="rememberScroll('row_@q.ItemID'); this.form.submit()" />
+                    </td>
+                    </form>
                 </tr>
             }
         </tbody>
     </table>
 
     <div class="mt-4 d-flex gap-3">
-        <a class="btn btn-secondary" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@Model.UserId">Tillbaka till Bedömningar</a>
+        <a class="btn btn-outline-secondary"
+           asp-controller="StaffAssessment"
+           asp-action="Assessments"
+           asp-route-userId="@Model.UserId">
+            ⬅ Tillbaka till patientens bedömningar
+        </a>
+
+        @if (!Model.IsStaffComplete)
+        {
+            <form asp-action="Complete" method="post">
+                <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+                <input type="hidden" name="userId" value="@Model.UserId" />
+                <button type="submit" class="btn btn-success">
+                    ✔️ Markera personalbedömning som klar
+                </button>
+            </form>
+        }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function rememberScroll(id) {
+            sessionStorage.setItem('scrollTo', id);
+        }
+
+        window.addEventListener('load', function () {
+            const lastId = sessionStorage.getItem('scrollTo');
+            if (lastId) {
+                const el = document.getElementById(lastId);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                sessionStorage.removeItem('scrollTo');
+            }
+        });
+    </script>
+}
 
 @functions {
     string GetRowColor(int difference, bool skipped)
     {
-        if (skipped) return "table-danger"; // 🔴 Överhoppade frågor = röd
-        if (difference == 0) return "table-success"; // 🟢 Matchande
-        if (difference == 1) return "table-warning"; // 🟡 Liten skillnad
-        if (difference > 1) return "table-danger";   // 🔴 Stor skillnad
+        if (skipped) return "table-danger";
+        if (difference == 0) return "table-success";
+        if (difference == 1) return "table-warning";
+        if (difference > 1) return "table-danger";
         return "";
     }
 }
-
-
