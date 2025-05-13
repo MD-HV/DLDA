@@ -319,9 +319,29 @@ public class QuestionController : ControllerBase
         item.Flag = dto.Flag ?? false;
         item.AnsweredAt = DateTime.UtcNow;
 
+        // 🔽 Hämta bedömning och kontrollera om alla frågor nu är besvarade
+        var assessmentId = item.AssessmentID;
+
         _context.SaveChanges();
+
+        var allAnswered = _context.AssessmentItems
+            .Where(i => i.AssessmentID == assessmentId)
+            .All(i => i.StaffAnswer.HasValue);
+
+        if (allAnswered)
+        {
+            var assessment = _context.Assessments.Find(assessmentId);
+            if (assessment != null)
+            {
+                assessment.IsStaffComplete = true;
+                assessment.UpdatedAt = DateTime.UtcNow;
+                _context.SaveChanges();
+            }
+        }
+
         return Ok();
     }
+
 
     // POST: api/Question/quiz/staff/skip
     /// <summary>Markerar att personalen hoppat över en fråga.</summary>

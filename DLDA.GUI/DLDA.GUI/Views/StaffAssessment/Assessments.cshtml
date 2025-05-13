@@ -6,7 +6,7 @@
 <div class="container mt-5">
     <h3 class="mb-4">Bedömningar för patient</h3>
 
-    <p><strong>🔍 Debug UserId: @ViewBag.UserId</strong></p>
+    <p><strong>👤 Användare:</strong> @ViewBag.Username (ID: @ViewBag.UserId)</p>
 
     @if (TempData["Success"] != null)
     {
@@ -45,27 +45,27 @@
                             <div><strong>Patient:</strong> @(item.IsComplete ? "Klar" : "Pågående")</div>
                             <div><strong>Personal:</strong> @(item.IsStaffComplete ? "Klar" : "Pågående")</div>
                         </td>
-                        <td class="d-flex gap-2">
+                        <td class="d-flex flex-wrap gap-2">
                             @if (!item.IsStaffComplete)
                             {
-                                <a class="btn btn-sm btn-warning"
+                                <a class="btn btn-outline-primary btn-sm"
                                    asp-controller="StaffQuiz"
                                    asp-action="Resume"
                                    asp-route-assessmentId="@item.AssessmentID">
-                                    Fortsätt
+                                    ▶ Fortsätt
                                 </a>
                             }
                             else
                             {
-                                <a class="btn btn-sm btn-info"
+                                <a class="btn btn-outline-success btn-sm"
                                    asp-controller="Result"
                                    asp-action="StaffView"
                                    asp-route-id="@item.AssessmentID">
-                                    Visa resultat
+                                    📄 Visa resultat
                                 </a>
                             }
 
-                            <a class="btn btn-sm btn-danger"
+                            <a class="btn btn-outline-danger btn-sm"
                                asp-controller="StaffAssessment"
                                asp-action="Delete"
                                asp-route-id="@item.AssessmentID">
@@ -78,14 +78,19 @@
         </table>
     }
 
-    <!-- Skapar ny bedömning för patient -->
-    <form asp-controller="StaffAssessment"
-          asp-action="CreateForPatient"
-          method="post"
-          class="d-inline">
-        <input type="hidden" name="userId" value="@ViewBag.UserId" />
-        <button type="submit" class="btn btn-success">Ny bedömning</button>
-    </form>
+    <div class="mt-4 d-flex gap-2 flex-wrap">
+        <form asp-controller="StaffAssessment"
+              asp-action="CreateForPatient"
+              method="post"
+              class="d-inline">
+            <input type="hidden" name="userId" value="@ViewBag.UserId" />
+            <button type="submit" class="btn btn-success btn-sm">➕ Ny bedömning</button>
+        </form>
 
-    <a class="btn btn-secondary mt-3" asp-controller="StaffAssessment" asp-action="Index">Tillbaka till patientlista</a>
+        <a class="btn btn-secondary btn-sm"
+           asp-controller="StaffAssessment"
+           asp-action="Index">
+            ⬅ Tillbaka till patientlista
+        </a>
+    </div>
 </div>

@@ -202,6 +202,48 @@ public class AssessmentItemController : ControllerBase
             .ToList();
     }
 
+    // GET: api/AssessmentItem/staff/assessment/{assessmentId}/overview
+    [HttpGet("staff/assessment/{assessmentId}/overview")]
+    public async Task<ActionResult<StaffResultOverviewDto>> GetStaffAssessmentOverview(int assessmentId)
+    {
+        var assessment = await _context.Assessments
+            .Include(a => a.User) // ✅ Inkludera användare för att få ut namnet
+            .FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+
+        if (assessment == null)
+            return NotFound();
+
+        var items = await _context.AssessmentItems
+            .Where(ai => ai.AssessmentID == assessmentId)
+            .Include(ai => ai.Question)
+            .OrderBy(ai => ai.Order)
+            .ToListAsync();
+
+        var dto = new StaffResultOverviewDto
+        {
+            AssessmentId = assessment.AssessmentID,
+            UserId = assessment.UserId,
+            Username = assessment.User?.Username ?? "Okänd", // ✅ Ny egenskap för att visa namn
+            CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
+            Questions = items.Select(ai => new StaffResultRowDto
+            {
+                ItemID = ai.ItemID,
+                Order = ai.Order,
+                QuestionText = ai.Question?.QuestionText ?? "Frågetext saknas",
+                PatientAnswer = ai.PatientAnswer,
+                StaffAnswer = ai.StaffAnswer,
+                PatientComment = ai.PatientComment,
+                StaffComment = ai.StaffComment,
+                Flag = ai.Flag,
+                SkippedByPatient = ai.SkippedByPatient
+                // Difference beräknas automatiskt
+            }).ToList()
+        };
+
+        return Ok(dto);
+    }
+
+
     // GET: api/AssessmentItem/{id}
     // Hämtar ett specifikt bedömningsitem
     [HttpGet("{id}")]

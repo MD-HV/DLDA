@@ -1,6 +1,7 @@
 ﻿using DLDA.GUI.Authorization;
 using DLDA.GUI.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 [RoleAuthorize("staff")]
 public class StaffQuizController : Controller
@@ -16,38 +17,28 @@ public class StaffQuizController : Controller
     [HttpGet]
     public async Task<IActionResult> Resume(int assessmentId)
     {
-        // 1. Hämta aktuell bedömning
-        var assessmentResponse = await _httpClient.GetAsync($"Assessment/{assessmentId}");
-        if (!assessmentResponse.IsSuccessStatusCode)
-            return View("Error");
-
-        var assessment = await assessmentResponse.Content.ReadFromJsonAsync<AssessmentDto>();
-
-        // 2. Om personalen redan är klar, visa resultat
-        if (assessment?.IsStaffComplete == true)
-        {
-            TempData["Success"] = "Personalen har redan slutfört denna bedömning.";
-            return RedirectToAction("StaffView", "Result", new { id = assessmentId });
-        }
-
-        // 3. Hämta nästa obesvarade fråga
         var response = await _httpClient.GetAsync($"Question/quiz/staff/next/{assessmentId}");
+
         Console.WriteLine($"[DEBUG] StatusCode: {response.StatusCode}");
 
-        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        if (response.StatusCode == HttpStatusCode.NotFound)
         {
+            // 👉 Dirigera vidare till sammanställning
             TempData["Success"] = "Du har gått igenom alla frågor.";
-            return RedirectToAction("Assessments", "StaffAssessment", new { userId = assessment?.UserId });
+            return RedirectToAction("Index", "StaffResult", new { id = assessmentId });
         }
 
         if (!response.IsSuccessStatusCode)
-            return View("Error");
+        {
+            TempData["Error"] = "Kunde inte läsa in frågan.";
+            return RedirectToAction("Index", "StaffAssessment");
+        }
 
         var dto = await response.Content.ReadFromJsonAsync<StaffQuestionDto>();
         if (dto == null)
         {
             TempData["Error"] = "Kunde inte läsa in frågan.";
-            return View("Error");
+            return RedirectToAction("Index", "StaffAssessment");
         }
 
         ViewBag.AssessmentId = assessmentId;

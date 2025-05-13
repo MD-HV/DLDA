@@ -43,6 +43,18 @@ namespace DLDA.GUI.Controllers
         {
             ViewBag.UserId = userId;
 
+            // Hämta användarens namn
+            var userResponse = await _httpClient.GetAsync($"User/{userId}");
+            if (userResponse.IsSuccessStatusCode)
+            {
+                var user = await userResponse.Content.ReadFromJsonAsync<UserDto>();
+                ViewBag.Username = user?.Username ?? "Okänt namn";
+            }
+            else
+            {
+                ViewBag.Username = "Okänt namn";
+            }
+
             var response = await _httpClient.GetAsync($"Assessment/user/{userId}");
             if (!response.IsSuccessStatusCode)
                 return View("Error");
