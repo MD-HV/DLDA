@@ -55,7 +55,8 @@ public class AssessmentItemController : ControllerBase
                 ai.QuestionID,
                 QuestionText = ai.Question != null ? ai.Question.QuestionText : "",
                 PatientAnswer = ai.PatientAnswer,
-                Flag = ai.Flag
+                Flag = ai.Flag,
+                SkippedByPatient = ai.SkippedByPatient
             })
             .ToList();
 
@@ -67,29 +68,114 @@ public class AssessmentItemController : ControllerBase
     [HttpPut("patient/{id}")]
     public IActionResult UpdatePatientAnswer(int id, [FromBody] PatientAnswerDto dto)
     {
-        var item = _context.AssessmentItems.Find(id);
-        if (item == null) return NotFound();
+        Console.WriteLine($"[INFO] PUT patient/{id} – inkommande answer: {dto.Answer}, kommentar: {dto.Comment}");
 
+        var item = _context.AssessmentItems.Find(id);
+        if (item == null)
+        {
+            Console.WriteLine($"[ERROR] Kunde inte hitta AssessmentItem med ID={id}");
+            return NotFound();
+        }
+
+        // Spara patientens svar
         item.PatientAnswer = dto.Answer;
         item.PatientComment = dto.Comment;
         item.AnsweredAt = DateTime.UtcNow;
+        item.SkippedByPatient = false;
 
-        _context.SaveChanges();
-        return NoContent();
+        // Återställ eventuell SkippedByPatient-markering om den finns
+        if (item.SkippedByPatient)
+        {
+            Console.WriteLine($"[DEBUG] Fråga var tidigare skippad – återställer SkippedByPatient till false.");
+            item.SkippedByPatient = false;
+        }
+
+        try
+        {
+            _context.SaveChanges();
+            Console.WriteLine($"[SUCCESS] Svar sparat för ItemID={id}: Answer={item.PatientAnswer}");
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Misslyckades med att spara svar för ItemID={id}: {ex.Message}");
+            return StatusCode(500, "Kunde inte spara svaret.");
+        }
     }
 
+
     // PUT: api/AssessmentItem/skip/{itemId}
-    // Markerar en fråga som överhoppad (flag = true)
+    // Markerar en fråga som överhoppad av patienten
     [HttpPut("skip/{itemId}")]
     public IActionResult SkipQuestion(int itemId)
     {
         var item = _context.AssessmentItems.Find(itemId);
         if (item == null) return NotFound();
 
-        item.Flag = true;
+        item.SkippedByPatient = true;
         item.AnsweredAt = DateTime.UtcNow;
 
         _context.SaveChanges();
+        return NoContent();
+    }
+
+    // GET: api/AssessmentItem/patient/assessment/{assessmentId}/overview
+    // Returnerar översikt över en patients bedömning
+    [HttpGet("patient/assessment/{assessmentId}/overview")]
+    public async Task<ActionResult<AssessmentOverviewDto>> GetAssessmentOverview(int assessmentId)
+    {
+        var assessment = await _context.Assessments
+            .Where(a => a.AssessmentID == assessmentId)
+            .FirstOrDefaultAsync();
+
+        if (assessment == null)
+            return NotFound();
+
+        var items = await _context.AssessmentItems
+            .Where(ai => ai.AssessmentID == assessmentId)
+            .Include(ai => ai.Question)
+            .OrderBy(ai => ai.Order)
+            .ToListAsync();
+
+        var total = items.Count; // ✅ Lägg till detta
+
+        var questions = items.Select(ai => new QuestionOverviewDto
+        {
+            ItemID = ai.ItemID, // ✅ För PUT
+            QuestionId = ai.QuestionID,
+            QuestionText = ai.Question?.QuestionText ?? "Frågetext saknas",
+            PatientAnswer = ai.PatientAnswer is >= 0 and <= 4 ? ai.PatientAnswer : null,
+            PatientComment = ai.PatientComment,
+            Order = ai.Order,
+            Total = total
+        }).ToList();
+
+        var overview = new AssessmentOverviewDto
+        {
+            AssessmentId = assessment.AssessmentID,
+            ScaleType = assessment.ScaleType,
+            IsComplete = assessment.IsComplete,
+            CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
+            Questions = questions
+        };
+
+        return Ok(overview);
+    }
+
+
+
+
+    // POST: api/AssessmentItem/assessment/{assessmentId}/complete
+    // Markerar en hel bedömning som färdig
+    [HttpPost("assessment/{assessmentId}/complete")]
+    public IActionResult CompleteAssessment(int assessmentId)
+    {
+        var assessment = _context.Assessments.Find(assessmentId);
+        if (assessment == null) return NotFound();
+
+        assessment.IsComplete = true;
+        _context.SaveChanges();
+
         return NoContent();
     }
 
@@ -110,7 +196,8 @@ public class AssessmentItemController : ControllerBase
                 QuestionID = ai.QuestionID,
                 PatientAnswer = ai.PatientAnswer,
                 StaffAnswer = ai.StaffAnswer,
-                Flag = ai.Flag
+                Flag = ai.Flag,
+                SkippedByPatient = ai.SkippedByPatient
             })
             .ToList();
     }
@@ -130,7 +217,8 @@ public class AssessmentItemController : ControllerBase
             QuestionID = item.QuestionID,
             PatientAnswer = item.PatientAnswer,
             StaffAnswer = item.StaffAnswer,
-            Flag = item.Flag
+            Flag = item.Flag,
+            SkippedByPatient = item.SkippedByPatient
         };
     }
 
@@ -166,10 +254,8 @@ public class AssessmentItemController : ControllerBase
         });
     }
 
-
-
     // POST: api/AssessmentItem
-    // Skapar ett nytt bedömningsitem (t.ex. när formuläret startas)
+    // Skapar ett nytt bedömningsitem (t.ex. när formulär byggs manuellt)
     [HttpPost]
     public IActionResult CreateItem(AssessmentItemDto dto)
     {
@@ -180,6 +266,7 @@ public class AssessmentItemController : ControllerBase
             PatientAnswer = dto.PatientAnswer ?? -1,
             StaffAnswer = dto.StaffAnswer,
             Flag = dto.Flag,
+            SkippedByPatient = false,
             AnsweredAt = DateTime.UtcNow
         };
 
@@ -199,6 +286,7 @@ public class AssessmentItemController : ControllerBase
 
         item.StaffAnswer = dto.Answer;
         item.StaffComment = dto.Comment;
+        item.Flag = dto.Flag ?? false;
         item.AnsweredAt = DateTime.UtcNow;
 
         _context.SaveChanges();

@@ -11,5 +11,8 @@ namespace DLDA.GUI.DTOs
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool HasStarted { get; set; }
+        public int AnsweredCount { get; set; }   // Antal frågor som är besvarade
+        public int TotalQuestions { get; set; }  // Totalt antal frågor
+        public bool IsStaffComplete { get; set; } //
     }
 }

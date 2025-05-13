@@ -15,12 +15,6 @@ namespace DLDA.GUI.Controllers
             _httpClient = httpClientFactory.CreateClient("DLDA");
         }
 
-        // GET: /PatientAssessment/Info
-        public IActionResult Info()
-        {
-            return View(); // Views/PatientAssessment/Info.cshtml
-        }
-
         // GET: /PatientAssessment
         // Visar patientens egna bedömningar
         public async Task<IActionResult> Index()

@@ -13,11 +13,12 @@
     </div>
 
     <div class="bg-white rounded p-4 shadow-sm mb-4 border-start border-4 border-primary">
-        <h3 class="fw-bold mb-0">@Model.QuestionText</h3>
+        <h3 class="fw-bold mb-0">Fråga @(@Model.Order + 1)</h3>
+        <h3 class="fw-bold mt-2">@Model.QuestionText</h3>
     </div>
 
     <form asp-action="SubmitAnswer" method="post">
-        <input type="hidden" name="itemId" value="@Model.ItemID" />
+        <input type="hidden" name="itemId" value="@Model.AssessmentItemID" />
         <input type="hidden" name="assessmentId" value="@assessmentId" />
 
         <div class="mb-4">
@@ -59,7 +60,7 @@
         </form>
 
         <form asp-action="SkipQuestion" method="post">
-            <input type="hidden" name="itemId" value="@Model.ItemID" />
+            <input type="hidden" name="itemId" value="@Model.AssessmentItemID" />
             <input type="hidden" name="assessmentId" value="@assessmentId" />
             <button type="submit" class="btn btn-secondary">⏭ Hoppa över</button>
         </form>

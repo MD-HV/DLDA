@@ -127,37 +127,44 @@ public class QuestionController : ControllerBase
 
     // GET: api/Question/quiz/patient/next/{assessmentId}
     /// <summary>Hämtar nästa obesvarade fråga för patienten.</summary>
+    // GET: api/Question/quiz/patient/next/{assessmentId}
     [HttpGet("quiz/patient/next/{assessmentId}")]
-    public async Task<ActionResult<QuestionDto>> GetNextUnanswered(int assessmentId)
+    public async Task<ActionResult<QuestionDto>> GetNextUnansweredQuestion(int assessmentId)
     {
+        // 1. Försök hitta obesvarad och inte överhoppad
         var item = await _context.AssessmentItems
-            .Include(i => i.Question)
-            .Where(i => i.AssessmentID == assessmentId && i.PatientAnswer == null && !i.Flag)
-            .OrderBy(i => i.Order)
+            .Include(ai => ai.Question)
+            .Where(ai =>
+                ai.AssessmentID == assessmentId &&
+                (ai.PatientAnswer == null || ai.PatientAnswer == -1) &&
+                !ai.SkippedByPatient)
+            .OrderBy(ai => ai.Order)
             .FirstOrDefaultAsync();
 
-        if (item == null || item.Question == null)
-            return NotFound();
+        // 2. Om alla obesvarade är skippade – då är vi klara
+        if (item == null)
+        {
+            return NotFound(new { message = "Alla frågor är besvarade eller överhoppade." });
+        }
 
-        var total = await _context.AssessmentItems
-            .CountAsync(i => i.AssessmentID == assessmentId);
-
-        var assessment = await _context.Assessments
-            .FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+        var total = await _context.AssessmentItems.CountAsync(ai => ai.AssessmentID == assessmentId);
+        var assessment = await _context.Assessments.FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
 
         return Ok(new QuestionDto
         {
-            ItemID = item.ItemID,
             AssessmentID = item.AssessmentID,
-            QuestionID = item.Question.QuestionID,
-            QuestionText = item.Question.QuestionText ?? "",
-            Category = item.Question.Category ?? "",
-            IsActive = item.Question.IsActive,
+            AssessmentItemID = item.ItemID, // 👈 korrekt fält som frontenden ska använda
+            QuestionID = item.QuestionID,
+            QuestionText = item.Question?.QuestionText ?? "Frågetext saknas",
+            Category = item.Question?.Category ?? "Okänd",
+            IsActive = item.Question?.IsActive ?? false,
             Order = item.Order,
             Total = total,
             ScaleType = assessment?.ScaleType ?? "Numerisk"
         });
     }
+
+
 
     // POST: api/Question/quiz/patient/submit
     /// <summary>Sparar patientens svar och kommentar på en fråga.</summary>
@@ -183,12 +190,14 @@ public class QuestionController : ControllerBase
         var item = _context.AssessmentItems.Find(dto.ItemID);
         if (item == null) return NotFound();
 
-        item.PatientAnswer = null;
+        item.SkippedByPatient = true; // ✅ nytt
         item.AnsweredAt = DateTime.UtcNow;
+
         _context.SaveChanges();
 
         return Ok();
     }
+
 
     // GET: api/Question/quiz/patient/progress/{assessmentId}/{questionId}
     /// <summary>Visar vilken fråga patienten är på i bedömningen.</summary>
@@ -257,28 +266,45 @@ public class QuestionController : ControllerBase
     // GET: api/Question/quiz/staff/next/{assessmentId}
     /// <summary>Hämtar nästa obesvarade fråga för personalen.</summary>
     [HttpGet("quiz/staff/next/{assessmentId}")]
-    public IActionResult GetNextUnansweredStaffQuestion(int assessmentId)
+    public async Task<ActionResult<StaffQuestionDto>> GetNextUnansweredStaffQuestion(int assessmentId)
     {
-        var nextItem = _context.AssessmentItems
-            .Include(i => i.Question)
-            .Where(i => i.AssessmentID == assessmentId && !i.StaffAnswer.HasValue)
-            .OrderBy(i => i.QuestionID)
-            .FirstOrDefault();
+        Console.WriteLine($"[DEBUG] Staff next frågehämtning för assessment {assessmentId}");
 
-        if (nextItem == null)
-            return Ok(new { Done = true });
+        var item = await _context.AssessmentItems
+            .Include(ai => ai.Question)
+            .Where(ai =>
+                ai.AssessmentID == assessmentId &&
+                (ai.StaffAnswer == null || ai.StaffAnswer == -1))
+            .OrderBy(ai => ai.Order)
+            .FirstOrDefaultAsync();
 
-        return Ok(new
+        if (item == null)
         {
-            QuestionID = nextItem.QuestionID,
-            QuestionText = nextItem.Question?.QuestionText,
-            Category = nextItem.Question?.Category,
-            ItemID = nextItem.ItemID,
-            PatientAnswer = nextItem.PatientAnswer,
-            PatientComment = nextItem.PatientComment,
-            Flag = nextItem.Flag
+            Console.WriteLine("[DEBUG] Alla frågor besvarade av personalen");
+            return NotFound(new { message = "Alla frågor är besvarade." });
+        }
+
+        var total = await _context.AssessmentItems.CountAsync(ai => ai.AssessmentID == assessmentId);
+        var assessment = await _context.Assessments.FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
+
+        return Ok(new StaffQuestionDto
+        {
+            ItemID = item.ItemID,
+            AssessmentID = item.AssessmentID,
+            QuestionID = item.QuestionID,
+            QuestionText = item.Question?.QuestionText ?? "Frågetext saknas",
+            Category = item.Question?.Category ?? "Okänd",
+            Order = item.Order,
+            Total = total,
+            ScaleType = assessment?.ScaleType ?? "Numerisk",
+            PatientAnswer = item.PatientAnswer,
+            PatientComment = item.PatientComment,
+            StaffAnswer = item.StaffAnswer,
+            StaffComment = item.StaffComment,
+            Flag = item.Flag
         });
     }
+
 
     // POST: api/Question/quiz/staff/submit
     /// <summary>Sparar personalsvar, kommentar och eventuell flagga.</summary>

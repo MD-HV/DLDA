@@ -12,5 +12,6 @@
         public int Order { get; set; }
         public int Total { get; set; }
         public string? ScaleType { get; set; }
+        public int AssessmentItemID { get; set; }
     }
 }

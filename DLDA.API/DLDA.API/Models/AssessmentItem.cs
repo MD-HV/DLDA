@@ -31,6 +31,9 @@ namespace DLDA.API.Models
 
         // När svaret lämnades (senaste svarstid)
         public DateTime? AnsweredAt { get; set; } = DateTime.UtcNow;
+       
+        // Ifall frågan skippas av patienten
+        public bool SkippedByPatient { get; set; } = false;
 
         // Flagga från personalen för vidare diskussion
         public bool Flag { get; set; }

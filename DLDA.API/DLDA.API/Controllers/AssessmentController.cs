@@ -35,7 +35,9 @@ public class AssessmentController : ControllerBase
                 IsComplete = a.IsComplete,
                 UserId = a.UserId,
                 CreatedAt = a.CreatedAt ?? DateTime.MinValue,
-                HasStarted = a.AssessmentItems.Any(i => i.PatientAnswer != null) // 👈 Kontroll här
+                HasStarted = a.AssessmentItems.Any(i => i.PatientAnswer != null || i.SkippedByPatient),
+                AnsweredCount = a.AssessmentItems.Count(i => i.PatientAnswer != null || i.SkippedByPatient),
+                TotalQuestions = a.AssessmentItems.Count
             })
             .ToListAsync();
     }
@@ -108,6 +110,7 @@ public class AssessmentController : ControllerBase
                     PatientAnswer = null,
                     StaffAnswer = null,
                     Flag = false,
+                    SkippedByPatient = false, // ✅ Nytt fält
                     AnsweredAt = null,
                     Order = index++
                 };
@@ -140,7 +143,6 @@ public class AssessmentController : ControllerBase
             return StatusCode(500, "Ett internt fel uppstod vid skapande av bedömning.");
         }
     }
-
 
     // GET: api/Assessment
     // Returnerar samtliga bedömningar i systemet (för personal/admin)
@@ -225,5 +227,4 @@ public class AssessmentController : ControllerBase
 
         return NoContent();
     }
-
 }

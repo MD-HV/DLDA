@@ -41,15 +41,17 @@
                         <td>@item.AssessmentID</td>
                         <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
                         <td>@item.ScaleType</td>
-                        <td>@(item.IsComplete ? "Klar" : "Pågående")</td>
+                        <td>
+                            <div><strong>Patient:</strong> @(item.IsComplete ? "Klar" : "Pågående")</div>
+                            <div><strong>Personal:</strong> @(item.IsStaffComplete ? "Klar" : "Pågående")</div>
+                        </td>
                         <td class="d-flex gap-2">
-                            @if (!item.IsComplete)
+                            @if (!item.IsStaffComplete)
                             {
-                                <!-- OBS: Resume-funktionen finns inte än i StaffAssessmentController än :P-->
                                 <a class="btn btn-sm btn-warning"
                                    asp-controller="StaffQuiz"
                                    asp-action="Resume"
-                                   asp-route-id="@item.AssessmentID">
+                                   asp-route-assessmentId="@item.AssessmentID">
                                     Fortsätt
                                 </a>
                             }

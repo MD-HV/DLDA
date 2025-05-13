@@ -8,9 +8,7 @@
 
   <ItemGroup>
     <Folder Include="Services\" />
-    <Folder Include="Views\StaffQuiz\" />
     <Folder Include="Views\StaffResult\" />
-    <Folder Include="Views\PatientResult\" />
     <Folder Include="Views\StaffStatistics\" />
     <Folder Include="Views\PatientStatistics\" />
   </ItemGroup>

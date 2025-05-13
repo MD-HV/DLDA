@@ -16,5 +16,6 @@ namespace DLDA.GUI.DTOs
         public string? StaffComment { get; set; }
         public int Order { get; set; }
         public bool Flag { get; set; }
+        public bool SkippedByPatient { get; set; }
     }
 }

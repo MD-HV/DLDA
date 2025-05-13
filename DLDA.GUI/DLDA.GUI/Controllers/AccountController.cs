@@ -35,7 +35,7 @@ public class AccountController : Controller
         {
             "admin" => RedirectToAction("Index", "Admin"),
             "staff" => RedirectToAction("Index", "StaffAssessment"),
-            "patient" => RedirectToAction("Info", "PatientAssessment"),
+            "patient" => RedirectToAction("Index", "PatientAssessment"),
             _ => RedirectToAction("Login")
         };
     }

@@ -1,0 +1,95 @@
+﻿@model DLDA.GUI.DTOs.AssessmentOverviewDto
+@{
+    ViewData["Title"] = "Resultatöversikt";
+}
+
+<div class="container mt-5">
+    <h2>Resultatöversikt för bedömning (@Model.AssessmentId)</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fråga</th>
+                <th>Svar & kommentar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var q in Model.Questions)
+            {
+                <tr>
+                    <td>
+                        <strong>Fråga @(@q.Order + 1)</strong><br />
+                        @q.QuestionText
+                    </td>
+                    <td>
+                        @if (Model.IsComplete)
+                        {
+                            <div>
+                                <strong>Svar:</strong> @(q.PatientAnswer?.ToString() ?? "Ej besvarad")<br />
+                                <strong>Kommentar:</strong> @(string.IsNullOrWhiteSpace(q.PatientComment) ? "Ingen kommentar" : q.PatientComment)
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-controller="PatientResult"
+                                  asp-action="UpdateAnswer"
+                                  method="post"
+                                  class="d-flex flex-column gap-2">
+
+                                <input type="hidden" name="itemId" value="@q.ItemID" />
+                                <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+
+                                <div class="d-flex gap-2 flex-wrap">
+                                    @for (int i = 0; i <= 4; i++)
+                                    {
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input"
+                                                   type="radio"
+                                                   name="answer"
+                                                   id="answer_@q.QuestionId@i"
+                                                   value="@i"
+                                            @(q.PatientAnswer == i ? "checked" : "") />
+                                            <label class="form-check-label" for="answer_@q.QuestionId@i">@i</label>
+                                        </div>
+                                    }
+                                </div>
+
+                                <textarea name="comment"
+                                          class="form-control"
+                                          rows="2"
+                                          placeholder="Kommentar (frivilligt)">@q.PatientComment</textarea>
+
+                                <button type="submit" class="btn btn-sm btn-outline-primary w-auto mt-1">💾 Spara</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.IsComplete)
+    {
+        <form asp-action="Complete" method="post">
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+            <button type="submit" class="btn btn-success">✔️ Jag är klar</button>
+        </form>
+    }
+    else
+    {
+        <a class="btn btn-primary mt-3"
+           asp-controller="PatientAssessment"
+           asp-action="Index">
+            🔙 Tillbaka till översikten
+        </a>
+    }
+</div>

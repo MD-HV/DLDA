@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Information";
+    var assessmentId = ViewBag.AssessmentId as int? ?? 0;
+    var hasStarted = ViewBag.HasStarted as bool? ?? false;
 }
 
 <div class="container mt-5 text-center">
@@ -14,5 +16,14 @@
         Tänk på hur det varit den senaste veckan.
     </p>
 
-    <a class="btn btn-primary mt-4" asp-controller="PatientAssessment" asp-action="Index">Visa mina bedömningar</a>
+    <form method="get" asp-controller="PatientQuiz" asp-action="@(hasStarted ? "Resume" : "ScaleSelect")">
+        <input type="hidden" name="id" value="@assessmentId" />
+        <button type="submit" class="btn btn-success mt-4">
+            @(hasStarted ? "▶ Fortsätt bedömning" : "🚀 Starta bedömning")
+        </button>
+    </form>
+
+    <a class="btn btn-outline-secondary mt-3" asp-controller="PatientAssessment" asp-action="Index">
+        🔙 Tillbaka till mina bedömningar
+    </a>
 </div>

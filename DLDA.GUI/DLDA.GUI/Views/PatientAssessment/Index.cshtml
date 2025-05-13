@@ -29,7 +29,18 @@
                         <td>@item.AssessmentID</td>
                         <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
                         <td>@item.ScaleType</td>
-                        <td>@(item.IsComplete ? "Klar" : "Pågående")</td>
+                        <td>
+                            @if (item.IsComplete)
+                            {
+                                <span class="text-success fw-semibold">Klar</span>
+                            }
+                            else
+                            {
+                                <span class="text-warning fw-semibold">
+                                    Pågående – @item.AnsweredCount av @item.TotalQuestions frågor
+                                </span>
+                            }
+                        </td>
                         <td>
                             @if (!item.IsComplete)
                             {
@@ -37,23 +48,23 @@
                                 {
                                     <a class="btn btn-sm btn-warning"
                                        asp-controller="PatientQuiz"
-                                       asp-action="Resume"
+                                       asp-action="Info"
                                        asp-route-id="@item.AssessmentID">Fortsätt</a>
                                 }
                                 else
                                 {
                                     <a class="btn btn-sm btn-primary"
                                        asp-controller="PatientQuiz"
-                                       asp-action="ScaleSelect"
+                                       asp-action="Info"
                                        asp-route-id="@item.AssessmentID">Starta</a>
                                 }
                             }
                             else
                             {
                                 <a class="btn btn-sm btn-info"
-                                   asp-controller="Result"
-                                   asp-action="PatientView"
-                                   asp-route-id="@item.AssessmentID">Visa</a>
+                                   asp-controller="PatientResult"
+                                   asp-action="Index"
+                                   asp-route-assessmentId="@item.AssessmentID">Visa</a>
                             }
                         </td>
                     </tr>
