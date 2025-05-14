@@ -61,12 +61,23 @@
                             }
                             else
                             {
-                                <a class="btn btn-sm btn-info"
-                                   asp-controller="PatientResult"
-                                   asp-action="Index"
-                                   asp-route-assessmentId="@item.AssessmentID">Visa</a>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a class="btn btn-sm btn-info"
+                                       asp-controller="PatientResult"
+                                       asp-action="Index"
+                                       asp-route-assessmentId="@item.AssessmentID">Visa</a>
+
+                                    <a class="btn btn-sm btn-outline-success"
+                                       asp-controller="PatientStatistics"
+                                       asp-action="Overview"
+                                       asp-route-assessmentId="@item.AssessmentID">
+                                        📊 Statistik
+                                    </a>
+
+                                </div>
                             }
                         </td>
+
                     </tr>
                 }
             </tbody>

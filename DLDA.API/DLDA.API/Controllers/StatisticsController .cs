@@ -1,4 +1,5 @@
 ﻿using DLDA.API.Data;
+using DLDA.API.DTOs;
 using DLDA.API.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -119,6 +120,86 @@ namespace DLDA.API.Controllers
                     .ToList()
             });
         }
+
+        // GET: api/statistics/summary/{assessmentId}
+        // Returnerar summering av patientens senaste bedömning (enbart patientens svar)
+        [HttpGet("summary/{assessmentId}")]
+        public ActionResult<object> GetSingleAssessmentSummary(int assessmentId)
+        {
+            var items = _context.AssessmentItems
+                .Where(i => i.AssessmentID == assessmentId && i.PatientAnswer.HasValue)
+                .ToList();
+
+            if (!items.Any())
+                return NotFound("Inga besvarade frågor hittades.");
+
+            int noProblem = items.Count(i => i.PatientAnswer is 0 or 1);
+            int someProblem = items.Count(i => i.PatientAnswer is 2 or 3);
+            int bigProblem = items.Count(i => i.PatientAnswer == 4);
+            int skipped = _context.AssessmentItems.Count(i => i.AssessmentID == assessmentId && !i.PatientAnswer.HasValue);
+
+            var topProblems = items
+                .Where(i => i.PatientAnswer >= 2)
+                .OrderByDescending(i => i.PatientAnswer)
+                .Take(5)
+                .Select(i => new
+                {
+                    Question = i.Question?.QuestionText ?? "(fråga saknas)",
+                    Answer = i.PatientAnswer
+                });
+
+            return Ok(new
+            {
+                TotalAnswered = items.Count,
+                NoProblem = noProblem,
+                SomeProblem = someProblem,
+                BigProblem = bigProblem,
+                Skipped = skipped,
+                TopProblems = topProblems
+            });
+        }
+
+        // GET: api/statistics/summary/patient/{assessmentId}
+        [HttpGet("summary/patient/{assessmentId}")]
+        public ActionResult<PatientSingleSummaryDto> GetSingleSummary(int assessmentId)
+        {
+            try
+            {
+                var items = _context.AssessmentItems
+                    .Where(i => i.AssessmentID == assessmentId)
+                    .Include(i => i.Question)
+                    .ToList();
+
+                var assessment = _context.Assessments
+                    .Where(a => a.AssessmentID == assessmentId)
+                    .FirstOrDefault();
+
+                if (assessment == null)
+                    return NotFound("Bedömningen kunde inte hittas.");
+
+                var summary = new PatientSingleSummaryDto
+                {
+                    AssessmentId = assessmentId,
+                    CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
+                    Answers = items.Select(i => new PatientAnswerStatsDto
+                    {
+                        QuestionId = i.QuestionID,
+                        QuestionText = i.Question?.QuestionText ?? "[Okänd fråga]",
+                        Answer = i.PatientAnswer
+                    }).ToList()
+                };
+
+                return Ok(summary);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Fel i GetSingleSummary: {ex.Message}");
+                return StatusCode(500, "Ett internt fel uppstod vid hämtning av statistik.");
+            }
+        }
+
+
+
 
         // --------------------------
         // [PERSONAL] – Fördjupad analys och jämförelse
