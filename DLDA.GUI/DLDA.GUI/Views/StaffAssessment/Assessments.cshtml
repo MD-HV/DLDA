@@ -52,7 +52,14 @@
                                    asp-controller="StaffQuiz"
                                    asp-action="Resume"
                                    asp-route-assessmentId="@item.AssessmentID">
-                                    ▶ Fortsätt
+                                    ▶ Till quiz
+                                </a>
+
+                                <a class="btn btn-outline-success btn-sm"
+                                   asp-controller="StaffResult"
+                                   asp-action="Index"
+                                   asp-route-id="@item.AssessmentID">
+                                    📄 Resultat
                                 </a>
                             }
                             else
@@ -64,6 +71,9 @@
                                     📄 Visa resultat
                                 </a>
                             }
+
+
+
 
                             <a class="btn btn-outline-danger btn-sm"
                                asp-controller="StaffAssessment"

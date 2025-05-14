@@ -40,6 +40,7 @@ public class AccountController : Controller
         };
     }
 
+    [HttpPost]
     public IActionResult Logout()
     {
         HttpContext.Session.Clear();
