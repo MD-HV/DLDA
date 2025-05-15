@@ -1,6 +1,10 @@
 ﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
+
 @{
     ViewData["Title"] = "Bedömningar för patient";
+
+    var completedStaffCount = Model.Count(m => m.IsStaffComplete);
+    var enableComparison = completedStaffCount >= 1;
 }
 
 <div class="container mt-5">
@@ -17,6 +21,9 @@
     {
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
+
+    <!-- 📊 Jämförelse-knapp lägga till! -->
+    
 
     @if (!Model.Any())
     {
@@ -64,16 +71,20 @@
                             }
                             else
                             {
-                                <a class="btn btn-outline-success btn-sm"
+                                <a class="btn btn-sm btn-info"
                                    asp-controller="StaffResult"
                                    asp-action="Index"
                                    asp-route-id="@item.AssessmentID">
                                     📄 Visa resultat
                                 </a>
+
+                                <a class="btn btn-sm btn-outline-success"
+                                   asp-controller="StaffStatistics"
+                                   asp-action="Comparison"
+                                  asp-route-assessmentId="@item.AssessmentID">
+                                    📊 Statistik
+                                </a>
                             }
-
-
-
 
                             <a class="btn btn-outline-danger btn-sm"
                                asp-controller="StaffAssessment"

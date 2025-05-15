@@ -13,8 +13,4 @@
     <None Remove="Services\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Views\StaffStatistics\" />
-  </ItemGroup>
-
 </Project>

@@ -15,13 +15,40 @@
     var labelsJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Question));
     var previousJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Previous));
     var currentJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Current));
+
+    string FormatScore(int score)
+    {
+        return score switch
+        {
+            0 => "Inget problem",
+            1 => "Litet problem",
+            2 => "Måttligt problem",
+            3 => "Stort problem",
+            4 => "Mycket stort problem",
+            _ => score.ToString()
+        };
+    }
+
+    string FormatImprovement(int change)
+    {
+        return change switch
+        {
+            >= 3 => "Stora förbättringar",
+            2 => "Tydlig förbättring",
+            1 => "Viss förbättring",
+            _ => ""
+        };
+    }
 }
 
 <div class="container mt-5">
-    <h2 class="mb-4">📈 Förbättring över tid</h2>
+    <h2 class="mb-2">📈 Förbättring över tid</h2>
 
     <p>
-        Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning – Lägre är bättre.
+        Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning.
+        <br />
+        <strong>Jämförelse mellan @Model.PreviousDate.ToString("yyyy-MM-dd") och @Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
+        <br />
     </p>
 
     @if (!förbättringar.Any())
@@ -42,11 +69,11 @@
                 </div>
             </div>
 
-            <!-- 📝 Återkoppling -->
+            <!-- 📜 Återkoppling -->
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-                        <h5 class="mb-3">📝 Återkoppling</h5>
+                        <h5 class="mb-3">📜 Återkoppling</h5>
 
                         <ul class="list-unstyled mb-3">
                             <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
@@ -75,7 +102,7 @@
             </div>
         </div>
 
-        <!-- 🔽 Toggle för att visa detaljerad fråga-förändring -->
+        <!-- 🕽️ Toggle för att visa detaljerad fråga-förändring -->
         <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetails()">
             🔍 Visa detaljer per fråga
         </button>
@@ -86,6 +113,7 @@
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
+                                <th>Nr</th>
                                 <th>Fråga</th>
                                 <th>Tidigare</th>
                                 <th>Nuvarande</th>
@@ -95,11 +123,19 @@
                         <tbody>
                             @foreach (var f in förbättringar)
                             {
-                                <tr>
+                                var highlight = f.Change >= 1 ? "table-success" : "";
+                                <tr class="@highlight">
+                                    <td>@f.QuestionId</td>
                                     <td>@f.Question</td>
-                                    <td>@(f.SkippedPrevious ? "Hoppad över" : f.Previous.ToString())</td>
-                                    <td>@(f.SkippedCurrent ? "Hoppad över" : f.Current.ToString())</td>
-                                    <td>@f.Change</td>
+                                    <td>
+                                        @(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))
+                                        <br /><small class="text-muted">(@f.Previous)</small>
+                                    </td>
+                                    <td>
+                                        @(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))
+                                        <br /><small class="text-muted">(@f.Current)</small>
+                                    </td>
+                                    <td>@FormatImprovement(f.Change)</td>
                                 </tr>
                             }
                         </tbody>
@@ -173,7 +209,7 @@
 
             const isVisible = section.style.display === 'block';
             section.style.display = isVisible ? 'none' : 'block';
-            button.innerText = isVisible ? '🔍 Visa detaljer per fråga' : '🔼 Dölj detaljer';
+            button.innerText = isVisible ? '🔍 Visa detaljer per fråga' : '🔜 Dölj detaljer';
         }
     </script>
 }

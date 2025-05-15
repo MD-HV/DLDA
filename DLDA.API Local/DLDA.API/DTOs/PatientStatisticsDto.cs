@@ -17,6 +17,8 @@
     public class PatientChangeOverviewDto
     {
         public List<ImprovementDto> Förbättringar { get; set; } = new();
+        public DateTime PreviousDate { get; set; }
+        public DateTime CurrentDate { get; set; }
 
         // 🔄 Automatisk beräkning: hur många färre frågor hoppades över?
         public int FärreHoppadeFrågor =>
@@ -39,6 +41,7 @@
         public int Current { get; set; }
         public int Change => Previous - Current;
         public string Category { get; set; } = string.Empty;
+        public int QuestionId { get; set; }
 
         // 🔍 Hoppade över-data
         public bool SkippedPrevious { get; set; }
@@ -54,5 +57,6 @@
         public string Category { get; set; } = string.Empty;
         public bool SkippedPrevious { get; set; }
         public bool SkippedCurrent { get; set; }
+        public int QuestionID { get; set; }
     }
 }
