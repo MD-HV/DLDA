@@ -1,0 +1,62 @@
+﻿@model List<DLDA.GUI.DTOs.PatientWithLatestAssessmentDto>
+@{
+    ViewData["Title"] = "Patientlista";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">👥 Patientlista</h2>
+
+    <!-- Alert-meddelanden -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
+    @if (Model.Any())
+    {
+        <div class="list-group shadow-sm">
+            @foreach (var patient in Model)
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">👤 <strong>@patient.Username</strong></h5>
+                        @if (patient.LastAssessmentDate.HasValue)
+                        {
+                            <p class="mb-1 text-muted">
+                                📅 Senaste bedömning: <strong>@patient.LastAssessmentDate.Value.ToString("yyyy-MM-dd")</strong>
+                            </p>
+                        }
+                        else
+                        {
+                            <p class="mb-1 text-muted">📅 <em>Ingen bedömning har genomförts ännu.</em></p>
+                        }
+                    </div>
+                    <a asp-controller="StaffAssessment"
+                       asp-action="Assessments"
+                       asp-route-userId="@patient.UserID"
+                       class="btn btn-outline-primary btn-sm"
+                       aria-label="Gå till bedömningar för @patient.Username">
+                        📄 Gå till bedömningar
+                    </a>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info mt-4" role="alert">
+            Det finns inga registrerade patienter att visa.
+        </div>
+    }
+</div>

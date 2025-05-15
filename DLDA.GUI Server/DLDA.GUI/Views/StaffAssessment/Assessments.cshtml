@@ -1,0 +1,133 @@
+﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
+
+@{
+    ViewData["Title"] = "Bedömningar för patient";
+
+    var completedStaffCount = Model.Count(m => m.IsStaffComplete);
+    var enableComparison = completedStaffCount >= 1;
+}
+
+<div class="container mt-5">
+    <h3 class="mb-4">Bedömningar för patient</h3>
+
+    <p><strong>👤 Användare:</strong> @ViewBag.Username (ID: @ViewBag.UserId)</p>
+
+    @if (TempData["Success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center justify-content-start" role="alert">
+        <span class="me-2">✅</span>
+        <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center justify-content-start" role="alert">
+        <span class="me-2">❌</span>
+        <div>@TempData["Error"]</div>
+    </div>
+}
+
+    <!-- 📈 Förändring över tid för personal -->
+<div class="mb-4">
+    <a class="btn btn-outline-secondary @(completedStaffCount < 2 ? "disabled text-muted pe-none" : "")"
+       asp-controller="StaffStatistics"
+       asp-action="ChangeOverview"
+       asp-route-userId="@ViewBag.UserId">
+        📈 Jämför förändring över tid
+    </a>
+    <span class="text-muted small ms-2">
+        (Minst två avslutade personalbedömningar krävs)
+    </span>
+</div>
+    
+
+    @if (!Model.Any())
+    {
+        <p>Inga bedömningar har ännu genomförts.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Skattningsskala</th>
+                    <th>Status</th>
+                    <th>Åtgärder</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.AssessmentID</td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@item.ScaleType</td>
+                        <td>
+                            <div><strong>Patient:</strong> @(item.IsComplete ? "Klar" : "Pågående")</div>
+                            <div><strong>Personal:</strong> @(item.IsStaffComplete ? "Klar" : "Pågående")</div>
+                        </td>
+                        <td class="d-flex flex-wrap gap-2">
+                            @if (!item.IsStaffComplete)
+                            {
+                                <a class="btn btn-outline-primary btn-sm"
+                                   asp-controller="StaffQuiz"
+                                   asp-action="Resume"
+                                   asp-route-assessmentId="@item.AssessmentID">
+                                    ▶ Till quiz
+                                </a>
+
+                                <a class="btn btn-outline-success btn-sm"
+                                   asp-controller="StaffResult"
+                                   asp-action="Index"
+                                   asp-route-id="@item.AssessmentID">
+                                    📄 Resultat
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-info"
+                                   asp-controller="StaffResult"
+                                   asp-action="Index"
+                                   asp-route-id="@item.AssessmentID">
+                                    📄 Visa resultat
+                                </a>
+
+                                <a class="btn btn-sm btn-outline-success"
+                                   asp-controller="StaffStatistics"
+                                   asp-action="Comparison"
+                                  asp-route-assessmentId="@item.AssessmentID">
+                                    📊 Statistik
+                                </a>
+                            }
+
+                            <a class="btn btn-outline-danger btn-sm"
+                               asp-controller="StaffAssessment"
+                               asp-action="Delete"
+                               asp-route-id="@item.AssessmentID">
+                                🗑 Ta bort
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <div class="mt-4 d-flex gap-2 flex-wrap">
+        <form asp-controller="StaffAssessment"
+              asp-action="CreateForPatient"
+              method="post"
+              class="d-inline">
+            <input type="hidden" name="userId" value="@ViewBag.UserId" />
+            <button type="submit" class="btn btn-success btn-sm">➕ Ny bedömning</button>
+        </form>
+
+        <a class="btn btn-secondary btn-sm"
+           asp-controller="StaffAssessment"
+           asp-action="Index">
+            ⬅ Tillbaka till patientlista
+        </a>
+    </div>
+</div>

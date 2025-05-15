@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Adminpanel";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Inloggad som admin</h2>
+
+    <div class="alert alert-info">
+        <h5 class="alert-heading">ℹ️ Adminpanel</h5>
+        <p>
+            Du är inloggad som administratör och har tillgång till att hantera användare och systemets frågor.
+            Härifrån kan du:
+        </p>
+
+    <!-- 🟢 Framgångsmeddelande -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+
+    <!-- 🔴 Felmeddelande -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
+    <div class="d-flex flex-column gap-3">
+        <a class="btn btn-primary" asp-controller="AdminQuestion" asp-action="Index">
+            🗂 Gå till frågor översikten
+        </a>
+
+        <a class="btn btn-success" asp-controller="AdminUser" asp-action="Index">
+            ➕ Lägg till ny användare (personal eller patient)
+        </a>
+    </div>
+</div>

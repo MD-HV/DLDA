@@ -1,0 +1,117 @@
+﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
+@{
+    var completedCount = Model.Where(m => m.IsComplete).Count();
+    var disableImprovement = completedCount < 2;
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">Mina bedömningar</h2>
+
+    <!-- 🟢 Lyckat meddelande -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+
+    <!-- 🔴 Felmeddelande -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
+    <!-- 📈 Förbättring över tid-knapp -->
+    <div class="mb-4">
+        <a class="btn btn-outline-secondary @(disableImprovement ? "disabled text-muted pe-none" : "")"
+           asp-controller="PatientStatistics"
+           asp-action="Improvement"
+           asp-route-userId="@Context.Session.GetInt32("UserID")">
+            📈 Jämför förbättring över tid
+        </a>
+        <span class="text-muted small ms-2">
+            (Minst två avslutade bedömningar krävs)
+        </span>
+    </div>
+
+
+    @if (!Model.Any())
+    {
+        <p>Du har ännu inte påbörjat någon bedömning.</p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Skattningsskala</th>
+                    <th>Status</th>
+                    <th>Åtgärd</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.AssessmentID</td>
+                        <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td>@item.ScaleType</td>
+                        <td>
+                            @if (item.IsComplete)
+                            {
+                                <span class="text-success fw-semibold">Klar</span>
+                            }
+                            else
+                            {
+                                <span class="text-warning fw-semibold">
+                                    Pågående – @item.AnsweredCount av @item.TotalQuestions frågor
+                                </span>
+                            }
+                        </td>
+                        <td>
+                            @if (!item.IsComplete)
+                            {
+                                if (item.HasStarted)
+                                {
+                                    <a class="btn btn-sm btn-warning"
+                                       asp-controller="PatientQuiz"
+                                       asp-action="Info"
+                                       asp-route-id="@item.AssessmentID">Fortsätt</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm btn-primary"
+                                       asp-controller="PatientQuiz"
+                                       asp-action="Info"
+                                       asp-route-id="@item.AssessmentID">Starta</a>
+                                }
+                            }
+                            else
+                            {
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a class="btn btn-sm btn-info"
+                                       asp-controller="PatientResult"
+                                       asp-action="Index"
+                                       asp-route-assessmentId="@item.AssessmentID">Visa</a>
+
+                                    <a class="btn btn-sm btn-outline-success"
+                                       asp-controller="PatientStatistics"
+                                       asp-action="Overview"
+                                       asp-route-assessmentId="@item.AssessmentID">
+                                        📊 Statistik
+                                    </a>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
