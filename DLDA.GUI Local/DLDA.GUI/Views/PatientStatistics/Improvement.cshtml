@@ -41,6 +41,28 @@
     }
 }
 
+<div class="mt-4">
+        <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+            ⬅ Tillbaka till mina bedömningar
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
+        <span class="me-2">✅</span>
+        <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
+        <span class="me-2">❌</span>
+        <div>@TempData["Error"]</div>
+    </div>
+}
+
+
 <div class="container mt-5">
     <h2 class="mb-2">📈 Förbättring över tid</h2>
 

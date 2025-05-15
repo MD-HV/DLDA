@@ -3,6 +3,20 @@
     ViewData["Title"] = "Välj skattningsskala";
 }
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
+        <span class="me-2">✅</span>
+        <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
+        <span class="me-2">❌</span>
+        <div>@TempData["Error"]</div>
+    </div>
+}
 <div class="container mt-5 text-center">
     <h2 class="mb-3">Hur vill du svara på frågorna?</h2>
     <p>Välj det sätt som känns enklast</p>

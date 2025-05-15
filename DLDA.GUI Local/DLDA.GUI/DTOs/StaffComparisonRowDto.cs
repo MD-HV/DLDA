@@ -10,4 +10,14 @@
         public string Comment { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
     }
+
+    public class StaffChangeOverviewDto
+    {
+        public DateTime PreviousDate { get; set; }
+        public DateTime CurrentDate { get; set; }
+        public List<ImprovementDto> Förbättringar { get; set; } = new();
+        public List<ImprovementDto> Försämringar { get; set; } = new();
+        public List<ImprovementDto> Flaggade { get; set; } = new();
+        public List<ImprovementDto> Hoppade { get; set; } = new();
+    }
 }

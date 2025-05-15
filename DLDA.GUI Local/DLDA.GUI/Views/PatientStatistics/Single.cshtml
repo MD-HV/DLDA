@@ -20,6 +20,33 @@
         .ToList();
 }
 
+<div class="mt-5">
+    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+        ⬅ Tillbaka till mina bedömningar
+    </a>
+</div>
+
+<div class="container mt-5">
+
+@* Alert-meddelanden *@
+@if (TempData["Success"] != null)
+{
+        <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+}
+@if (TempData["Error"] != null)
+{
+        <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+}
+
+    <h2 class="mb-4">🟢 Sammanställning av egenbedömning</h2>
+
+
 <div class="container mt-5">
     <h2 class="mb-4">🟢 Sammanställning av egenbedömning</h2>
     <p><strong>Datum:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")</p>

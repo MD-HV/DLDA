@@ -13,16 +13,32 @@
     <p><strong>👤 Användare:</strong> @ViewBag.Username (ID: @ViewBag.UserId)</p>
 
     @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
+{
+    <div class="alert alert-success d-flex align-items-center justify-content-start" role="alert">
+        <span class="me-2">✅</span>
+        <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center justify-content-start" role="alert">
+        <span class="me-2">❌</span>
+        <div>@TempData["Error"]</div>
+    </div>
+}
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
-    <!-- 📊 Jämförelse-knapp lägga till! -->
+    <!-- 📈 Förändring över tid för personal -->
+<div class="mb-4">
+    <a class="btn btn-outline-secondary @(completedStaffCount < 2 ? "disabled text-muted pe-none" : "")"
+       asp-controller="StaffStatistics"
+       asp-action="ChangeOverview"
+       asp-route-userId="@ViewBag.UserId">
+        📈 Jämför förändring över tid
+    </a>
+    <span class="text-muted small ms-2">
+        (Minst två avslutade personalbedömningar krävs)
+    </span>
+</div>
     
 
     @if (!Model.Any())

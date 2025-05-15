@@ -1,64 +1,98 @@
 ﻿@model DLDA.GUI.DTOs.QuestionDto
 @{
     ViewData["Title"] = "Fråga";
+
     var assessmentId = ViewBag.AssessmentId as int? ?? 0;
     var scaleType = (Model.ScaleType ?? "Numerisk").ToLower();
     var prefix = scaleType == "smiley" ? "Smiley" : "Number";
+
+    string GetLabel(int value) => value switch
+    {
+        0 => "Inget problem",
+        1 => "Litet problem",
+        2 => "Måttligt problem",
+        3 => "Stort problem",
+        4 => "Mycket stort problem",
+        _ => ""
+    };
 }
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <small class="text-muted">Kategori: @Model.Category</small>
-        <small class="text-muted">Fråga @(@Model.Order + 1) av @Model.Total</small>
-    </div>
+<div class="container mt-5">
 
-    <div class="container mt-5">
-        <div class="alert alert-info">
-            <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
-            Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
-            <em>Tänk på hur det varit den senaste veckan.</em>
+    <!-- 🟢 TempData-meddelanden -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
         </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
 
-    <div class="bg-white rounded p-4 shadow-sm mb-4 border-start border-4 border-primary">
-        <h3 class="fw-bold mb-0">Fråga @(@Model.Order + 1)</h3>
-        <h3 class="fw-bold mt-2">@Model.QuestionText</h3>
+    <!-- 👤 Info-ruta -->
+    <div class="alert alert-info">
+        <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
+        Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
+        <em>Tänk på hur det varit den senaste veckan.</em>
     </div>
 
+    <!-- 🧩 Frågerubrik -->
+    <div class="bg-white rounded p-4 shadow-sm mb-4 border-start border-4 border-primary">
+        <small class="text-muted">Fråga @(@Model.Order + 1)</small>
+        <h5 class="fw-semibold mt-2 mb-1">Hur bedömer du din:</h5>
+        <h4 class="fw-bold text-primary">@Model.QuestionText</h4>
+    </div>
+
+    <!-- 📋 Formulär -->
     <form asp-action="SubmitAnswer" method="post">
         <input type="hidden" name="itemId" value="@Model.AssessmentItemID" />
         <input type="hidden" name="assessmentId" value="@assessmentId" />
 
         <div class="mb-4">
-            <label class="form-label fw-semibold">Hur stort är problemet?</label>
+            <label class="form-label fw-semibold">Bedömning</label>
 
-            <div class="d-flex gap-3 flex-wrap">
+            <div class="d-flex gap-3 flex-wrap justify-content-start">
                 @for (int i = 0; i <= 4; i++)
                 {
                     var inputId = $"a{i}";
                     var imagePath = Url.Content($"~/Images/{prefix} {i}.png");
-
                     <div class="form-check text-center">
                         <input type="radio" class="btn-check" name="answer" id="@inputId" value="@i" required />
                         <label class="btn" for="@inputId">
                             <img src="@imagePath" alt="@prefix @i" width="60" />
-                            <div class="small mt-1">@i</div>
+                            <div class="small mt-1 fw-bold">@i</div>
+                            <div class="small text-muted">@GetLabel(i)</div>
                         </label>
                     </div>
                 }
             </div>
+
+            <!-- 🔔 Påminnelse -->
+            <div class="form-text text-muted mt-2">
+                Du kan också välja att <strong>hoppa över frågan</strong> med knappen nedanför om du inte vill svara just nu.
+            </div>
         </div>
 
+        <!-- 💬 Kommentar -->
         <div class="mb-4">
             <label for="comment" class="form-label">Kommentar (frivilligt)</label>
             <textarea class="form-control" name="comment" rows="3"></textarea>
         </div>
 
+        <!-- ✅ Nästa -->
         <div class="d-flex gap-3">
             <button type="submit" class="btn btn-primary">💾 Nästa fråga</button>
         </div>
     </form>
 
-    <!-- Separata formulärknappar utanför SubmitAnswer-formuläret -->
-    <div class="d-flex gap-3 mt-3">
+    <!-- 🔁 Övriga kontroller -->
+    <div class="d-flex gap-3 mt-3 flex-wrap">
         <form asp-action="Previous" method="post">
             <input type="hidden" name="assessmentId" value="@assessmentId" />
             <input type="hidden" name="currentOrder" value="@Model.Order" />

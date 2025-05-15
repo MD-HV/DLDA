@@ -1,1 +1,35 @@
-﻿<h2>Frågesida index</h2>
+﻿@{
+    ViewData["Title"] = "Frågesida index";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">📋 Frågesida index</h2>
+
+    <!-- 🟢 Lyckat meddelande -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+
+    <!-- 🔴 Felmeddelande -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
+    <!-- Här kommer resten av innehållet t.ex. tabell med frågor -->
+    <p>Här visas alla frågor som administratören kan redigera eller ta bort.</p>
+
+    <a class="btn btn-success" asp-action="Create">➕ Lägg till ny fråga</a>
+
+    <!-- Exempel: -->
+    @* <table class="table mt-4">
+        ...
+    </table> *@
+</div>

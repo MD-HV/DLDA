@@ -1,1 +1,49 @@
-﻿<h2>Sida för att lägga till användare och bestämma deras roll</h2>
+﻿@{
+    ViewData["Title"] = "Lägg till användare";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">👤 Lägg till användare och bestäm roll</h2>
+
+    <!-- 🟢 Lyckat meddelande -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+
+    <!-- 🔴 Felmeddelande -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
+    <!-- 📝 Formulär (exempel) -->
+    <form asp-action="Create" method="post">
+        <div class="mb-3">
+            <label for="Username" class="form-label">Användarnamn</label>
+            <input type="text" class="form-control" id="Username" name="Username" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="Email" class="form-label">E-post</label>
+            <input type="email" class="form-control" id="Email" name="Email" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="Role" class="form-label">Roll</label>
+            <select class="form-select" id="Role" name="Role">
+                <option value="1">Admin</option>
+                <option value="2">Personal</option>
+                <option value="3">Patient</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">💾 Skapa användare</button>
+    </form>
+</div>

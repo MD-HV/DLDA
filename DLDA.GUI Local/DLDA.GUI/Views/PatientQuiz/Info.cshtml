@@ -8,12 +8,28 @@
     <h1 class="display-4">DLDA</h1>
     <h4 class="mb-4">Hur jag upplever min funktion i vardagen</h4>
 
+    <!-- 🟢 TempData-meddelanden -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
     <img src="~/Images/dlda_intro.png" alt="DLDA illustration" class="img-fluid mb-4" style="max-width: 280px;" />
 
     <p class="lead">
         Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
         Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
-        Tänk på hur det varit den senaste veckan.
+        <strong>Tänk på hur det varit den senaste veckan.</strong>
     </p>
 
     <form method="get" asp-controller="PatientQuiz" asp-action="@(hasStarted ? "Resume" : "ScaleSelect")">

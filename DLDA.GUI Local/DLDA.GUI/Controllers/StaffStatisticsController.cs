@@ -70,5 +70,29 @@ public class StaffStatisticsController : Controller
         }
     }
 
+    [HttpGet("ChangeOverview/{userId}")]
+    public async Task<IActionResult> ChangeOverview(int userId)
+    {
+        var response = await _httpClient.GetAsync($"statistics/staff-change-overview/{userId}");
+        if (!response.IsSuccessStatusCode)
+        {
+            TempData["Error"] = "Kunde inte hämta översiktsdata.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
 
+        var json = await response.Content.ReadAsStringAsync();
+        if (json.Contains("inte tillräckligt"))
+        {
+            TempData["Error"] = "Det krävs minst två avslutade bedömningar för att visa förändringar.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
+
+        var overview = JsonSerializer.Deserialize<StaffChangeOverviewDto>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        ViewBag.UserId = userId;
+        return View("ChangeOverview", overview);
+    }
 }

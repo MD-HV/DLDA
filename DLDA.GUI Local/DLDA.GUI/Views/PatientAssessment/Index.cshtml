@@ -4,9 +4,26 @@
     var disableImprovement = completedCount < 2;
 }
 
-
 <div class="container mt-5">
     <h2 class="mb-4">Mina bedömningar</h2>
+
+    <!-- 🟢 Lyckat meddelande -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+
+    <!-- 🔴 Felmeddelande -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
 
     <!-- 📈 Förbättring över tid-knapp -->
     <div class="mb-4">
@@ -20,6 +37,7 @@
             (Minst två avslutade bedömningar krävs)
         </span>
     </div>
+
 
     @if (!Model.Any())
     {

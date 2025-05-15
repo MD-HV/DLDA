@@ -8,6 +8,12 @@ namespace DLDA.GUI.Controllers
     [RoleAuthorize("admin")]
     public class AdminQuestionController : Controller
     {
+        private readonly HttpClient _httpClient;
+
+        public AdminQuestionController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClient = httpClientFactory.CreateClient("DLDA");
+        }
         public IActionResult Index()
         {
             return View();

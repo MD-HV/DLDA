@@ -5,18 +5,45 @@
 
 <div class="container mt-5">
     <h3 class="text-danger">🗑️ Bekräfta borttagning</h3>
-    <p>Är du säker på att du vill ta bort denna bedömning? Detta kan inte ångras.</p>
 
+    <p class="text-muted">Du håller på att ta bort en bedömning. Denna åtgärd är permanent och kan <strong>inte</strong> ångras.</p>
+
+    <!-- Alert-meddelanden -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success d-flex align-items-center" role="alert">
+            <span class="me-2">✅</span>
+            <div>@TempData["Success"]</div>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <span class="me-2">❌</span>
+            <div>@TempData["Error"]</div>
+        </div>
+    }
+
+    <!-- Bedömningsinfo -->
     <ul>
         <li><strong>ID:</strong> @Model.AssessmentID</li>
         <li><strong>Skattningsskala:</strong> @Model.ScaleType</li>
         <li><strong>Skapad:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")</li>
     </ul>
 
-    <form asp-controller="StaffAssessment" asp-action="DeleteConfirmed" method="post">
+    <!-- Formulär -->
+    <form asp-controller="StaffAssessment" asp-action="DeleteConfirmed" method="post" class="mt-4">
         <input type="hidden" name="id" value="@Model.AssessmentID" />
         <input type="hidden" name="userId" value="@Model.UserId" />
-        <button type="submit" class="btn btn-danger">🗑 Ja, ta bort</button>
-        <a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@Model.UserId" class="btn btn-secondary ms-2">Avbryt</a>
+
+        <button type="submit" class="btn btn-danger">
+            🗑 Ja, ta bort denna bedömning
+        </button>
+        <a asp-controller="StaffAssessment"
+           asp-action="Assessments"
+           asp-route-userId="@Model.UserId"
+           class="btn btn-outline-secondary ms-2">
+            ⬅ Avbryt
+        </a>
     </form>
 </div>
