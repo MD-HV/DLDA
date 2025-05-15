@@ -1,10 +1,25 @@
 ﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
 @{
-    ViewData["Title"] = "Mina bedömningar";
+    var completedCount = Model.Where(m => m.IsComplete).Count();
+    var disableImprovement = completedCount < 2;
 }
+
 
 <div class="container mt-5">
     <h2 class="mb-4">Mina bedömningar</h2>
+
+    <!-- 📈 Förbättring över tid-knapp -->
+    <div class="mb-4">
+        <a class="btn btn-outline-secondary @(disableImprovement ? "disabled text-muted pe-none" : "")"
+           asp-controller="PatientStatistics"
+           asp-action="Improvement"
+           asp-route-userId="@Context.Session.GetInt32("UserID")">
+            📈 Jämför förbättring över tid
+        </a>
+        <span class="text-muted small ms-2">
+            (Minst två avslutade bedömningar krävs)
+        </span>
+    </div>
 
     @if (!Model.Any())
     {
@@ -13,7 +28,7 @@
     else
     {
         <table class="table table-bordered">
-            <thead class="thead-dark">
+            <thead class="table-light">
                 <tr>
                     <th>ID</th>
                     <th>Datum</th>
@@ -73,11 +88,9 @@
                                        asp-route-assessmentId="@item.AssessmentID">
                                         📊 Statistik
                                     </a>
-
                                 </div>
                             }
                         </td>
-
                     </tr>
                 }
             </tbody>

@@ -295,7 +295,7 @@ namespace DLDA.API.Controllers
         // GET: api/statistics/patient-change-overview/{userId}
         // Returnerar förändringar mellan två senaste bedömningar, uppdelat i tre grupper
         [HttpGet("patient-change-overview/{userId}")]
-        public ActionResult<object> GetPatientChangeOverviewGrouped(int userId)
+        public ActionResult<PatientChangeOverviewDto> GetPatientChangeOverviewGrouped(int userId)
         {
             var assessments = _context.Assessments
                 .Where(a => a.UserId == userId)
@@ -310,50 +310,57 @@ namespace DLDA.API.Controllers
             var previousAssessment = assessments[1];
 
             var latestItems = _context.AssessmentItems
-                .Where(i => i.AssessmentID == latest.AssessmentID && i.PatientAnswer.HasValue)
+                .Where(i => i.AssessmentID == latest.AssessmentID)
                 .Include(i => i.Question)
                 .ToList();
 
             var previousItems = _context.AssessmentItems
-                .Where(i => i.AssessmentID == previousAssessment.AssessmentID && i.PatientAnswer.HasValue)
-                .ToDictionary(i => i.QuestionID, i => i.PatientAnswer!.Value);
+                .Where(i => i.AssessmentID == previousAssessment.AssessmentID)
+                .ToDictionary(i => i.QuestionID, i => i);
 
-            var improvements = new List<object>();
-            var deteriorations = new List<object>();
-            var unchanged = new List<object>();
+            var improvements = new List<ImprovementApiDto>();
 
             foreach (var item in latestItems)
             {
                 if (!previousItems.ContainsKey(item.QuestionID)) continue;
 
-                var previousValue = previousItems[item.QuestionID];
-                var currentValue = item.PatientAnswer!.Value;
-                var questionText = item.Question?.QuestionText ?? "(okänd fråga)";
-                var changeAmount = Math.Abs(currentValue - previousValue);
+                var previousItem = previousItems[item.QuestionID];
+                if (!item.PatientAnswer.HasValue || !previousItem.PatientAnswer.HasValue) continue;
+
+                var previousValue = previousItem.PatientAnswer.Value;
+                var currentValue = item.PatientAnswer.Value;
 
                 if (currentValue < previousValue)
                 {
-                    improvements.Add(new { Question = questionText, Previous = previousValue, Current = currentValue, Change = changeAmount });
-                }
-                else if (currentValue > previousValue)
-                {
-                    deteriorations.Add(new { Question = questionText, Previous = previousValue, Current = currentValue, Change = changeAmount });
-                }
-                else
-                {
-                    unchanged.Add(new { Question = questionText, Value = currentValue });
+                    improvements.Add(new ImprovementApiDto
+                    {
+                        Question = item.Question?.QuestionText ?? "(okänd fråga)",
+                        Previous = previousValue,
+                        Current = currentValue,
+                        Category = item.Question?.Category ?? "",
+                        SkippedPrevious = !previousItem.PatientAnswer.HasValue,
+                        SkippedCurrent = !item.PatientAnswer.HasValue
+                    });
                 }
             }
 
-            var sortedImprovements = improvements.OrderByDescending(i => ((dynamic)i).Change).ToList();
-            var sortedDeteriorations = deteriorations.OrderByDescending(i => ((dynamic)i).Change).ToList();
+            var sortedImprovements = improvements.OrderByDescending(i => i.Change).ToList();
 
-            return Ok(new
+            var result = new PatientChangeOverviewDto
             {
-                Förbättringar = sortedImprovements,
-                Försämringar = sortedDeteriorations,
-                Oförändrat = unchanged
-            });
+                Förbättringar = sortedImprovements.Select(i => new ImprovementDto
+                {
+                    Question = i.Question,
+                    Previous = i.Previous,
+                    Current = i.Current,
+                    Category = i.Category,
+                    SkippedPrevious = i.SkippedPrevious,
+                    SkippedCurrent = i.SkippedCurrent
+                }).ToList()
+            };
+
+            return Ok(result);
         }
+
     }
 }

@@ -1,0 +1,179 @@
+﻿@model DLDA.GUI.DTOs.PatientChangeOverviewDto
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Förbättring över tid";
+
+    var förbättringar = Model.Förbättringar;
+    var kategorier = förbättringar
+        .Where(f => !string.IsNullOrWhiteSpace(f.Category))
+        .Select(f => f.Category)
+        .Distinct()
+        .OrderBy(k => k)
+        .ToList();
+
+    var labelsJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Question));
+    var previousJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Previous));
+    var currentJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Current));
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">📈 Förbättring över tid</h2>
+
+    <p>
+        Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning – Lägre är bättre.
+    </p>
+
+    @if (!förbättringar.Any())
+    {
+        <div class="alert alert-info mt-4">
+            Det finns inga tydliga förbättringar mellan de två senaste bedömningarna.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <!-- 📊 Stapeldiagram -->
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <canvas id="improvementChart" style="height: 600px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📝 Återkoppling -->
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3">📝 Återkoppling</h5>
+
+                        <ul class="list-unstyled mb-3">
+                            <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
+                            <li><strong>@kategorier.Count</strong> kategorier innehöll förbättringar.</li>
+                            <li><strong>@förbättringar.Count(f => f.SkippedPrevious)</strong> frågor besvarades nu som tidigare varit <span class="text-muted">hoppade över</span>.</li>
+                        </ul>
+
+                        @if (kategorier.Any())
+                        {
+                            <div class="alert alert-success p-2 mb-3">
+                                Det finns flera områden där förbättringar skett sedan senaste bedömningen.
+                            </div>
+
+                            <div>
+                                <h6 class="text-success">✅ Kategorier som förbättrats</h6>
+                                <ul>
+                                    @foreach (var kategori in kategorier)
+                                    {
+                                        <li>@kategori</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔽 Toggle för att visa detaljerad fråga-förändring -->
+        <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetails()">
+            🔍 Visa detaljer per fråga
+        </button>
+
+        <div id="detailsSection" style="display: none;">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fråga</th>
+                                <th>Tidigare</th>
+                                <th>Nuvarande</th>
+                                <th>Förbättring</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in förbättringar)
+                            {
+                                <tr>
+                                    <td>@f.Question</td>
+                                    <td>@(f.SkippedPrevious ? "Hoppad över" : f.Previous.ToString())</td>
+                                    <td>@(f.SkippedCurrent ? "Hoppad över" : f.Current.ToString())</td>
+                                    <td>@f.Change</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="mt-4">
+        <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+            ⬅ Tillbaka till mina bedömningar
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('improvementChart');
+
+        const labels = @Html.Raw(labelsJson);
+        const previousData = @Html.Raw(previousJson);
+        const currentData = @Html.Raw(currentJson);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Tidigare',
+                        data: previousData,
+                        backgroundColor: '#ffc107'
+                    },
+                    {
+                        label: 'Nuvarande',
+                        data: currentData,
+                        backgroundColor: '#198754'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 4,
+                        ticks: { stepSize: 1 },
+                        title: {
+                            display: true,
+                            text: 'Skattning (lägre = bättre)'
+                        }
+                    }
+                }
+            }
+        });
+
+        function toggleDetails() {
+            const section = document.getElementById('detailsSection');
+            const button = document.getElementById('toggleButton');
+
+            const isVisible = section.style.display === 'block';
+            section.style.display = isVisible ? 'none' : 'block';
+            button.innerText = isVisible ? '🔍 Visa detaljer per fråga' : '🔼 Dölj detaljer';
+        }
+    </script>
+}
