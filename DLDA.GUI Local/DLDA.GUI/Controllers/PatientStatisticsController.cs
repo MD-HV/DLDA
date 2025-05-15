@@ -19,79 +19,103 @@ public class PatientStatisticsController : Controller
     [HttpGet("Single/{assessmentId}")]
     public async Task<IActionResult> Single(int assessmentId)
     {
-        // Hämta alla svar från API:t
-        var response = await _httpClient.GetAsync($"AssessmentItem/patient/assessment/{assessmentId}");
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            TempData["Error"] = "Kunde inte hämta bedömningssvar.";
+            var response = await _httpClient.GetAsync($"AssessmentItem/patient/assessment/{assessmentId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte hämta bedömningssvar.";
+                return RedirectToAction("Index", "PatientAssessment");
+            }
+
+            var answers = await response.Content.ReadFromJsonAsync<List<PatientAnswerStatsDto>>();
+            if (answers == null)
+            {
+                TempData["Error"] = "Inga svar kunde läsas in.";
+                return RedirectToAction("Index", "PatientAssessment");
+            }
+
+            var assessmentResp = await _httpClient.GetAsync($"Assessment/{assessmentId}");
+            if (!assessmentResp.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte hämta bedömningsinformation.";
+                return RedirectToAction("Index", "PatientAssessment");
+            }
+
+            var assessment = await assessmentResp.Content.ReadFromJsonAsync<AssessmentDto>();
+
+            var model = new PatientStatisticsDto
+            {
+                AssessmentId = assessmentId,
+                CreatedAt = assessment?.CreatedAt ?? DateTime.MinValue,
+                Answers = answers
+            };
+
+            return View("Single", model);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Tekniskt fel: {ex.Message}";
             return RedirectToAction("Index", "PatientAssessment");
         }
-
-        var answers = await response.Content.ReadFromJsonAsync<List<PatientAnswerStatsDto>>();
-        if (answers == null)
-        {
-            TempData["Error"] = "Inga svar kunde läsas in.";
-            return RedirectToAction("Index", "PatientAssessment");
-        }
-
-        // Hämta metainfo om bedömningen
-        var assessmentResp = await _httpClient.GetAsync($"Assessment/{assessmentId}");
-        var assessment = await assessmentResp.Content.ReadFromJsonAsync<AssessmentDto>();
-
-        var model = new PatientStatisticsDto
-        {
-            AssessmentId = assessmentId,
-            CreatedAt = assessment?.CreatedAt ?? DateTime.MinValue,
-            Answers = answers
-        };
-
-        return View("Single", model);
     }
 
-
-    // Tillåt både: ?assessmentId=82 och /Overview/82
+    // GET: /PatientStatistics/Overview or /PatientStatistics/Overview/82
     [HttpGet("Overview")]
     [HttpGet("Overview/{assessmentId}")]
     public async Task<IActionResult> Overview(int assessmentId)
     {
-        var response = await _httpClient.GetAsync($"statistics/summary/patient/{assessmentId}");
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            TempData["Error"] = "Kunde inte hämta statistik.";
+            var response = await _httpClient.GetAsync($"statistics/summary/patient/{assessmentId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte hämta statistik.";
+                return RedirectToAction("Index", "PatientAssessment");
+            }
+
+            var summary = await response.Content.ReadFromJsonAsync<PatientSingleSummaryDto>();
+            return View("Single", summary);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Tekniskt fel: {ex.Message}";
             return RedirectToAction("Index", "PatientAssessment");
         }
-
-        var summary = await response.Content.ReadFromJsonAsync<PatientSingleSummaryDto>();
-        return View("Single", summary);
     }
 
+    // GET: /PatientStatistics/Improvement/{userId}
     [HttpGet("Improvement/{userId}")]
     public async Task<IActionResult> Improvement(int userId)
     {
-        var response = await _httpClient.GetAsync($"statistics/patient-change-overview/{userId}");
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            TempData["Error"] = "Det gick inte att hämta förbättringsdata.";
+            var response = await _httpClient.GetAsync($"statistics/patient-change-overview/{userId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Det gick inte att hämta förbättringsdata.";
+                return RedirectToAction("Index", "PatientAssessment");
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            if (jsonString.Contains("inte tillräckligt"))
+            {
+                TempData["Error"] = "Du måste ha minst två avslutade bedömningar för att visa förbättringar över tid.";
+                return RedirectToAction("Index", "PatientAssessment");
+            }
+
+            var data = JsonSerializer.Deserialize<PatientChangeOverviewDto>(jsonString, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return View("Improvement", data);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
             return RedirectToAction("Index", "PatientAssessment");
         }
-
-        // 🟡 Läs svaret som ren text
-        var jsonString = await response.Content.ReadAsStringAsync();
-
-        // 🔴 Om det är ett felmeddelande (t.ex. från NotFound), returnera tidigt
-        if (jsonString.Contains("inte tillräckligt"))
-        {
-            TempData["Error"] = "Du måste ha minst två avslutade bedömningar för att visa förbättringar över tid.";
-            return RedirectToAction("Index", "PatientAssessment");
-        }
-
-        // ✅ Om inte, deserialisera till DTO
-        var data = JsonSerializer.Deserialize<PatientChangeOverviewDto>(jsonString, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        return View("Improvement", data);
     }
-
 }

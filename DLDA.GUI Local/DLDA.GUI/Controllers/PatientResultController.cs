@@ -1,6 +1,7 @@
 ﻿using DLDA.GUI.Authorization;
 using DLDA.GUI.DTOs;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Json;
 
 [RoleAuthorize("patient")]
 public class PatientResultController : Controller
@@ -17,27 +18,34 @@ public class PatientResultController : Controller
     {
         try
         {
-            // Hämta bedömningen (för att få IsComplete)
             var assessmentResponse = await _httpClient.GetAsync($"Assessment/{assessmentId}");
             if (!assessmentResponse.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte hämta bedömningsinformation.";
                 return View("Error");
+            }
 
             var assessment = await assessmentResponse.Content.ReadFromJsonAsync<AssessmentDto>();
 
-            // Hämta frågor + svar
             var response = await _httpClient.GetAsync($"AssessmentItem/patient/assessment/{assessmentId}/overview");
             if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte hämta frågeöversikt.";
                 return View("Error");
+            }
 
             var overview = await response.Content.ReadFromJsonAsync<AssessmentOverviewDto>();
             if (overview == null)
+            {
+                TempData["Error"] = "Ingen data tillgänglig för sammanställning.";
                 return View("Error");
+            }
 
             return View(overview);
         }
         catch (Exception ex)
         {
-            ViewBag.Error = ex.Message;
+            TempData["Error"] = $"Tekniskt fel: {ex.Message}";
             return View("Error");
         }
     }
@@ -46,32 +54,51 @@ public class PatientResultController : Controller
     [HttpPost]
     public async Task<IActionResult> Complete(int assessmentId)
     {
-        var response = await _httpClient.PostAsync($"AssessmentItem/assessment/{assessmentId}/complete", null);
-        if (!response.IsSuccessStatusCode)
-            return View("Error");
+        try
+        {
+            var response = await _httpClient.PostAsync($"AssessmentItem/assessment/{assessmentId}/complete", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte markera bedömningen som klar.";
+                return RedirectToAction("Index", new { assessmentId });
+            }
 
-        TempData["Success"] = "Bedömningen är nu markerad som klar.";
-        return RedirectToAction("Index", "PatientAssessment");
+            TempData["Success"] = "Bedömningen är nu markerad som klar.";
+            return RedirectToAction("Index", "PatientAssessment");
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
+            return RedirectToAction("Index", new { assessmentId });
+        }
     }
 
+    // POST: /PatientResult/UpdateAnswer
     [HttpPost]
     public async Task<IActionResult> UpdateAnswer(int itemId, int assessmentId, int answer, string? comment)
     {
-        var dto = new PatientAnswerDto
+        try
         {
-            Answer = answer,
-            Comment = string.IsNullOrWhiteSpace(comment) ? null : comment
-        };
+            var dto = new PatientAnswerDto
+            {
+                Answer = answer,
+                Comment = string.IsNullOrWhiteSpace(comment) ? null : comment
+            };
 
-        var response = await _httpClient.PutAsJsonAsync($"AssessmentItem/patient/{itemId}", dto);
+            var response = await _httpClient.PutAsJsonAsync($"AssessmentItem/patient/{itemId}", dto);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            TempData["Error"] = "Kunde inte spara ändringar.";
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte spara ändringar.";
+            }
+            else
+            {
+                TempData["Success"] = "Svar uppdaterat.";
+            }
         }
-        else
+        catch (Exception ex)
         {
-            TempData["Success"] = "Svar uppdaterat.";
+            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
         }
 
         return RedirectToAction("Index", new { assessmentId });

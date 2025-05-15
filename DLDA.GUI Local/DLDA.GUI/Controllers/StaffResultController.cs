@@ -1,9 +1,7 @@
 ﻿using DLDA.GUI.Authorization;
 using DLDA.GUI.DTOs;
 using Microsoft.AspNetCore.Mvc;
-
-// Visa resultat, Patient: visa egen förbättring (positiv feedback),
-// Personal: visa förbättringar och försämringar per fråga eller kategori
+using System.Net.Http.Json;
 
 namespace DLDA.GUI.Controllers
 {
@@ -20,64 +18,86 @@ namespace DLDA.GUI.Controllers
         // GET: /StaffResult/Index/{id}
         public async Task<IActionResult> Index(int id)
         {
-            var response = await _httpClient.GetAsync($"AssessmentItem/staff/assessment/{id}/overview");
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                TempData["Error"] = "Kunde inte hämta personalsammanställning.";
+                var response = await _httpClient.GetAsync($"AssessmentItem/staff/assessment/{id}/overview");
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Kunde inte hämta personalsammanställning.";
+                    return RedirectToAction("Index", "StaffAssessment");
+                }
+
+                var overview = await response.Content.ReadFromJsonAsync<StaffResultOverviewDto>();
+                if (overview == null)
+                {
+                    TempData["Error"] = "Data saknas för sammanställningen.";
+                    return RedirectToAction("Index", "StaffAssessment");
+                }
+
+                return View("Index", overview);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
                 return RedirectToAction("Index", "StaffAssessment");
             }
-
-            var overview = await response.Content.ReadFromJsonAsync<StaffResultOverviewDto>();
-            if (overview == null)
-            {
-                TempData["Error"] = "Data saknas.";
-                return RedirectToAction("Index", "StaffAssessment");
-            }
-
-            return View("Index", overview);
         }
 
-
+        // POST: /StaffResult/UpdateStaffAnswer
         [HttpPost]
         public async Task<IActionResult> UpdateStaffAnswer(int itemId, int assessmentId, int answer, string? comment, bool flag)
         {
-            var dto = new SubmitStaffAnswerDto
+            try
             {
-                ItemID = itemId,
-                Answer = answer,
-                Comment = comment,
-                Flag = flag
-            };
+                var dto = new SubmitStaffAnswerDto
+                {
+                    ItemID = itemId,
+                    Answer = answer,
+                    Comment = comment,
+                    Flag = flag
+                };
 
-            var response = await _httpClient.PostAsJsonAsync("Question/quiz/staff/submit", dto);
+                var response = await _httpClient.PostAsJsonAsync("Question/quiz/staff/submit", dto);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Kunde inte spara ändringar.";
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Kunde inte spara ändringar.";
+                }
+                else
+                {
+                    TempData["Success"] = "Svar uppdaterat.";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                TempData["Success"] = "Svar uppdaterat.";
+                TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
             }
 
             return RedirectToAction("Index", new { id = assessmentId });
         }
 
+        // POST: /StaffResult/Complete
         [HttpPost]
         public async Task<IActionResult> Complete(int assessmentId, int userId)
         {
-            var response = await _httpClient.PostAsync($"AssessmentItem/assessment/{assessmentId}/staff-complete", null);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                TempData["Error"] = "Kunde inte markera bedömningen som klar. Kontrollera att alla frågor är besvarade.";
+                var response = await _httpClient.PostAsync($"AssessmentItem/assessment/{assessmentId}/staff-complete", null);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Kunde inte markera bedömningen som klar. Kontrollera att alla frågor är besvarade.";
+                    return RedirectToAction("Index", new { id = assessmentId });
+                }
+
+                TempData["Success"] = "Personalens bedömning har markerats som klar.";
+                return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
                 return RedirectToAction("Index", new { id = assessmentId });
             }
-
-            TempData["Success"] = "Personalens bedömning har markerats som klar.";
-            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
         }
-
-
     }
 }

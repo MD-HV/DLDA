@@ -1,49 +1,47 @@
-﻿@{
-    ViewData["Title"] = "Lägg till användare";
+﻿@model List<DLDA.GUI.DTOs.UserDto>
+@{
+    ViewData["Title"] = "Alla användare";
 }
 
 <div class="container mt-5">
-    <h2 class="mb-4">👤 Lägg till användare och bestäm roll</h2>
+    <h2 class="mb-4">👥 Alla användare</h2>
 
-    <!-- 🟢 Lyckat meddelande -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success d-flex align-items-center" role="alert">
-            <span class="me-2">✅</span>
-            <div>@TempData["Success"]</div>
-        </div>
+        <div class="alert alert-success">@TempData["Success"]</div>
     }
 
-    <!-- 🔴 Felmeddelande -->
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger d-flex align-items-center" role="alert">
-            <span class="me-2">❌</span>
-            <div>@TempData["Error"]</div>
-        </div>
+        <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <!-- 📝 Formulär (exempel) -->
-    <form asp-action="Create" method="post">
-        <div class="mb-3">
-            <label for="Username" class="form-label">Användarnamn</label>
-            <input type="text" class="form-control" id="Username" name="Username" required />
-        </div>
+    <a asp-action="Create" class="btn btn-success mb-3">➕ Skapa ny användare</a>
 
-        <div class="mb-3">
-            <label for="Email" class="form-label">E-post</label>
-            <input type="email" class="form-control" id="Email" name="Email" required />
-        </div>
-
-        <div class="mb-3">
-            <label for="Role" class="form-label">Roll</label>
-            <select class="form-select" id="Role" name="Role">
-                <option value="1">Admin</option>
-                <option value="2">Personal</option>
-                <option value="3">Patient</option>
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-primary">💾 Skapa användare</button>
-    </form>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Användarnamn</th>
+                <th>E-post</th>
+                <th>Roll</th>
+                <th>Åtgärder</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.UserID</td>
+                    <td>@user.Username</td>
+                    <td>@user.Email</td>
+                    <td>@user.Role</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@user.UserID" class="btn btn-sm btn-primary">✏ Redigera</a>
+                        <a asp-action="Delete" asp-route-id="@user.UserID" class="btn btn-sm btn-danger">🗑 Ta bort</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>

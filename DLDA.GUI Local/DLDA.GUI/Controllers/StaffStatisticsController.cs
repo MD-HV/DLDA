@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-//  Övergripande statistik, Matchningsgrad, Diff-tabeller, Trendanalys över tid
-
 [Route("StaffStatistics")]
 [RoleAuthorize("staff")]
 public class StaffStatisticsController : Controller
@@ -17,7 +15,7 @@ public class StaffStatisticsController : Controller
         _httpClient = httpClientFactory.CreateClient("DLDA");
     }
 
-    // GET: /StaffStatistics/Comparison/82
+    // GET: /StaffStatistics/Comparison/{assessmentId}
     [HttpGet("Comparison/{assessmentId}")]
     public async Task<IActionResult> Comparison(int assessmentId)
     {
@@ -33,7 +31,6 @@ public class StaffStatisticsController : Controller
             }
 
             var json = await response.Content.ReadAsStringAsync();
-
             var comparison = JsonSerializer.Deserialize<List<StaffComparisonRowDto>>(json, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -45,11 +42,11 @@ public class StaffStatisticsController : Controller
                 return RedirectToAction("Index", "StaffAssessment");
             }
 
-            // 🔍 Hämta bedömningen för att extrahera UserId (kan hämtas från separat API eller cache)
+            // 🔍 Hämta bedömningen för att få UserId
             var assessmentResponse = await _httpClient.GetAsync($"assessment/{assessmentId}");
             if (!assessmentResponse.IsSuccessStatusCode)
             {
-                TempData["Error"] = "Kunde inte hämta användarinformation.";
+                TempData["Error"] = "Kunde inte hämta information om användaren.";
                 return RedirectToAction("Index", "StaffAssessment");
             }
 
@@ -65,34 +62,43 @@ public class StaffStatisticsController : Controller
         }
         catch (Exception ex)
         {
-            TempData["Error"] = $"Ett fel inträffade: {ex.Message}";
+            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
             return RedirectToAction("Index", "StaffAssessment");
         }
     }
 
+    // GET: /StaffStatistics/ChangeOverview/{userId}
     [HttpGet("ChangeOverview/{userId}")]
     public async Task<IActionResult> ChangeOverview(int userId)
     {
-        var response = await _httpClient.GetAsync($"statistics/staff-change-overview/{userId}");
-        if (!response.IsSuccessStatusCode)
+        try
         {
-            TempData["Error"] = "Kunde inte hämta översiktsdata.";
+            var response = await _httpClient.GetAsync($"statistics/staff-change-overview/{userId}");
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Kunde inte hämta översiktsdata.";
+                return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            if (json.Contains("inte tillräckligt"))
+            {
+                TempData["Error"] = "Det krävs minst två avslutade bedömningar för att visa förändringar.";
+                return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+            }
+
+            var overview = JsonSerializer.Deserialize<StaffChangeOverviewDto>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            ViewBag.UserId = userId;
+            return View("ChangeOverview", overview);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
             return RedirectToAction("Assessments", "StaffAssessment", new { userId });
         }
-
-        var json = await response.Content.ReadAsStringAsync();
-        if (json.Contains("inte tillräckligt"))
-        {
-            TempData["Error"] = "Det krävs minst två avslutade bedömningar för att visa förändringar.";
-            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
-        }
-
-        var overview = JsonSerializer.Deserialize<StaffChangeOverviewDto>(json, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-
-        ViewBag.UserId = userId;
-        return View("ChangeOverview", overview);
     }
 }

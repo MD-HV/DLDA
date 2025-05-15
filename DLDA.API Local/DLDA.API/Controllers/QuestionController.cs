@@ -153,16 +153,21 @@ public class QuestionController : ControllerBase
         return Ok(new QuestionDto
         {
             AssessmentID = item.AssessmentID,
-            AssessmentItemID = item.ItemID, // 👈 korrekt fält som frontenden ska använda
+            AssessmentItemID = item.ItemID, // 👈 korrekt ID för att svara
             QuestionID = item.QuestionID,
             QuestionText = item.Question?.QuestionText ?? "Frågetext saknas",
             Category = item.Question?.Category ?? "Okänd",
             IsActive = item.Question?.IsActive ?? false,
             Order = item.Order,
             Total = total,
-            ScaleType = assessment?.ScaleType ?? "Numerisk"
+            ScaleType = assessment?.ScaleType ?? "Numerisk",
+
+            // ✅ Lägg till tidigare patientdata om den finns
+            PatientAnswer = item.PatientAnswer,
+            PatientComment = item.PatientComment
         });
     }
+
 
 
 
@@ -224,7 +229,6 @@ public class QuestionController : ControllerBase
         });
     }
 
-    // GET: api/Question/quiz/patient/previous/{assessmentId}/{currentOrder}
     [HttpGet("quiz/patient/previous/{assessmentId}/{currentOrder}")]
     public async Task<ActionResult<QuestionDto>> GetPreviousQuestion(int assessmentId, int currentOrder)
     {
@@ -255,9 +259,12 @@ public class QuestionController : ControllerBase
             IsActive = item.Question.IsActive,
             Order = item.Order,
             Total = total,
-            ScaleType = assessment?.ScaleType ?? "Numerisk"
+            ScaleType = assessment?.ScaleType ?? "Numerisk",
+            PatientAnswer = item.PatientAnswer, // 👈 Lägger till svar
+            PatientComment = item.PatientComment // 👈 Lägger till kommentar
         });
     }
+
 
     // --------------------------
     // [QUIZ – STAFF]

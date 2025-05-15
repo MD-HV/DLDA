@@ -13,5 +13,7 @@
         public int Total { get; set; }
         public string? ScaleType { get; set; }
         public int AssessmentItemID { get; set; }
+        public int? PatientAnswer { get; set; }
+        public string? PatientComment { get; set; }
     }
 }
