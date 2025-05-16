@@ -229,6 +229,7 @@ public class AssessmentController : ControllerBase
 
         return NoContent();
     }
+
     // POST: /StaffAssessment/Unlock
     // låser upp en redan avklarad bedömning
     [HttpPost("unlock/{assessmentId}")]

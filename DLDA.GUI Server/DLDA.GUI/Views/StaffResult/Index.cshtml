@@ -73,8 +73,10 @@
 
     @if (isLocked)
     {
-        <div class="alert alert-info d-flex justify-content-between align-items-center">
-            <span>🔒 Denna bedömning är markerad som klar och kan inte längre redigeras.</span>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">
+                🔒 Denna bedömning är markerad som klar och kan inte längre redigeras.
+            </span>
             <form asp-action="Unlock" method="post" class="mb-0">
                 <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
                 <input type="hidden" name="userId" value="@Model.UserId" />
