@@ -250,11 +250,10 @@ namespace DLDA.API.Controllers
             return Ok(skipped);
         }
 
-        // GET: api/statistics/comparison-table/{assessmentId}
+        // GET: api/statistics/comparison-table-staff/{assessmentId}
         // Returnerar detaljerad rad-för-rad jämförelse av svar (patient & personal)
         [HttpGet("comparison-table-staff/{assessmentId}")]
         public ActionResult<List<StaffComparisonRowDto>> GetAssessmentComparisonForStaff(int assessmentId)
-
         {
             var items = _context.AssessmentItems
                 .Where(i => i.AssessmentID == assessmentId)
@@ -266,8 +265,8 @@ namespace DLDA.API.Controllers
             {
                 var p = i.PatientAnswer;
                 var s = i.StaffAnswer;
-                string status;
 
+                string status;
                 if (!p.HasValue) status = "skipped";
                 else if (!s.HasValue) status = "staff-skipped";
                 else if (p.Value == s.Value) status = "match";
@@ -278,17 +277,23 @@ namespace DLDA.API.Controllers
                 {
                     QuestionNumber = i.QuestionID,
                     QuestionText = i.Question?.QuestionText ?? "",
-                    PatientAnswer = p.HasValue ? p.Value.ToString() : "",
-                    StaffAnswer = s.HasValue ? s.Value.ToString() : "",
-                    Classification = status,
-                    Comment = i.Flag ? "Diskutera vidare ⚠️" : "",
-                    Category = i.Question?.Category ?? ""
-                };
+                    Category = i.Question?.Category ?? "",
 
+                    PatientAnswer = p,
+                    PatientComment = i.PatientComment,
+
+                    StaffAnswer = s,
+                    StaffComment = i.StaffComment,
+
+                    Classification = status,
+                    SkippedByPatient = !p.HasValue,
+                    IsFlagged = i.Flag
+                };
             });
 
             return Ok(result);
         }
+
 
         // GET: api/statistics/staff-change-overview/{userId}
         [HttpGet("staff-change-overview/{userId}")]

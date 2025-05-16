@@ -4,12 +4,26 @@
     {
         public int QuestionNumber { get; set; }
         public string QuestionText { get; set; } = string.Empty;
-        public string PatientAnswer { get; set; } = string.Empty;
-        public string StaffAnswer { get; set; } = string.Empty;
-        public string Classification { get; set; } = string.Empty; // match, mild-diff, strong-diff, skipped
-        public string Comment { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+
+        // 🧑 Patient
+        public int? PatientAnswer { get; set; }
+        public string? PatientComment { get; set; }
+
+        // 👩‍⚕️ Personal
+        public int? StaffAnswer { get; set; }
+        public string? StaffComment { get; set; }
+
+        // 🟡 Klassificering (match, mild-diff, strong-diff, skipped)
+        public string Classification { get; set; } = string.Empty;
+
+        // ⛔ Fråga hoppad över av patient
+        public bool SkippedByPatient { get; set; }
+
+        // 🚩 Markerad av personal för vidare diskussion
+        public bool IsFlagged { get; set; }
     }
+
 
     public class StaffChangeOverviewDto
     {

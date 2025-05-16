@@ -7,324 +7,214 @@
     var match = Model.Where(m => m.Classification == "match").ToList();
     var mild = Model.Where(m => m.Classification == "mild-diff").ToList();
     var strong = Model.Where(m => m.Classification == "strong-diff").ToList();
-    var skipped = Model.Where(m => m.Classification == "skipped" || m.Classification == "staff-skipped").ToList();
-    var flagged = Model.Where(m => !string.IsNullOrWhiteSpace(m.Comment)).ToList();
+    var skipped = Model.Where(m => m.Classification == "skipped" || m.Classification == "staff-skipped" || m.SkippedByPatient).ToList();
+    var flagged = Model.Where(m => m.IsFlagged).ToList();
+    var commented = Model.Where(m => !string.IsNullOrWhiteSpace(m.PatientComment) || !string.IsNullOrWhiteSpace(m.StaffComment)).ToList();
 
     var labelsJson = JsonSerializer.Serialize(new[] { "❗ Stor skillnad", "⚠ Mindre skillnad", "✅ Match", "🛑 Obesvarad" });
     var valuesJson = JsonSerializer.Serialize(new[] { strong.Count, mild.Count, match.Count, skipped.Count });
+
+    var topMatchCategories = match
+        .Where(m => !string.IsNullOrWhiteSpace(m.Category))
+        .GroupBy(m => m.Category.Trim())
+        .Select(g => new { Category = g.Key, Count = g.Count() })
+        .OrderByDescending(g => g.Count)
+        .Take(5)
+        .ToList();
+
+    var topStrongCategories = strong
+        .Where(m => !string.IsNullOrWhiteSpace(m.Category))
+        .GroupBy(m => m.Category.Trim())
+        .Select(g => new { Category = g.Key, Count = g.Count() })
+        .OrderByDescending(g => g.Count)
+        .Take(5)
+        .ToList();
 }
 
-<a class="btn btn-secondary mt-4"
-   asp-controller="StaffAssessment"
-   asp-action="Assessments"
-   asp-route-userId="@ViewBag.UserId">
+<a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
     ⬅ Tillbaka till bedömningar
 </a>
-
-@functions {
-    string FormatAnswer(string? answer)
-    {
-        return answer switch
-        {
-            "0" => "Inget problem<br /><small class=\"text-muted\">(0)</small>",
-            "1" => "Litet problem<br /><small class=\"text-muted\">(1)</small>",
-            "2" => "Måttligt problem<br /><small class=\"text-muted\">(2)</small>",
-            "3" => "Stort problem<br /><small class=\"text-muted\">(3)</small>",
-            "4" => "Mycket stort problem<br /><small class=\"text-muted\">(4)</small>",
-            _ => "-"
-        };
-    }
-}
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center justify-content-between" role="alert">
-        <span class="me-2">✅</span>
-        <div>@TempData["Success"]</div>
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
-        <span class="me-2">❌</span>
-        <div>@TempData["Error"]</div>
-    </div>
-}
 
 <div class="container mt-5">
     <h2 class="mb-4">📊 Jämförelse av skattningar mellan patient och personal</h2>
 
-    <div class="row mt-4">
+    <div class="row mb-4">
         <div class="col-md-6">
-            <canvas id="comparisonPie"></canvas>
+            <canvas id="comparisonPie" style="max-height: 500px;"></canvas>
         </div>
-
         <div class="col-md-6">
-            <h5 class="mb-3">📝 Återkoppling</h5>
-            <ul>
-                <li>💄 Totalt jämförda frågor: <strong>@Model.Count</strong></li>
-                <li>✅ Överensstämmer: <strong>@match.Count</strong></li>
-                <li>⚠ Mindre skillnad (±1): <strong>@mild.Count</strong></li>
-                <li>❗ Större skillnad (≥2): <strong>@strong.Count</strong></li>
-                <li>🛑 Obesvarade: <strong>@skipped.Count</strong></li>
-                <li>🚩 Flaggade: <strong>@flagged.Count</strong></li>
-            </ul>
-
-            @if (strong.Count >= 1)
-            {
-                <div class="alert alert-warning">
-                    Det finns <strong>@strong.Count</strong> frågor med större skillnader i skattning mellan patient och personal.
-                </div>
-            }
-
+            <div class="alert alert-warning">
+                Det finns <strong>@strong.Count</strong> frågor med större skillnader i skattning mellan patient och personal.
+            </div>
             <div class="row">
-                <div class="col-md-6">
-                    <div class="card border-success shadow-sm">
-                        <div class="card-header bg-success text-white">
-                            ✅ Kategorier med mest överensstämmelse
-                        </div>
+                <div class="col-12 mb-3">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white">✅ Kategorier med mest överensstämmelse</div>
                         <div class="card-body">
-                            <ul>
-                                @foreach (var group in match
-                                                                .Where(m => !string.IsNullOrWhiteSpace(m.Category))
-                                                                .GroupBy(m => m.Category.Trim().ToLower())
-                                                                .Select(g => new { Category = g.First().Category, Count = g.Count() })
-                                                                .OrderByDescending(g => g.Count)
-                                                                .Take(5))
+                            <ul class="mb-0">
+                                @foreach (var cat in topMatchCategories)
                                 {
-                                    <li><strong>@group.Category</strong>: @group.Count frågor</li>
+                                    <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
                                 }
                             </ul>
                         </div>
                     </div>
                 </div>
-
-                <div class="col-md-6">
-                    <div class="card border-danger shadow-sm">
-                        <div class="card-header bg-danger text-white">
-                            ❗ Kategorier med störst skillnader
-                        </div>
+                <div class="col-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">❗ Kategorier med störst skillnader</div>
                         <div class="card-body">
-                            <ul>
-                                @foreach (var group in strong
-                                                                .Where(m => !string.IsNullOrWhiteSpace(m.Category))
-                                                                .GroupBy(m => m.Category.Trim().ToLower())
-                                                                .Select(g => new { Category = g.First().Category, Count = g.Count() })
-                                                                .OrderByDescending(g => g.Count)
-                                                                .Take(5))
+                            <ul class="mb-0">
+                                @foreach (var cat in topStrongCategories)
                                 {
-                                    <li><strong>@group.Category</strong>: @group.Count frågor</li>
+                                    <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
                                 }
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
+            <ul class="list-unstyled mt-4">
+                <li>✅ Match: <strong>@match.Count</strong></li>
+                <li>⚠ Mindre skillnader: <strong>@mild.Count</strong></li>
+                <li>❗ Större skillnader: <strong>@strong.Count</strong></li>
+                <li>🛑 Hoppade frågor: <strong>@skipped.Count</strong></li>
+                <li>🚩 Flaggade frågor: <strong>@flagged.Count</strong></li>
+                <li>💬 Kommentarer (patient/personal): <strong>@commented.Count</strong></li>
+            </ul>
         </div>
     </div>
 
-    <!-- 📂 Tabeller per klassificering -->
-    @foreach (var (title, icon, list, color) in new[] {
-        ("❗ Stor skillnad", "danger", strong, "danger"),
-        ("⚠ Mindre skillnad", "warning", mild, "warning"),
-        ("✅ Match", "success", match, "success"),
-        ("🛑 Obesvarad", "secondary", skipped, "secondary")
-        })
-    {
-        var collapseId = title.Replace(" ", "_");
-        <div class="card border-@color mt-4 shadow-sm">
-            <div class="card-header bg-@color text-white d-flex justify-content-between align-items-center">
-                <span>@title</span>
-                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId">
-                    Visa/dölj
-                </button>
-            </div>
-            <div id="@collapseId" class="collapse">
-                <div class="card-body p-0">
-                    <table class="table table-bordered mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nr</th>
-                                <th>Fråga</th>
-                                <th>Kategori</th>
-                                <th>🧑 Patient</th>
-                                <th>👩‍🎓 Personal</th>
-                                <th>Skillnad</th>
-                                <th>Kommentar</th>
-                                <th>Flagga</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in list
-                                                    .OrderByDescending(r => Math.Max(
-                                                    int.TryParse(r.PatientAnswer, out var p) ? p : 0,
-                                                    int.TryParse(r.StaffAnswer, out var s) ? s : 0))
-                                                    .ThenByDescending(r =>
-                                                    r.Classification == "strong-diff" ? 3 :
-                                                    r.Classification == "mild-diff" ? 2 : 1))
-                            {
-                                var label = row.Classification switch
-                                {
-                                    "strong-diff" => "❗ Stor skillnad",
-                                    "mild-diff" => "⚠ Mindre skillnad",
-                                    "match" => "✅ Match",
-                                    _ => "🛑 Obesvarad"
-                                };
-
-                                <tr class="table-@color">
-                                    <td>@row.QuestionNumber</td>
-                                    <td>@row.QuestionText</td>
-                                    <td>@row.Category</td>
-                                    <td>@Html.Raw(FormatAnswer(row.PatientAnswer))</td>
-                                    <td>@Html.Raw(FormatAnswer(row.StaffAnswer))</td>
-                                    <td>@label</td>
-                                    <td>@(string.IsNullOrWhiteSpace(row.Comment) ? "-" : row.Comment)</td>
-                                    <td>@(string.IsNullOrWhiteSpace(row.Comment) ? "" : "🚩")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    }
-
-    @{
-        var highScores = Model
-        .Where(m => int.TryParse(m.PatientAnswer, out var ans) && ans >= 3)
-        .OrderByDescending(m => int.Parse(m.PatientAnswer))
-        .ThenBy(m => m.QuestionNumber)
-        .Take(10)
-        .ToList();
-
-        var lowScores = Model
-        .Where(m => int.TryParse(m.PatientAnswer, out var ans) && ans <= 1)
-        .OrderBy(m => int.Parse(m.PatientAnswer))
-        .ThenBy(m => m.QuestionNumber)
-        .Take(10)
-        .ToList();
-    }
-
-    <div class="row mt-5">
-        <div class="col-md-6">
-            <div class="card border-danger shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    🔺 Frågor patienten skattat högt (mest problem)
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-bordered mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nr</th>
-                                <th>Fråga</th>
-                                <th>Kategori</th>
-                                <th>Patientens svar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in highScores)
-                            {
-                                <tr>
-                                    <td>@row.QuestionNumber</td>
-                                    <td>@row.QuestionText</td>
-                                    <td>@row.Category</td>
-                                    <td>@Html.Raw(FormatAnswer(row.PatientAnswer))</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card border-success shadow-sm">
-                <div class="card-header bg-success text-white">
-                    🔻 Frågor patienten skattat lågt (fungerar bra)
-                </div>
-                <div class="card-body p-0">
-                    <table class="table table-bordered mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Nr</th>
-                                <th>Fråga</th>
-                                <th>Kategori</th>
-                                <th>Patientens svar</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in lowScores)
-                            {
-                                <tr>
-                                    <td>@row.QuestionNumber</td>
-                                    <td>@row.QuestionText</td>
-                                    <td>@row.Category</td>
-                                    <td>@Html.Raw(FormatAnswer(row.PatientAnswer))</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <div class="mb-3 d-flex flex-wrap gap-2">
+        <button class="btn btn-outline-secondary" onclick="toggleTable()">🔍 Visa/dölj frågetabell</button>
+        <select class="form-select w-auto" onchange="applyFilters()" id="filterSelector">
+            <option value="all">Visa alla</option>
+            <option value="match">✅ Match</option>
+            <option value="mild-diff">⚠ Mindre skillnad</option>
+            <option value="strong-diff">❗ Större skillnad</option>
+            <option value="skipped">🛑 Hoppade frågor</option>
+            <option value="flagged">🚩 Flaggade</option>
+            <option value="commented">💬 Kommentarer</option>
+        </select>
     </div>
 
+    <div id="questionTableSection" style="display:none;">
+        <table class="table table-bordered table-hover" id="comparisonTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Nr</th>
+                    <th>Fråga</th>
+                    <th>Kategori</th>
+                    <th>🧑 Patient</th>
+                    <th>👩‍⚕️ Personal</th>
+                    <th>Kommentarer</th>
+                    <th>Flagga</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    var label = row.Classification switch
+                    {
+                        "strong-diff" => "❗ Stor skillnad",
+                        "mild-diff" => "⚠ Mindre skillnad",
+                        "match" => "✅ Match",
+                        _ => "🛑 Obesvarad"
+                    };
 
-    <a class="btn btn-secondary mt-4"
-       asp-controller="StaffAssessment"
-       asp-action="Assessments"
-       asp-route-userId="@ViewBag.UserId">
+                    var rowClass = row.Classification switch
+                    {
+                        "strong-diff" => "table-danger",
+                        "mild-diff" => "table-warning",
+                        "match" => "table-success",
+                        _ => "table-secondary"
+                    };
+
+                    <tr class="@rowClass"
+                        data-type="@row.Classification"
+                        data-flagged="@row.IsFlagged.ToString().ToLower()"
+                        data-commented="@( (!string.IsNullOrWhiteSpace(row.PatientComment) || !string.IsNullOrWhiteSpace(row.StaffComment)).ToString().ToLower() )">
+                        <td>@row.QuestionNumber</td>
+                        <td>@row.QuestionText</td>
+                        <td>@row.Category</td>
+                        <td>@Html.Raw(FormatAnswer(row.PatientAnswer))</td>
+                        <td>@Html.Raw(FormatAnswer(row.StaffAnswer))</td>
+                        <td>
+                            <strong>Patient:</strong> @(string.IsNullOrWhiteSpace(row.PatientComment) ? "-" : row.PatientComment)<br />
+                            <strong>Personal:</strong> @(string.IsNullOrWhiteSpace(row.StaffComment) ? "-" : row.StaffComment)
+                        </td>
+                        <td>@(row.IsFlagged ? "🚩" : "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
         ⬅ Tillbaka till bedömningar
     </a>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <script>
-        const ctx = document.getElementById('comparisonPie');
         const labels = @Html.Raw(labelsJson);
-        const data = @Html.Raw(valuesJson);
+        const values = @Html.Raw(valuesJson);
 
-        new Chart(ctx, {
+        new Chart(document.getElementById('comparisonPie'), {
             type: 'pie',
             data: {
                 labels: labels,
                 datasets: [{
-                    data: data,
-                    backgroundColor: ['#dc3545', '#ffc107', '#198754', '#adb5bd'],
-                    borderWidth: 1
+                    data: values,
+                    backgroundColor: ['#dc3545', '#ffc107', '#198754', '#adb5bd']
                 }]
             },
             options: {
                 plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                        callbacks: {
-                            label: function (ctx) {
-                                const label = ctx.label || '';
-                                const value = ctx.parsed || 0;
-                                return `${label}: ${value} frågor`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: '#000',
-                        font: {
-                            weight: 'bold',
-                            size: 16
-                        },
-                        formatter: (value, ctx) => {
-                            const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            if (total === 0 || value === 0) return '';
-                            const percent = Math.round((value / total) * 100);
-                            return `${percent}%`;
-                        }
-                    }
+                    legend: { position: 'bottom' }
                 }
-            },
-            plugins: [ChartDataLabels]
+            }
         });
+
+        function toggleTable() {
+            const section = document.getElementById("questionTableSection");
+            section.style.display = section.style.display === "none" ? "block" : "none";
+        }
+
+        function applyFilters() {
+            const filter = document.getElementById("filterSelector").value;
+            const rows = document.querySelectorAll("#comparisonTable tbody tr");
+
+            rows.forEach(row => {
+                const type = row.dataset.type;
+                const flagged = row.dataset.flagged === "true";
+                const commented = row.dataset.commented === "true";
+
+                let show = false;
+                if (filter === "all") show = true;
+                else if (filter === "flagged") show = flagged;
+                else if (filter === "commented") show = commented;
+                else if (filter === "skipped") show = type === "skipped" || type === "staff-skipped";
+                else show = type === filter;
+
+                row.style.display = show ? "table-row" : "none";
+            });
+        }
     </script>
+}
+
+@functions {
+    string FormatAnswer(int? value)
+    {
+        return value switch
+        {
+            0 => "Inget problem<br /><small class=\"text-muted\">(0)</small>",
+            1 => "Litet problem<br /><small class=\"text-muted\">(1)</small>",
+            2 => "Måttligt problem<br /><small class=\"text-muted\">(2)</small>",
+            3 => "Stort problem<br /><small class=\"text-muted\">(3)</small>",
+            4 => "Mycket stort problem<br /><small class=\"text-muted\">(4)</small>",
+            _ => "-"
+        };
+    }
 }
