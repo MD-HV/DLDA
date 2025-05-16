@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * jQuery JavaScript Library v3.7.1
  * https://jquery.com/
  *
@@ -3870,7 +3870,10 @@ if ( document.readyState === "complete" ||
 	document.addEventListener( "DOMContentLoaded", completed );
 
 	// A fallback to window.onload, that will always work
-	window.addEventListener( "load", completed );
+	window.onload = () => {
+		document.getElementById('detailsSection').style.display = 'block';
+		document.getElementById('toggleButton').textContent = '🔍 Dölj detaljer';
+		filterData('all');
 }
 
 

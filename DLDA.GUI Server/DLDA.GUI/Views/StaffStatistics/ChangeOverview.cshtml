@@ -44,22 +44,6 @@
     string FormatChange(int prev, int curr) => curr < prev ? "✅ Förbättring" : curr > prev ? "❗ Försämring" : "Oförändrat";
 }
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center justify-content-between" role="alert">
-        <span class="me-2">✅</span>
-        <div>@TempData["Success"]</div>
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
-        <span class="me-2">❌</span>
-        <div>@TempData["Error"]</div>
-    </div>
-}
-
 <div class="container mt-5">
     <h2 class="mb-2">📈 Förändringar över tid (personal)</h2>
     <p>
@@ -67,8 +51,18 @@
         <strong>@Model.PreviousDate.ToString("yyyy-MM-dd")</strong> → <strong>@Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
     </p>
 
-    <a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId"
-       class="btn btn-secondary">
+    <div class="dropdown mb-3">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            Filter
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+            <li><a class="dropdown-item" href="#" onclick="filterData('all')">Visa allt</a></li>
+            <li><a class="dropdown-item" href="#" onclick="filterData('improvement')">Förbättringar</a></li>
+            <li><a class="dropdown-item" href="#" onclick="filterData('deterioration')">Försämringar</a></li>
+        </ul>
+    </div>
+
+    <a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId" class="btn btn-secondary mb-4">
         ⬅ Tillbaka till bedömningar
     </a>
 
@@ -76,7 +70,10 @@
         <div class="col-md-8">
             <div class="card shadow-sm border-0 mb-4">
                 <div class="card-body">
-                    <canvas id="improvementChart" style="height: 500px;"></canvas>
+                    <div style="height: 500px;">
+                        <h5 class="text-muted" id="chartFilterLabel"></h5>
+                        <canvas id="improvementChart" style="height: 100%; width: 100%;"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -94,146 +91,207 @@
 
                     @if (förbättradeKategorier.Any())
                     {
-                        <div class="alert alert-success p-2 mb-3">
+                        <div class="alert alert-success p-2 mb-3" id="feedbackImprovementNote">
                             Det finns flera områden där förbättringar skett sedan senaste bedömningen.
                         </div>
-                        <h6 class="text-success">✅ Kategorier som förbättrats</h6>
-                        <ul>
-                            @foreach (var kategori in förbättradeKategorier)
-                            {
-                                <li>@kategori</li>
-                            }
-                        </ul>
+                        <div id="feedbackImprovement">
+                            <h6 class="text-success">✅ Kategorier som förbättrats</h6>
+                            <ul>
+                                @foreach (var kategori in förbättradeKategorier)
+                                {
+                                    <li>@kategori</li>
+                                }
+                            </ul>
+                        </div>
                     }
-
                     @if (försämradeKategorier.Any())
                     {
-                        <div class="alert alert-danger p-2 mt-4">
+                        <div class="alert alert-danger p-2 mt-4" id="feedbackDeteriorationNote">
                             Några områden har skattats som sämre jämfört med föregående bedömning.
                         </div>
-                        <h6 class="text-danger">❗ Kategorier som försämrats</h6>
-                        <ul>
-                            @foreach (var kategori in försämradeKategorier)
-                            {
-                                <li>@kategori</li>
-                            }
-                        </ul>
+                        <div id="feedbackDeterioration">
+                            <h6 class="text-danger">❗ Kategorier som försämrats</h6>
+                            <ul>
+                                @foreach (var kategori in försämradeKategorier)
+                                {
+                                    <li>@kategori</li>
+                                }
+                            </ul>
+                        </div>
                     }
                 </div>
             </div>
         </div>
-</div>
+    </div>
 
     <div class="d-flex gap-2 mt-4 flex-wrap">
         <button class="btn btn-outline-secondary" onclick="toggleDetails()" id="toggleButton">
-            🔍 Visa detaljer per fråga
+            🔍 Dölj detaljer
         </button>
 
-    <div id="detailsSection" style="display: none;">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Fråga</th>
-                            <th>Kategori</th>
-                            <th>Tidigare</th>
-                            <th>Nuvarande</th>
-                            <th>Förändring</th>
-                            <th>Flagga</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var f in förbättringar.Concat(försämringar))
-                        {
-                            var highlight = f.Current < f.Previous ? "table-success" :
-                            f.Current > f.Previous ? "table-danger" : "";
-
-                            <tr class="@highlight">
-                                <td>@f.QuestionId</td>
-                                <td>@f.Question</td>
-                                <td>@f.Category</td>
-                                <td>
-                                    @(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))<br />
-                                    <small class="text-muted">(@f.Previous)</small>
-                                </td>
-                                <td>
-                                    @(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))<br />
-                                    <small class="text-muted">(@f.Current)</small>
-                                </td>
-                                <td>@FormatChange(f.Previous, f.Current)</td>
-                                <td>@(flaggade.Any(x => x.QuestionId == f.QuestionId) ? "🚩" : "")</td>
+        <div id="detailsSection" style="display: none;">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Fråga</th>
+                                <th>Kategori</th>
+                                <th>Tidigare</th>
+                                <th>Nuvarande</th>
+                                <th>Förändring</th>
+                                <th>Flagga</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in förbättringar.Concat(försämringar))
+                            {
+                                var highlight = f.Current < f.Previous ? "table-success" :
+                                f.Current > f.Previous ? "table-danger" : "";
+
+                                <tr class="@highlight">
+                                    <td>@f.QuestionId</td>
+                                    <td>@f.Question</td>
+                                    <td>@f.Category</td>
+                                    <td>
+                                        @(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))<br />
+                                        <small class="text-muted">(@f.Previous)</small>
+                                    </td>
+                                    <td>
+                                        @(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))<br />
+                                        <small class="text-muted">(@f.Current)</small>
+                                    </td>
+                                    <td>@FormatChange(f.Previous, f.Current)</td>
+                                    <td>@(flaggade.Any(x => x.QuestionId == f.QuestionId) ? "🚩" : "")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-
-        <a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId"
-            class="btn btn-secondary">
-            ⬅ Tillbaka till bedömningar
-        </a>
-    </div>
+</div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('improvementChart');
-        const labels = @Html.Raw(labelsJson);
-        const previousData = @Html.Raw(previousJson);
-        const currentData = @Html.Raw(currentJson);
+        const rawLabels = @Html.Raw(labelsJson);
+        const rawPrevious = @Html.Raw(previousJson);
+        const rawCurrent = @Html.Raw(currentJson);
 
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Tidigare',
-                        data: previousData,
-                        backgroundColor: '#ffc107'
-                    },
-                    {
-                        label: 'Nuvarande',
-                        data: currentData,
-                        backgroundColor: '#dc3545'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
+        const rawTypes = rawPrevious.map((prev, i) => {
+            const curr = rawCurrent[i];
+            if (curr < prev) return "Förbättring";
+            if (curr > prev) return "Försämring";
+            return "Oförändrad";
+        });
+
+        let chartInstance = null;
+
+                function updateChart(filterType) {
+            const filteredIndexes = rawTypes.map((type, i) => {
+                if (filterType === 'improvement' && type === "Förbättring") return i;
+                if (filterType === 'deterioration' && type === "Försämring") return i;
+                if (filterType === 'all') return i;
+                return -1;
+            }).filter(i => i !== -1);
+
+            const labels = filteredIndexes.map(i => rawLabels[i]);
+            const previous = filteredIndexes.map(i => rawPrevious[i]);
+            const current = filteredIndexes.map(i => rawCurrent[i]);
+            const barColors = filteredIndexes.map(i => rawCurrent[i] < rawPrevious[i] ? "#28a745" : "#dc3545");
+
+            const chartTitle = document.getElementById("chartFilterLabel");
+            chartTitle.innerText = filterType === "all"
+                ? "Visar alla resultat"
+                : filterType === "improvement"
+                    ? "Visar endast förbättringar"
+                    : "Visar endast försämringar";
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(document.getElementById('improvementChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Tidigare',
+                            data: previous,
+                            backgroundColor: '#ffc107'
+                        },
+                        {
+                            label: 'Nuvarande',
+                            data: current,
+                            backgroundColor: barColors
+                        }
+                    ]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 4,
-                        ticks: { stepSize: 1 },
-                        title: {
-                            display: true,
-                            text: 'Skattning (lägre = bättre)'
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // viktig!
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: { stepSize: 1 },
+                            title: {
+                                display: true,
+                                text: 'Skattning (lägre = bättre)'
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
+
+
+        function filterData(type) {
+            updateChart(type);
+            filterTable(type);
+
+            document.getElementById("feedbackImprovement").style.display = (type === 'all' || type === 'improvement') ? 'block' : 'none';
+            document.getElementById("feedbackDeterioration").style.display = (type === 'all' || type === 'deterioration') ? 'block' : 'none';
+            document.getElementById("feedbackImprovementNote").style.display = (type === 'all' || type === 'improvement') ? 'block' : 'none';
+            document.getElementById("feedbackDeteriorationNote").style.display = (type === 'all' || type === 'deterioration') ? 'block' : 'none';
+        }
+
+        function filterTable(type) {
+            const improvementRows = document.querySelectorAll('.table-success');
+            const deteriorationRows = document.querySelectorAll('.table-danger');
+
+            improvementRows.forEach(row => row.style.display = type === 'deterioration' ? 'none' : 'table-row');
+            deteriorationRows.forEach(row => row.style.display = type === 'improvement' ? 'none' : 'table-row');
+        }
 
         function toggleDetails() {
             const section = document.getElementById('detailsSection');
             const button = document.getElementById('toggleButton');
             const visible = section.style.display === 'block';
+
             section.style.display = visible ? 'none' : 'block';
-            button.innerText = visible ? '🔍 Visa detaljer per fråga' : '🔼 Dölj detaljer';
+            button.textContent = visible ? '🔍 Visa detaljer' : '🔍 Dölj detaljer';
         }
+
+                window.onload = () => {
+            document.getElementById('detailsSection').style.display = 'none';
+            document.getElementById('toggleButton').textContent = '🔍 Visa detaljer';
+            updateChart('all');
+            filterTable('all');
+        };
     </script>
 }
+
+
+

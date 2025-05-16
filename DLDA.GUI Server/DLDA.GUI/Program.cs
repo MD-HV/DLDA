@@ -14,7 +14,7 @@ builder.Services.AddSession(options =>
 // Registrera HttpClient med rätt bas-URL till ditt DLDA.API
 builder.Services.AddHttpClient("DLDA", client =>
 {
-    client.BaseAddress = new Uri("https://informatik3.ei.hv.se/api/");
+    client.BaseAddress = new Uri("https://informatik3.ei.hv.se/DLDA.API/api/");
 });
 
 var app = builder.Build();
