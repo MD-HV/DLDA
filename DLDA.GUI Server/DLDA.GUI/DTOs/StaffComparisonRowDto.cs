@@ -22,11 +22,17 @@
 
         // 🚩 Markerad av personal för vidare diskussion
         public bool IsFlagged { get; set; }
+
+        // Info om datum och patientnamn
+        public DateTime CreatedAt { get; set; }
+        public string Username { get; set; } = string.Empty;
+
     }
 
 
     public class StaffChangeOverviewDto
     {
+        public string Username { get; set; } = string.Empty;
         public DateTime PreviousDate { get; set; }
         public DateTime CurrentDate { get; set; }
         public List<ImprovementDto> Förbättringar { get; set; } = new();

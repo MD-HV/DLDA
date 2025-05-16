@@ -38,7 +38,7 @@
                             else if (role == "staff")
                             {
                                 <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-controller="StaffAssessment" asp-action="Index">Bedömningar</a>
+                                    <a class="nav-link text-dark" asp-controller="StaffAssessment" asp-action="Index">Patientlista</a>
                                 </li>
                             }
                             else if (role == "admin")
@@ -85,6 +85,9 @@
 
     <div class="container">
         <main role="main" class="pb-3">
+            <div class="container mt-3">
+                @await Html.PartialAsync("_AlertPartial")
+            </div>
             @RenderBody()
         </main>
     </div>

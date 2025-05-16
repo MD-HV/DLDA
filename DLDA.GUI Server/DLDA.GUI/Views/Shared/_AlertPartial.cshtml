@@ -1,0 +1,17 @@
+﻿@* Visar meddelanden från både TempData och ViewBag *@
+
+@if (TempData["Success"] != null || ViewBag.Success != null)
+{
+    <div class="alert alert-success d-flex align-items-center" role="alert">
+        <span class="me-2">✅</span>
+        <div>@(TempData["Success"] ?? ViewBag.Success)</div>
+    </div>
+}
+
+@if (TempData["Error"] != null || ViewBag.Error != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <span class="me-2">❌</span>
+        <div>@(TempData["Error"] ?? ViewBag.Error)</div>
+    </div>
+}

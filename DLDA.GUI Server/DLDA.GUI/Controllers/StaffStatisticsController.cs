@@ -21,6 +21,7 @@ public class StaffStatisticsController : Controller
     {
         try
         {
+            // 🔹 Hämta jämförelsedata för patient och personal
             var response = await _httpClient.GetAsync($"statistics/comparison-table-staff/{assessmentId}");
 
             if (!response.IsSuccessStatusCode)
@@ -56,7 +57,10 @@ public class StaffStatisticsController : Controller
                 PropertyNameCaseInsensitive = true
             });
 
+            // 🧾 Skicka vidare information till vyn
             ViewBag.UserId = assessment?.UserId ?? 0;
+            ViewBag.PatientName = comparison.First().Username;
+            ViewBag.AssessmentDate = comparison.First().CreatedAt;
 
             return View("Comparison", comparison);
         }
@@ -66,6 +70,7 @@ public class StaffStatisticsController : Controller
             return RedirectToAction("Index", "StaffAssessment");
         }
     }
+
 
     // GET: /StaffStatistics/ChangeOverview/{userId}
     [HttpGet("ChangeOverview/{userId}")]

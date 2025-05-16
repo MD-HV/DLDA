@@ -45,44 +45,52 @@
 }
 
 <div class="container mt-5">
-    <h2 class="mb-2">📈 Förändringar över tid (personal)</h2>
+    <h2 class="mb-3">📈 Förändringar över tid (personal)</h2>
+
     <p>
-        Denna vy visar förändringar i patientens skattningar mellan två bedömningar:
-        <strong>@Model.PreviousDate.ToString("yyyy-MM-dd")</strong> → <strong>@Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
+        👤 <strong>Patient:</strong> @Model.Username<br />
+        📅 <strong>@Model.PreviousDate.ToString("yyyy-MM-dd")</strong> och <strong>@Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
     </p>
 
-    <div class="dropdown mb-3">
-        <button class="btn btn-secondary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            Filter
-        </button>
-        <ul class="dropdown-menu" aria-labelledby="filterDropdown">
-            <li><a class="dropdown-item" href="#" onclick="filterData('all')">Visa allt</a></li>
-            <li><a class="dropdown-item" href="#" onclick="filterData('improvement')">Förbättringar</a></li>
-            <li><a class="dropdown-item" href="#" onclick="filterData('deterioration')">Försämringar</a></li>
-        </ul>
-    </div>
+    <!-- 🔧 Uppdaterad knappsektion -->
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a class="btn btn-secondary" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+            ⬅ Tillbaka till bedömningar
+        </a>
 
-    <a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId" class="btn btn-secondary mb-4">
-        ⬅ Tillbaka till bedömningar
-    </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Filter
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="filterData('all')">Visa allt</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterData('improvement')">Förbättringar</a></li>
+                <li><a class="dropdown-item" href="#" onclick="filterData('deterioration')">Försämringar</a></li>
+            </ul>
+        </div>
+
+        <button class="btn btn-outline-secondary" onclick="toggleDetails()" id="toggleButton">
+            🔍 Visa detaljer
+        </button>
+    </div>
 
     <div class="row">
         <div class="col-md-8">
-            <div class="card shadow-sm border-0 mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
+                    <h5 class="text-muted" id="chartFilterLabel">📊 Visar alla resultat</h5>
                     <div style="height: 500px;">
-                        <h5 class="text-muted" id="chartFilterLabel"></h5>
-                        <canvas id="improvementChart" style="height: 100%; width: 100%;"></canvas>
+                        <canvas id="improvementChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card shadow-sm border-0 mb-4">
+            <div class="card mb-4 shadow-sm">
                 <div class="card-body">
-                    <h5 class="mb-3">📜 Återkoppling</h5>
-                    <ul class="list-unstyled mb-3">
+                    <h5 class="mb-3">📋 Återkoppling</h5>
+                    <ul class="list-unstyled">
                         <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
                         <li><strong>@försämringar.Count</strong> frågor visade försämring.</li>
                         <li><strong>@flaggade.Count</strong> aktuella flaggor.</li>
@@ -91,30 +99,27 @@
 
                     @if (förbättradeKategorier.Any())
                     {
-                        <div class="alert alert-success p-2 mb-3" id="feedbackImprovementNote">
-                            Det finns flera områden där förbättringar skett sedan senaste bedömningen.
-                        </div>
+                        <div id="feedbackImprovementNote" class="alert alert-success p-2">Flera förbättringar har noterats.</div>
                         <div id="feedbackImprovement">
-                            <h6 class="text-success">✅ Kategorier som förbättrats</h6>
+                            <h6 class="text-success">✅ Förbättrade kategorier</h6>
                             <ul>
-                                @foreach (var kategori in förbättradeKategorier)
+                                @foreach (var cat in förbättradeKategorier)
                                 {
-                                    <li>@kategori</li>
+                                    <li>@cat</li>
                                 }
                             </ul>
                         </div>
                     }
+
                     @if (försämradeKategorier.Any())
                     {
-                        <div class="alert alert-danger p-2 mt-4" id="feedbackDeteriorationNote">
-                            Några områden har skattats som sämre jämfört med föregående bedömning.
-                        </div>
+                        <div id="feedbackDeteriorationNote" class="alert alert-danger p-2 mt-3">Vissa områden har skattats sämre.</div>
                         <div id="feedbackDeterioration">
-                            <h6 class="text-danger">❗ Kategorier som försämrats</h6>
+                            <h6 class="text-danger">❗ Försämrade kategorier</h6>
                             <ul>
-                                @foreach (var kategori in försämradeKategorier)
+                                @foreach (var cat in försämradeKategorier)
                                 {
-                                    <li>@kategori</li>
+                                    <li>@cat</li>
                                 }
                             </ul>
                         </div>
@@ -124,178 +129,54 @@
         </div>
     </div>
 
-    <div class="d-flex gap-2 mt-4 flex-wrap">
-        <button class="btn btn-outline-secondary" onclick="toggleDetails()" id="toggleButton">
-            🔍 Dölj detaljer
-        </button>
+    <div id="detailsSection" style="display: none;" class="mt-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Fråga</th>
+                            <th>Kategori</th>
+                            <th>Tidigare</th>
+                            <th>Nuvarande</th>
+                            <th>Förändring</th>
+                            <th>Flagga</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var f in förbättringar.Concat(försämringar))
+                        {
+                            var rowClass = f.Current < f.Previous ? "table-success" :
+                            f.Current > f.Previous ? "table-danger" : "";
 
-        <div id="detailsSection" style="display: none;">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Fråga</th>
-                                <th>Kategori</th>
-                                <th>Tidigare</th>
-                                <th>Nuvarande</th>
-                                <th>Förändring</th>
-                                <th>Flagga</th>
+                            <tr class="@rowClass">
+                                <td>@f.QuestionId</td>
+                                <td>@f.Question</td>
+                                <td>@f.Category</td>
+                                <td>@(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))<br /><small class="text-muted">(@f.Previous)</small></td>
+                                <td>@(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))<br /><small class="text-muted">(@f.Current)</small></td>
+                                <td>@FormatChange(f.Previous, f.Current)</td>
+                                <td>@(flaggade.Any(x => x.QuestionId == f.QuestionId) ? "🚩" : "")</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var f in förbättringar.Concat(försämringar))
-                            {
-                                var highlight = f.Current < f.Previous ? "table-success" :
-                                f.Current > f.Previous ? "table-danger" : "";
-
-                                <tr class="@highlight">
-                                    <td>@f.QuestionId</td>
-                                    <td>@f.Question</td>
-                                    <td>@f.Category</td>
-                                    <td>
-                                        @(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))<br />
-                                        <small class="text-muted">(@f.Previous)</small>
-                                    </td>
-                                    <td>
-                                        @(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))<br />
-                                        <small class="text-muted">(@f.Current)</small>
-                                    </td>
-                                    <td>@FormatChange(f.Previous, f.Current)</td>
-                                    <td>@(flaggade.Any(x => x.QuestionId == f.QuestionId) ? "🚩" : "")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</div>
 
-<a asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId" class="btn btn-secondary mb-4">
-    ⬅ Tillbaka till bedömningar
-</a>
+    <a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+        ⬅ Tillbaka till bedömningar
+    </a>
+</div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
         const rawLabels = @Html.Raw(labelsJson);
         const rawPrevious = @Html.Raw(previousJson);
         const rawCurrent = @Html.Raw(currentJson);
-
-        const rawTypes = rawPrevious.map((prev, i) => {
-            const curr = rawCurrent[i];
-            if (curr < prev) return "Förbättring";
-            if (curr > prev) return "Försämring";
-            return "Oförändrad";
-        });
-
-        let chartInstance = null;
-
-                function updateChart(filterType) {
-            const filteredIndexes = rawTypes.map((type, i) => {
-                if (filterType === 'improvement' && type === "Förbättring") return i;
-                if (filterType === 'deterioration' && type === "Försämring") return i;
-                if (filterType === 'all') return i;
-                return -1;
-            }).filter(i => i !== -1);
-
-            const labels = filteredIndexes.map(i => rawLabels[i]);
-            const previous = filteredIndexes.map(i => rawPrevious[i]);
-            const current = filteredIndexes.map(i => rawCurrent[i]);
-            const barColors = filteredIndexes.map(i => rawCurrent[i] < rawPrevious[i] ? "#28a745" : "#dc3545");
-
-            const chartTitle = document.getElementById("chartFilterLabel");
-            chartTitle.innerText = filterType === "all"
-                ? "Visar alla resultat"
-                : filterType === "improvement"
-                    ? "Visar endast förbättringar"
-                    : "Visar endast försämringar";
-
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
-            chartInstance = new Chart(document.getElementById('improvementChart'), {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Tidigare',
-                            data: previous,
-                            backgroundColor: '#ffc107'
-                        },
-                        {
-                            label: 'Nuvarande',
-                            data: current,
-                            backgroundColor: barColors
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // viktig!
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 4,
-                            ticks: { stepSize: 1 },
-                            title: {
-                                display: true,
-                                text: 'Skattning (lägre = bättre)'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-
-        function filterData(type) {
-            updateChart(type);
-            filterTable(type);
-
-            document.getElementById("feedbackImprovement").style.display = (type === 'all' || type === 'improvement') ? 'block' : 'none';
-            document.getElementById("feedbackDeterioration").style.display = (type === 'all' || type === 'deterioration') ? 'block' : 'none';
-            document.getElementById("feedbackImprovementNote").style.display = (type === 'all' || type === 'improvement') ? 'block' : 'none';
-            document.getElementById("feedbackDeteriorationNote").style.display = (type === 'all' || type === 'deterioration') ? 'block' : 'none';
-        }
-
-        function filterTable(type) {
-            const improvementRows = document.querySelectorAll('.table-success');
-            const deteriorationRows = document.querySelectorAll('.table-danger');
-
-            improvementRows.forEach(row => row.style.display = type === 'deterioration' ? 'none' : 'table-row');
-            deteriorationRows.forEach(row => row.style.display = type === 'improvement' ? 'none' : 'table-row');
-        }
-
-        function toggleDetails() {
-            const section = document.getElementById('detailsSection');
-            const button = document.getElementById('toggleButton');
-            const visible = section.style.display === 'block';
-
-            section.style.display = visible ? 'none' : 'block';
-            button.textContent = visible ? '🔍 Visa detaljer' : '🔍 Dölj detaljer';
-        }
-
-                window.onload = () => {
-            document.getElementById('detailsSection').style.display = 'none';
-            document.getElementById('toggleButton').textContent = '🔍 Visa detaljer';
-            updateChart('all');
-            filterTable('all');
-        };
     </script>
 }
-
-
-

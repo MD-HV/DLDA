@@ -255,6 +255,13 @@ namespace DLDA.API.Controllers
         [HttpGet("comparison-table-staff/{assessmentId}")]
         public ActionResult<List<StaffComparisonRowDto>> GetAssessmentComparisonForStaff(int assessmentId)
         {
+            var assessment = _context.Assessments
+                .Include(a => a.User)
+                .FirstOrDefault(a => a.AssessmentID == assessmentId);
+
+            if (assessment == null)
+                return NotFound("Bedömningen kunde inte hittas.");
+
             var items = _context.AssessmentItems
                 .Where(i => i.AssessmentID == assessmentId)
                 .Include(i => i.Question)
@@ -287,12 +294,17 @@ namespace DLDA.API.Controllers
 
                     Classification = status,
                     SkippedByPatient = !p.HasValue,
-                    IsFlagged = i.Flag
+                    IsFlagged = i.Flag,
+
+                    // 🔹 Nytt: lägg till datum och användarnamn
+                    CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
+                    Username = assessment.User?.Username ?? "Okänd"
                 };
-            });
+            }).ToList();
 
             return Ok(result);
         }
+
 
 
         // GET: api/statistics/staff-change-overview/{userId}
@@ -301,6 +313,7 @@ namespace DLDA.API.Controllers
         {
             var assessments = _context.Assessments
                 .Where(a => a.UserId == userId && a.IsComplete)
+                .Include(a => a.User) // 👈 behövs för Username
                 .OrderByDescending(a => a.CreatedAt)
                 .Take(2)
                 .ToList();
@@ -371,6 +384,7 @@ namespace DLDA.API.Controllers
 
             return Ok(new StaffChangeOverviewDto
             {
+                Username = latest.User?.Username ?? "Okänd",
                 PreviousDate = previous.CreatedAt ?? DateTime.MinValue,
                 CurrentDate = latest.CreatedAt ?? DateTime.MinValue,
                 Förbättringar = improvements.OrderByDescending(i => i.Change).ToList(),
@@ -379,6 +393,5 @@ namespace DLDA.API.Controllers
                 Hoppade = skipped
             });
         }
-
     }
 }

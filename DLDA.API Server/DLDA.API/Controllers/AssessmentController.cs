@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using DLDA.API.Data;
+﻿using DLDA.API.Data;
 using DLDA.API.DTOs;
 using DLDA.API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -228,4 +229,20 @@ public class AssessmentController : ControllerBase
 
         return NoContent();
     }
+    // POST: /StaffAssessment/Unlock
+    // låser upp en redan avklarad bedömning
+    [HttpPost("unlock/{assessmentId}")]
+    public IActionResult UnlockAssessment(int assessmentId)
+    {
+        var assessment = _context.Assessments.FirstOrDefault(a => a.AssessmentID == assessmentId);
+        if (assessment == null)
+            return NotFound();
+
+        assessment.IsStaffComplete = false;
+        _context.SaveChanges();
+
+        return Ok();
+    }
+
+
 }

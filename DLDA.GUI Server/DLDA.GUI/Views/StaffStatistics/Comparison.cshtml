@@ -38,6 +38,11 @@
 <div class="container mt-5">
     <h2 class="mb-4">📊 Jämförelse av skattningar mellan patient och personal</h2>
 
+    <p>
+        <strong>👤 Patient:</strong> @ViewBag.PatientName <br />
+        <strong>🗓️ Bedömningsdatum:</strong> @ViewBag.AssessmentDate?.ToString("yyyy-MM-dd")
+    </p>
+
     <div class="row mb-4">
         <div class="col-md-6">
             <canvas id="comparisonPie" style="max-height: 500px;"></canvas>

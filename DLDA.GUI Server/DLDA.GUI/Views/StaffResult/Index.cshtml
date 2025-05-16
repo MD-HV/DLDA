@@ -1,23 +1,19 @@
 ﻿@model DLDA.GUI.DTOs.StaffResultOverviewDto
-
 @{
     ViewData["Title"] = "Resultatöversikt";
     var isLocked = Model.IsStaffComplete;
 }
 
 @functions {
-    string FormatAnswer(int? value)
+    string FormatAnswer(int? value) => value switch
     {
-        return value switch
-        {
-            0 => "Inget problem<br /><small class=\"text-muted\">(0)</small>",
-            1 => "Litet problem<br /><small class=\"text-muted\">(1)</small>",
-            2 => "Måttligt problem<br /><small class=\"text-muted\">(2)</small>",
-            3 => "Stort problem<br /><small class=\"text-muted\">(3)</small>",
-            4 => "Mycket stort problem<br /><small class=\"text-muted\">(4)</small>",
-            _ => "Ej besvarad"
-        };
-    }
+        0 => "Inget problem<br /><small class=\"text-muted\">(0)</small>",
+        1 => "Litet problem<br /><small class=\"text-muted\">(1)</small>",
+        2 => "Måttligt problem<br /><small class=\"text-muted\">(2)</small>",
+        3 => "Stort problem<br /><small class=\"text-muted\">(3)</small>",
+        4 => "Mycket stort problem<br /><small class=\"text-muted\">(4)</small>",
+        _ => "Ej besvarad"
+    };
 
     string GetRowColor(int difference, bool skipped)
     {
@@ -49,21 +45,7 @@
     }
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center justify-content-between" role="alert">
-        <span class="me-2">✅</span>
-        <div>@TempData["Success"]</div>
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger d-flex align-items-center justify-content-between" role="alert">
-        <span class="me-2">❌</span>
-        <div>@TempData["Error"]</div>
-    </div>
-}
+@await Html.PartialAsync("_AlertPartial")
 
 <div class="container mt-5">
     <h2>Sammanställning av personalens bedömning</h2>
@@ -91,8 +73,15 @@
 
     @if (isLocked)
     {
-        <div class="alert alert-info">
-            🔒 Denna bedömning är markerad som klar och kan inte längre redigeras.
+        <div class="alert alert-info d-flex justify-content-between align-items-center">
+            <span>🔒 Denna bedömning är markerad som klar och kan inte längre redigeras.</span>
+            <form asp-action="Unlock" method="post" class="mb-0">
+                <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+                <input type="hidden" name="userId" value="@Model.UserId" />
+                <button type="submit" class="btn btn-outline-danger btn-sm ms-3">
+                    🔓 Lås upp
+                </button>
+            </form>
         </div>
     }
 
@@ -173,41 +162,11 @@
             }
         </tbody>
     </table>
-
-    <div class="mt-4 d-flex gap-3">
-        <a class="btn btn-outline-secondary"
-           asp-controller="StaffAssessment"
-           asp-action="Assessments"
-           asp-route-userId="@Model.UserId">
-            ⬅ Tillbaka till patientens bedömningar
-        </a>
-
-        @if (!Model.IsStaffComplete)
-        {
-            <form asp-action="Complete" method="post">
-                <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
-                <input type="hidden" name="userId" value="@Model.UserId" />
-                <button type="submit" class="btn btn-success">
-                    ✔️ Markera personalbedömning som klar
-                </button>
-            </form>
-        }
-    </div>
 </div>
 
-@section Scripts {
-    <script>
-        function rememberScroll(id) {
-            sessionStorage.setItem('scrollTo', id);
-        }
-
-        window.addEventListener('load', function () {
-            const lastId = sessionStorage.getItem('scrollTo');
-            if (lastId) {
-                const el = document.getElementById(lastId);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                sessionStorage.removeItem('scrollTo');
-            }
-        });
-    </script>
-}
+<a class="btn btn-outline-secondary"
+   asp-controller="StaffAssessment"
+   asp-action="Assessments"
+   asp-route-userId="@Model.UserId">
+    ⬅ Tillbaka till patientens bedömningar
+</a>

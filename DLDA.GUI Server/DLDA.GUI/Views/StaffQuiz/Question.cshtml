@@ -20,34 +20,44 @@
 }
 
 <div class="container mt-5">
+    <!-- Centralt hanterade alerts -->
+    <partial name="_AlertPartial" />
 
     <!-- 👁 Tidigare svar från patient -->
-    <div class="alert alert-info">
-        <p>
-            <strong>Patientens svar:</strong>
-            @if (Model.PatientAnswer.HasValue)
-            {
-                <span>@FormatAnswer(Model.PatientAnswer.Value) <small class="text-muted">(@Model.PatientAnswer)</small></span>
-            }
-            else
-            {
-                <span class="text-muted">Ej besvarad</span>
-            }
-        </p>
-        <p>
-            <strong>Kommentar från patient:</strong>
-            @if (!string.IsNullOrWhiteSpace(Model.PatientComment))
-            {
-                <span>@Model.PatientComment</span>
-            }
-            else
-            {
-                <span class="text-muted">Ingen kommentar</span>
-            }
-        </p>
-    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.PatientName))
+    {
+        <div class="alert alert-primary">
+            <div>
+                👤 <strong>Patient:</strong> @Model.PatientName
+            </div>
 
-    <!-- 📋 Frågeblock med frågenummer -->
+            <div class="mt-2">
+                <strong>Patientens svar:</strong>
+                @if (Model.PatientAnswer.HasValue)
+                {
+                    <span>@Model.PatientAnswer – @FormatAnswer(Model.PatientAnswer.Value)</span>
+                }
+                else
+                {
+                    <span class="text-muted">Ej besvarad</span>
+                }
+            </div>
+
+            <div>
+                <strong>Kommentar från patient:</strong>
+                @if (!string.IsNullOrWhiteSpace(Model.PatientComment))
+                {
+                    <span>@Model.PatientComment</span>
+                }
+                else
+                {
+                    <span class="text-muted">Ingen kommentar</span>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- 📋 Frågeblock -->
     <div class="bg-white p-4 rounded shadow-sm mb-4 border-start border-4 border-primary">
         <small class="text-muted d-block">Fråga @(@Model.Order + 1)</small>
         <h5 class="fw-semibold mt-2 mb-1">Hur bedömer du patientens:</h5>
@@ -67,6 +77,7 @@
                 {
                     var inputId = $"s{i}";
                     var imagePath = Url.Content($"~/Images/{prefix} {i}.png");
+
                     <div class="form-check text-center">
                         <input type="radio" class="btn-check" name="answer" id="@inputId" value="@i" @(Model.StaffAnswer == i ? "checked" : "") required />
                         <label class="btn" for="@inputId">

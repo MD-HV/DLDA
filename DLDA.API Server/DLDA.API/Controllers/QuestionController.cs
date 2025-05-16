@@ -294,6 +294,15 @@ public class QuestionController : ControllerBase
         var total = await _context.AssessmentItems.CountAsync(ai => ai.AssessmentID == assessmentId);
         var assessment = await _context.Assessments.FirstOrDefaultAsync(a => a.AssessmentID == assessmentId);
 
+        if (assessment == null)
+            return NotFound(new { message = "Bedömning hittades inte." });
+
+        // ✅ Hämta användaren baserat på assessment.UserId
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == assessment.UserId);
+
+        if (user == null)
+            return NotFound(new { message = "Patienten hittades inte." });
+
         return Ok(new StaffQuestionDto
         {
             ItemID = item.ItemID,
@@ -303,15 +312,17 @@ public class QuestionController : ControllerBase
             Category = item.Question?.Category ?? "Okänd",
             Order = item.Order,
             Total = total,
-            ScaleType = assessment?.ScaleType ?? "Numerisk",
+            ScaleType = assessment.ScaleType ?? "Numerisk",
             PatientAnswer = item.PatientAnswer,
             PatientComment = item.PatientComment,
             StaffAnswer = item.StaffAnswer,
             StaffComment = item.StaffComment,
             Flag = item.Flag,
-            UserID = assessment?.UserId ?? 0 // ✅ Lägg till detta!
+            UserID = assessment.UserId,
+            PatientName = user.Username // ✅ Nu fungerar detta!
         });
     }
+
 
     // GET: api/Question/quiz/staff/previous/{assessmentId}/{currentOrder}
     /// <summary>Hämtar föregående fråga för personalen.</summary>

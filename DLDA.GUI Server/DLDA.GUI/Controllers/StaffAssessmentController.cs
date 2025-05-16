@@ -128,5 +128,25 @@ namespace DLDA.GUI.Controllers
 
             return RedirectToAction("Assessments", new { userId });
         }
+
+        // POST: /StaffAssessment/Unlock
+        // låser upp en redan avklarad bedömning
+        [HttpPost]
+        public async Task<IActionResult> Unlock(int assessmentId, int userId)
+        {
+            var response = await _httpClient.PostAsync(
+                $"assessment/unlock/{assessmentId}",
+                null
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                TempData["Error"] = "Misslyckades med att låsa upp bedömningen.";
+                return RedirectToAction("Assessments", new { userId });
+            }
+
+            TempData["Success"] = "Bedömningen har låsts upp.";
+            return RedirectToAction("ResultOverview", new { assessmentId });
+        }
     }
 }

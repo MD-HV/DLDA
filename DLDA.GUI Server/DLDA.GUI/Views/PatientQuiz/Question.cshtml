@@ -19,21 +19,6 @@
 
 <div class="container mt-5">
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
-            <span class="me-2">✅</span>
-            <div>@TempData["Success"]</div>
-        </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
-            <span class="me-2">❌</span>
-            <div>@TempData["Error"]</div>
-        </div>
-    }
-
     <div class="alert alert-info">
         <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
         Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
@@ -108,4 +93,3 @@
         </form>
     </div>
 </div>
-

@@ -1,29 +1,12 @@
 ﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
 @{
-    var completedCount = Model.Where(m => m.IsComplete).Count();
+    ViewData["Title"] = "Mina bedömningar";
+    var completedCount = Model.Count(m => m.IsComplete);
     var disableImprovement = completedCount < 2;
 }
 
 <div class="container mt-5">
     <h2 class="mb-4">Mina bedömningar</h2>
-
-    <!-- 🟢 Lyckat meddelande -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success d-flex align-items-center" role="alert">
-            <span class="me-2">✅</span>
-            <div>@TempData["Success"]</div>
-        </div>
-    }
-
-    <!-- 🔴 Felmeddelande -->
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger d-flex align-items-center" role="alert">
-            <span class="me-2">❌</span>
-            <div>@TempData["Error"]</div>
-        </div>
-    }
 
     <!-- 📈 Förbättring över tid-knapp -->
     <div class="mb-4">
@@ -37,7 +20,6 @@
             (Minst två avslutade bedömningar krävs)
         </span>
     </div>
-
 
     @if (!Model.Any())
     {
@@ -77,20 +59,12 @@
                         <td>
                             @if (!item.IsComplete)
                             {
-                                if (item.HasStarted)
-                                {
-                                    <a class="btn btn-sm btn-warning"
-                                       asp-controller="PatientQuiz"
-                                       asp-action="Info"
-                                       asp-route-id="@item.AssessmentID">Fortsätt</a>
-                                }
-                                else
-                                {
-                                    <a class="btn btn-sm btn-primary"
-                                       asp-controller="PatientQuiz"
-                                       asp-action="Info"
-                                       asp-route-id="@item.AssessmentID">Starta</a>
-                                }
+                                var action = item.HasStarted ? "Fortsätt" : "Starta";
+                                var btnClass = item.HasStarted ? "btn-warning" : "btn-primary";
+                                <a class="btn btn-sm @btnClass"
+                                   asp-controller="PatientQuiz"
+                                   asp-action="Info"
+                                   asp-route-id="@item.AssessmentID">@action</a>
                             }
                             else
                             {

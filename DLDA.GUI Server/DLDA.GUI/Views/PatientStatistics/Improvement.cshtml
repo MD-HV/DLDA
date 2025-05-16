@@ -16,61 +16,38 @@
     var previousJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Previous));
     var currentJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Current));
 
-    string FormatScore(int score)
+    string FormatScore(int score) => score switch
     {
-        return score switch
-        {
-            0 => "Inget problem",
-            1 => "Litet problem",
-            2 => "Måttligt problem",
-            3 => "Stort problem",
-            4 => "Mycket stort problem",
-            _ => score.ToString()
-        };
-    }
+        0 => "Inget problem",
+        1 => "Litet problem",
+        2 => "Måttligt problem",
+        3 => "Stort problem",
+        4 => "Mycket stort problem",
+        _ => score.ToString()
+    };
 
-    string FormatImprovement(int change)
+    string FormatImprovement(int change) => change switch
     {
-        return change switch
-        {
-            >= 3 => "Stora förbättringar",
-            2 => "Tydlig förbättring",
-            1 => "Viss förbättring",
-            _ => ""
-        };
-    }
+        >= 3 => "Stora förbättringar",
+        2 => "Tydlig förbättring",
+        1 => "Viss förbättring",
+        _ => ""
+    };
 }
 
 <div class="mt-4">
-        <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
-            ⬅ Tillbaka till mina bedömningar
-        </a>
-    </div>
-
-    @if (TempData["Success"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
-        <span class="me-2">✅</span>
-        <div>@TempData["Success"]</div>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
-        <span class="me-2">❌</span>
-        <div>@TempData["Error"]</div>
-    </div>
-}
-
+    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+        ⬅ Tillbaka till mina bedömningar
+    </a>
+</div>
 
 <div class="container mt-5">
     <h2 class="mb-2">📈 Förbättring över tid</h2>
-
     <p>
         Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning.
         <br />
-        <strong>Jämförelse mellan @Model.PreviousDate.ToString("yyyy-MM-dd") och @Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
-        <br />
+        <strong>Jämförelse mellan bedömningen den @Model.PreviousDate.ToString("yyyy-MM-dd") och @Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
+
     </p>
 
     @if (!förbättringar.Any())
@@ -82,7 +59,6 @@
     else
     {
         <div class="row">
-            <!-- 📊 Stapeldiagram -->
             <div class="col-md-8">
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
@@ -91,12 +67,10 @@
                 </div>
             </div>
 
-            <!-- 📜 Återkoppling -->
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
                         <h5 class="mb-3">📜 Återkoppling</h5>
-
                         <ul class="list-unstyled mb-3">
                             <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
                             <li><strong>@kategorier.Count</strong> kategorier innehöll förbättringar.</li>
@@ -124,7 +98,6 @@
             </div>
         </div>
 
-        <!-- 🕽️ Toggle för att visa detaljerad fråga-förändring -->
         <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetails()">
             🔍 Visa detaljer per fråga
         </button>
@@ -166,71 +139,22 @@
             </div>
         </div>
     }
+</div>
 
-    <div class="mt-4">
-        <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
-            ⬅ Tillbaka till mina bedömningar
-        </a>
-    </div>
+<div class="mt-4">
+    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+        ⬅ Tillbaka till mina bedömningar
+    </a>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('improvementChart');
-
-        const labels = @Html.Raw(labelsJson);
-        const previousData = @Html.Raw(previousJson);
-        const currentData = @Html.Raw(currentJson);
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Tidigare',
-                        data: previousData,
-                        backgroundColor: '#ffc107'
-                    },
-                    {
-                        label: 'Nuvarande',
-                        data: currentData,
-                        backgroundColor: '#198754'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 4,
-                        ticks: { stepSize: 1 },
-                        title: {
-                            display: true,
-                            text: 'Skattning (lägre = bättre)'
-                        }
-                    }
-                }
-            }
+        document.addEventListener("DOMContentLoaded", function () {
+            const labels = @Html.Raw(labelsJson);
+            const previousData = @Html.Raw(previousJson);
+            const currentData = @Html.Raw(currentJson);
+            renderImprovementChart(labels, previousData, currentData); // ⬅ definieras i site.js
         });
-
-        function toggleDetails() {
-            const section = document.getElementById('detailsSection');
-            const button = document.getElementById('toggleButton');
-
-            const isVisible = section.style.display === 'block';
-            section.style.display = isVisible ? 'none' : 'block';
-            button.innerText = isVisible ? '🔍 Visa detaljer per fråga' : '🔜 Dölj detaljer';
-        }
     </script>
 }

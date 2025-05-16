@@ -22,5 +22,8 @@
 
         // Flagga för vidare diskussion
         public bool Flag { get; set; }
+
+        // Namn
+        public string PatientName { get; set; } = string.Empty;
     }
 }

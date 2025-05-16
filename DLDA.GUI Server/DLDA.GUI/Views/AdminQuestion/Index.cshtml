@@ -7,16 +7,6 @@
 <div class="container mt-5">
     <h2 class="mb-4">📋 Frågesida index</h2>
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">@TempData["Success"]</div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
     <a asp-action="Create" class="btn btn-success mb-3">➕ Lägg till ny fråga</a>
 
     <table class="table table-bordered">

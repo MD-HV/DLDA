@@ -12,34 +12,21 @@
 
     <p><strong>👤 Användare:</strong> @ViewBag.Username (ID: @ViewBag.UserId)</p>
 
-    @if (TempData["Success"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center justify-content-start" role="alert">
-        <span class="me-2">✅</span>
-        <div>@TempData["Success"]</div>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger d-flex align-items-center justify-content-start" role="alert">
-        <span class="me-2">❌</span>
-        <div>@TempData["Error"]</div>
-    </div>
-}
+    @* ✅ Statusmeddelanden *@
+    @await Html.PartialAsync("_AlertPartial")
 
     <!-- 📈 Förändring över tid för personal -->
-<div class="mb-4">
-    <a class="btn btn-outline-secondary @(completedStaffCount < 2 ? "disabled text-muted pe-none" : "")"
-       asp-controller="StaffStatistics"
-       asp-action="ChangeOverview"
-       asp-route-userId="@ViewBag.UserId">
-        📈 Jämför förändring över tid
-    </a>
-    <span class="text-muted small ms-2">
-        (Minst två avslutade personalbedömningar krävs)
-    </span>
-</div>
-    
+    <div class="mb-4">
+        <a class="btn btn-outline-secondary @(completedStaffCount < 2 ? "disabled text-muted pe-none" : "")"
+           asp-controller="StaffStatistics"
+           asp-action="ChangeOverview"
+           asp-route-userId="@ViewBag.UserId">
+            📈 Jämför förändring över tid
+        </a>
+        <span class="text-muted small ms-2">
+            (Minst två avslutade personalbedömningar krävs)
+        </span>
+    </div>
 
     @if (!Model.Any())
     {
@@ -74,14 +61,16 @@
                                 <a class="btn btn-outline-primary btn-sm"
                                    asp-controller="StaffQuiz"
                                    asp-action="Resume"
-                                   asp-route-assessmentId="@item.AssessmentID">
+                                   asp-route-assessmentId="@item.AssessmentID"
+                                   title="Fortsätt quiz">
                                     ▶ Till quiz
                                 </a>
 
                                 <a class="btn btn-outline-success btn-sm"
                                    asp-controller="StaffResult"
                                    asp-action="Index"
-                                   asp-route-id="@item.AssessmentID">
+                                   asp-route-id="@item.AssessmentID"
+                                   title="Gå till resultat">
                                     📄 Resultat
                                 </a>
                             }
@@ -90,14 +79,16 @@
                                 <a class="btn btn-sm btn-info"
                                    asp-controller="StaffResult"
                                    asp-action="Index"
-                                   asp-route-id="@item.AssessmentID">
+                                   asp-route-id="@item.AssessmentID"
+                                   title="Visa resultat">
                                     📄 Visa resultat
                                 </a>
 
                                 <a class="btn btn-sm btn-outline-success"
                                    asp-controller="StaffStatistics"
                                    asp-action="Comparison"
-                                  asp-route-assessmentId="@item.AssessmentID">
+                                   asp-route-assessmentId="@item.AssessmentID"
+                                   title="Visa jämförelse">
                                     📊 Statistik
                                 </a>
                             }
@@ -105,7 +96,8 @@
                             <a class="btn btn-outline-danger btn-sm"
                                asp-controller="StaffAssessment"
                                asp-action="Delete"
-                               asp-route-id="@item.AssessmentID">
+                               asp-route-id="@item.AssessmentID"
+                               title="Ta bort bedömning">
                                 🗑 Ta bort
                             </a>
                         </td>

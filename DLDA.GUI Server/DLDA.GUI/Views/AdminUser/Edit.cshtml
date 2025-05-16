@@ -7,11 +7,6 @@
 <div class="container mt-5">
     <h2 class="mb-4">✏️ Redigera användare</h2>
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">@TempData["Error"]</div>
-    }
-
     <form asp-action="Edit" method="post">
         <input type="hidden" asp-for="UserID" />
 
