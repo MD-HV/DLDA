@@ -52,7 +52,6 @@
         📅 <strong>@Model.PreviousDate.ToString("yyyy-MM-dd")</strong> och <strong>@Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
     </p>
 
-    <!-- 🔧 Uppdaterad knappsektion -->
     <div class="d-flex flex-wrap gap-2 mb-4">
         <a class="btn btn-secondary" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
             ⬅ Tillbaka till bedömningar
@@ -68,21 +67,24 @@
                 <li><a class="dropdown-item" href="#" onclick="filterData('deterioration')">Försämringar</a></li>
             </ul>
         </div>
-
-        <button class="btn btn-outline-secondary" onclick="toggleDetails()" id="toggleButton">
-            🔍 Visa detaljer
-        </button>
     </div>
 
     <div class="row">
         <div class="col-md-8">
-            <div class="card mb-4 shadow-sm">
+            <div class="card mb-0 shadow-sm">
                 <div class="card-body">
                     <h5 class="text-muted" id="chartFilterLabel">📊 Visar alla resultat</h5>
                     <div style="height: 500px;">
                         <canvas id="improvementChart"></canvas>
                     </div>
                 </div>
+            </div>
+
+            <!-- 🟢 Knappen ligger nu UTANFÖR kortet -->
+            <div class="mt-3">
+                <button class="btn btn-outline-secondary" onclick="toggleDetails()" id="toggleButton">
+                    🔍 Visa detaljer
+                </button>
             </div>
         </div>
 
