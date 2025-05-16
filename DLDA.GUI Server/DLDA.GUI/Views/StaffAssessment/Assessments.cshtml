@@ -12,9 +12,6 @@
 
     <p><strong>👤 Användare:</strong> @ViewBag.Username (ID: @ViewBag.UserId)</p>
 
-    @* ✅ Statusmeddelanden *@
-    @await Html.PartialAsync("_AlertPartial")
-
     <!-- 📈 Förändring över tid för personal -->
     <div class="mb-4">
         <a class="btn btn-outline-secondary @(completedStaffCount < 2 ? "disabled text-muted pe-none" : "")"

@@ -19,11 +19,25 @@
     }
 }
 
-<a class="btn btn-outline-secondary mt-3"
-   asp-controller="PatientAssessment"
-   asp-action="Index">
-    ⬅ Tillbaka till mina bedömningar
-</a>
+<div class="mt-4 d-flex gap-3">
+    @if (!Model.IsComplete)
+    {
+        <form asp-action="Complete" method="post">
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+            <button type="submit" class="btn btn-success">
+                ✔️ Markera som klar
+            </button>
+        </form>
+    }
+    else
+    {
+        <a class="btn btn-outline-primary"
+           asp-controller="PatientAssessment"
+           asp-action="Index">
+            ⬅ Tillbaka till mina bedömningar
+        </a>
+    }
+</div>
 
 <div class="container mt-5">
     <h2>📋 Resultatöversikt för bedömning (@Model.AssessmentId)</h2>
@@ -111,22 +125,22 @@
     </table>
 
     <div class="mt-4 d-flex gap-3">
-        <a class="btn btn-outline-secondary"
-           asp-controller="PatientAssessment"
-           asp-action="Index">
-            ⬅ Tillbaka till mina bedömningar
-        </a>
-
         @if (!Model.IsComplete)
         {
             <form asp-action="Complete" method="post">
                 <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
                 <button type="submit" class="btn btn-success">
-                    ✔️ Jag är klar
+                    ✔️ Markera som klar
                 </button>
             </form>
         }
+        else
+        {
+            <a class="btn btn-outline-primary"
+               asp-controller="PatientAssessment"
+               asp-action="Index">
+                ⬅ Tillbaka till mina bedömningar
+            </a>
+        }
     </div>
 </div>
-
-

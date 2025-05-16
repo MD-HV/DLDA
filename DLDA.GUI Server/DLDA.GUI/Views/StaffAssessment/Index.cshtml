@@ -6,9 +6,6 @@
 <div class="container mt-5">
     <h2 class="mb-4">👥 Patientlista</h2>
 
-    <!-- Centralt hanterade alert-meddelanden -->
-    @await Html.PartialAsync("_AlertPartial")
-
     @if (Model.Any())
     {
         <div class="list-group shadow-sm">
