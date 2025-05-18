@@ -1,0 +1,147 @@
+﻿@using DLDA.GUI.DTOs.Assessment
+@model AssessmentOverviewDto
+
+@{
+    ViewData["Title"] = "Resultatöversikt";
+}
+
+@functions {
+    string FormatAnswer(int? value)
+    {
+        return value switch
+        {
+            0 => "Inget problem<br /><small class=\"text-muted\">(0)</small>",
+            1 => "Litet problem<br /><small class=\"text-muted\">(1)</small>",
+            2 => "Måttligt problem<br /><small class=\"text-muted\">(2)</small>",
+            3 => "Stort problem<br /><small class=\"text-muted\">(3)</small>",
+            4 => "Mycket stort problem<br /><small class=\"text-muted\">(4)</small>",
+            _ => "Ej besvarad"
+        };
+    }
+}
+
+<div class="mt-4 d-flex gap-3">
+    @if (!Model.IsComplete)
+    {
+        <form asp-action="Complete" method="post">
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+            <button type="submit" class="btn btn-success">
+                ✔️ Markera som klar
+            </button>
+        </form>
+    }
+    else
+    {
+        <a class="btn btn-outline-primary"
+           asp-controller="PatientAssessment"
+           asp-action="Index">
+            ⬅ Tillbaka till mina bedömningar
+        </a>
+    }
+</div>
+
+<div class="container mt-5">
+    <h2>📋 Resultatöversikt för bedömning (@Model.AssessmentId)</h2>
+    <p class="text-muted mb-4">
+        🗓️ Bedömningsdatum: <strong>@Model.CreatedAt.ToString("yyyy-MM-dd")</strong>
+    </p>
+
+    <div class="alert alert-secondary small mb-4">
+        <strong>Skattningsskala:</strong><br />
+        0 = Inget problem, 1 = Litet problem, 2 = Måttligt problem, 3 = Stort problem, 4 = Mycket stort problem
+    </div>
+
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Fråga</th>
+                <th>Ditt svar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var q in Model.Questions.OrderBy(q => q.Order))
+            {
+                <tr id="row_@q.ItemID">
+                    @if (!Model.IsComplete)
+                    {
+                        <form asp-controller="PatientResult"
+                              asp-action="UpdateAnswer"
+                              method="post">
+                            <input type="hidden" name="itemId" value="@q.ItemID" />
+                            <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+
+                        <td>@(q.Order + 1)</td>
+                        <td>
+                            @q.QuestionText
+                            <div class="mt-2">
+                                <textarea name="comment"
+                                  class="form-control form-control-sm"
+                                  placeholder="Kommentar (frivilligt)"
+                                  onchange="rememberScroll('row_@q.ItemID'); this.form.submit()">@q.PatientComment</textarea>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                @for (int i = 0; i <= 4; i++)
+                                {
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="answer"
+                                               id="answer_@q.ItemID@i"
+                                               value="@i"
+                                               @(q.PatientAnswer == i ? "checked" : "")
+                                               onchange="rememberScroll('row_@q.ItemID'); this.form.submit()" />
+                                        <label class="form-check-label" for="answer_@q.ItemID@i">@i</label>
+                                    </div>
+                                }
+                            </div>
+
+                            @if (q.PatientAnswer.HasValue)
+                            {
+                                <div class="mt-1 small text-muted">
+                                    <strong>Valt:</strong><br />
+                                    @Html.Raw(FormatAnswer(q.PatientAnswer))
+                                </div>
+                            }
+                        </td>
+                        </form>
+                    }
+                    else
+                    {
+                        <td>@(q.Order + 1)</td>
+                        <td>
+                            @q.QuestionText
+                            <div class="text-muted small mt-1">
+                                <strong>Kommentar:</strong><br />
+                                @(string.IsNullOrWhiteSpace(q.PatientComment) ? "Ingen kommentar" : q.PatientComment)
+                            </div>
+                        </td>
+                        <td>@Html.Raw(FormatAnswer(q.PatientAnswer))</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="mt-4 d-flex gap-3">
+        @if (!Model.IsComplete)
+        {
+            <form asp-action="Complete" method="post">
+                <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+                <button type="submit" class="btn btn-success">
+                    ✔️ Markera som klar
+                </button>
+            </form>
+        }
+        else
+        {
+            <a class="btn btn-outline-primary"
+               asp-controller="PatientAssessment"
+               asp-action="Index">
+                ⬅ Tillbaka till mina bedömningar
+            </a>
+        }
+    </div>
+</div>

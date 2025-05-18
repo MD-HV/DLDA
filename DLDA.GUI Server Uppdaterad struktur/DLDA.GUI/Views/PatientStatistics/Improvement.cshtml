@@ -1,0 +1,161 @@
+﻿@model PatientChangeOverviewDto
+@using System.Text.Json
+@using DLDA.GUI.DTOs.Patient
+@using Microsoft.AspNetCore.Html
+
+@{
+    ViewData["Title"] = "Förbättring över tid";
+
+    var förbättringar = Model.Förbättringar;
+    var kategorier = förbättringar
+        .Where(f => !string.IsNullOrWhiteSpace(f.Category))
+        .Select(f => f.Category)
+        .Distinct()
+        .OrderBy(k => k)
+        .ToList();
+
+    var labelsJson = new HtmlString(JsonSerializer.Serialize(förbättringar.Select(f => f.Question)));
+    var previousJson = new HtmlString(JsonSerializer.Serialize(förbättringar.Select(f => f.Previous)));
+    var currentJson = new HtmlString(JsonSerializer.Serialize(förbättringar.Select(f => f.Current)));
+
+    string FormatScore(int score) => score switch
+    {
+        0 => "Inget problem",
+        1 => "Litet problem",
+        2 => "Måttligt problem",
+        3 => "Stort problem",
+        4 => "Mycket stort problem",
+        _ => score.ToString()
+    };
+
+    string FormatImprovement(int change) => change switch
+    {
+        >= 3 => "Stora förbättringar",
+        2 => "Tydlig förbättring",
+        1 => "Viss förbättring",
+        _ => ""
+    };
+}
+
+<div class="mt-4">
+    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+        ⬅ Tillbaka till mina bedömningar
+    </a>
+</div>
+
+<div class="container mt-5">
+    <h2 class="mb-2">📈 Förbättring över tid</h2>
+    <p>
+        Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning.
+        <br />
+        <strong>Jämförelse mellan bedömningen den @Model.PreviousDate.ToString("yyyy-MM-dd") och @Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
+    </p>
+
+    @if (!förbättringar.Any())
+    {
+        <div class="alert alert-info mt-4">
+            Det finns inga tydliga förbättringar mellan de två senaste bedömningarna.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <canvas id="improvementChart" style="height: 600px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="mb-3">📜 Återkoppling</h5>
+                        <ul class="list-unstyled mb-3">
+                            <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
+                            <li><strong>@kategorier.Count</strong> kategorier innehöll förbättringar.</li>
+                            <li><strong>@förbättringar.Count(f => f.SkippedPrevious)</strong> frågor besvarades nu som tidigare varit <span class="text-muted">hoppade över</span>.</li>
+                        </ul>
+
+                        @if (kategorier.Any())
+                        {
+                            <div class="alert alert-success p-2 mb-3">
+                                Det finns flera områden där förbättringar skett sedan senaste bedömningen.
+                            </div>
+
+                            <div>
+                                <h6 class="text-success">✅ Kategorier som förbättrats</h6>
+                                <ul>
+                                    @foreach (var kategori in kategorier)
+                                    {
+                                        <li>@kategori</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetailsPatient()">
+            🔍 Visa detaljer per fråga
+        </button>
+
+        <div id="detailsSection" style="display: none;">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nr</th>
+                                <th>Fråga</th>
+                                <th>Tidigare</th>
+                                <th>Nuvarande</th>
+                                <th>Förbättring</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in förbättringar)
+                            {
+                                var highlight = f.Change >= 1 ? "table-success" : "";
+                                <tr class="@highlight">
+                                    <td>@f.QuestionId</td>
+                                    <td>@f.Question</td>
+                                    <td>
+                                        @(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))
+                                        <br /><small class="text-muted">(@f.Previous)</small>
+                                    </td>
+                                    <td>
+                                        @(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))
+                                        <br /><small class="text-muted">(@f.Current)</small>
+                                    </td>
+                                    <td>@FormatImprovement(f.Change)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="mt-4">
+    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
+        ⬅ Tillbaka till mina bedömningar
+    </a>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const labels = @Html.Raw(labelsJson);
+            const previousData = @Html.Raw(previousJson);
+            const currentData = @Html.Raw(currentJson);
+            renderImprovementChart(labels, previousData, currentData); // definieras i extern JS
+        });
+    </script>
+}

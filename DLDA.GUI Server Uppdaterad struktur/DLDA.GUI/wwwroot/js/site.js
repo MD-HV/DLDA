@@ -1,18 +1,6 @@
-﻿
-// PatientResult/Index
-// scroll.js – Behåll scrollposition vid autosubmit
-function rememberScroll(id) {
-    sessionStorage.setItem('scrollTo', id);
-}
-
-window.addEventListener('load', function () {
-    const lastId = sessionStorage.getItem('scrollTo');
-    if (lastId) {
-        const el = document.getElementById(lastId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        sessionStorage.removeItem('scrollTo');
-    }
-});
+﻿// ==============================
+// 📊 posetiva förändringar ifrån de två senaste bedömningarna för patient visas i stapeldiagram (PatientStatistics/Improvment)
+// ==============================
 
 // PatientStatistics/improvement
 // === improvementChart.js ===
@@ -64,7 +52,7 @@ function renderImprovementChart(labels, previousData, currentData) {
 
 // PatientStatistics/improvement
 // === Dölj sektion ===
-function toggleDetails() {
+function toggleDetailsPatient() {
     const section = document.getElementById('detailsSection');
     const button = document.getElementById('toggleButton');
 
@@ -74,6 +62,10 @@ function toggleDetails() {
     section.style.display = isVisible ? 'none' : 'block';
     button.innerText = isVisible ? '🔍 Visa detaljer per fråga' : '🔜 Dölj detaljer';
 }
+
+// ==============================
+// 📊 posetiva frågesvar ifrån en bedömning för patient visas i en piechart (PatientStatistics/Singel)
+// ==============================
 
 // PatientStatistics/Single
 // === piechart patient ===
@@ -122,6 +114,10 @@ function renderPatientSinglePieChart(labels, data) {
     });
 }
 
+// ==============================
+// 📊 Autoscroll funktion till vårdgivare översiktvy (StaffResult)
+// ==============================
+
 // StaffResult/Index
 // === Autoskroll vid svar/flagg-kommentar ===
 function rememberScroll(id) {
@@ -138,7 +134,7 @@ window.addEventListener('load', function () {
 });
 
 // ==============================
-// 📊 Förändringar över tid (StaffChangeOverview)
+// 📊 Förändringar över tid negativ och posetiva ändringar visas i stapeldiagram (StaffChangeOverview)
 // ==============================
 
 let chartInstance = null; // Global referens till diagraminstansen
@@ -278,7 +274,7 @@ function filterTable(type) {
 /**
  * 👁 Växlar visning av den detaljerade frågetabellen
  */
-function toggleDetails() {
+function toggleDetailsStaff() {
     const section = document.getElementById('detailsSection');
     const button = document.getElementById('toggleButton');
     const visible = section && section.style.display === 'block';
@@ -306,6 +302,10 @@ document.addEventListener('DOMContentLoaded', function () {
         filterTable('all');
     }
 });
+
+// ==============================
+// 📊 Jämnförelse mellan vårdgivare och patient i en bedömning visas i en piechart (Comparison)
+// ==============================
 
 
 // StaffStatistics/Comparison

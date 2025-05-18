@@ -1,0 +1,37 @@
+﻿@using DLDA.GUI.DTOs.Question
+@model QuestionDto
+
+@{
+    ViewData["Title"] = "Redigera fråga";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">✏ Redigera fråga</h2>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <form asp-action="Edit" asp-route-id="@Model.QuestionID" method="post">
+        <input type="hidden" asp-for="QuestionID" />
+
+        <div class="mb-3">
+            <label asp-for="QuestionText" class="form-label">Frågetext</label>
+            <input asp-for="QuestionText" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Category" class="form-label">Kategori</label>
+            <input asp-for="Category" class="form-control" />
+        </div>
+
+        <div class="form-check mb-3">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label">Aktiv</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">💾 Spara ändringar</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Avbryt</a>
+    </form>
+</div>

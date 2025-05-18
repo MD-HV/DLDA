@@ -1,0 +1,41 @@
+﻿@using DLDA.GUI.DTOs.Question
+@model List<QuestionDto>
+
+@{
+    ViewData["Title"] = "Frågesida index";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">📋 Frågesida index</h2>
+
+    <a asp-action="Create" class="btn btn-success mb-3">➕ Lägg till ny fråga</a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Frågetext</th>
+                <th>Kategori</th>
+                <th>Aktiv</th>
+                <th>Åtgärder</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var question in Model)
+            {
+                <tr>
+                    <td>@question.QuestionID</td>
+                    <td>@question.QuestionText</td>
+                    <td>@question.Category</td>
+                    <td>@(question.IsActive ? "✅" : "❌")</td>
+                    <td>
+                        <div class="d-inline-flex gap-2">
+                            <a asp-action="Edit" asp-route-id="@question.QuestionID" class="btn btn-sm btn-primary">✏ Redigera</a>
+                            <a asp-action="Delete" asp-route-id="@question.QuestionID" class="btn btn-sm btn-danger">🗑 Ta bort</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

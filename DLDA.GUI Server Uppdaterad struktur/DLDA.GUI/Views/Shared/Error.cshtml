@@ -1,0 +1,18 @@
+﻿@model DLDA.GUI.Models.ErrorViewModel
+@{
+    ViewData["Title"] = "Fel";
+}
+
+<h1 class="text-danger">Ett fel inträffade.</h1>
+<h2 class="text-danger">Tyvärr kunde inte din förfrågan behandlas just nu.</h2>
+
+@if (Model?.ShowRequestId == true)
+{
+    <p>
+        <strong>Request-ID:</strong> <code>@Model.RequestId</code>
+    </p>
+}
+
+<p>
+    Försök igen eller kontakta administratören om problemet kvarstår.
+</p>
