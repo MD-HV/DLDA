@@ -1,4 +1,5 @@
-﻿@model DLDA.GUI.DTOs.QuestionDto
+﻿@using DLDA.GUI.DTOs.Question
+@model QuestionDto
 @{
     ViewData["Title"] = "Skapa ny fråga";
 }
@@ -25,6 +26,6 @@
         </div>
 
         <button type="submit" class="btn btn-primary">💾 Skapa fråga</button>
-        <a asp-action="ListQuestions" class="btn btn-secondary ms-2">Avbryt</a>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Avbryt</a>
     </form>
 </div>

@@ -1,63 +1,58 @@
-﻿using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc;
-using DLDA.GUI.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using DLDA.GUI.DTOs.Authentication;
 
+/// <summary>
+/// Hanterar inloggning och utloggning av användare.
+/// </summary>
 public class AccountController : Controller
 {
-    private readonly HttpClient _httpClient;
+    private readonly AccountService _accountService;
     private readonly ILogger<AccountController> _logger;
 
-    public AccountController(IHttpClientFactory factory, ILogger<AccountController> logger)
+    public AccountController(AccountService accountService, ILogger<AccountController> logger)
     {
-        _httpClient = factory.CreateClient("DLDA");
+        _accountService = accountService;
         _logger = logger;
     }
 
+    /// <summary>
+    /// Visar inloggningssidan.
+    /// </summary>
     [HttpGet]
     public IActionResult Login() => View();
 
+    /// <summary>
+    /// Bearbetar inloggningsuppgifter och skapar session.
+    /// </summary>
+    /// <param name="login">Inloggningsdata (användarnamn och lösenord).</param>
+    /// <returns>Redirect till relevant startsida baserat på användarroll, eller tillbaks till login vid fel.</returns>
     [HttpPost]
     public async Task<IActionResult> Login(LoginDto login)
     {
-        try
+        var user = await _accountService.LoginAsync(login);
+        if (user == null)
         {
-            var response = await _httpClient.PostAsJsonAsync("Auth/login", login);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Inloggning misslyckades. Status: {Status}", response.StatusCode);
-                ViewBag.Error = "Felaktigt användarnamn eller lösenord.";
-                return View();
-            }
-
-            var user = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
-            if (user == null)
-            {
-                _logger.LogError("Inloggningssvaret kunde inte deserialiseras.");
-                ViewBag.Error = "Felaktigt svar från servern.";
-                return View();
-            }
-
-            HttpContext.Session.SetInt32("UserID", user.UserID);
-            HttpContext.Session.SetString("Username", user.Username);
-            HttpContext.Session.SetString("Role", user.Role);
-
-            return user.Role.ToLower() switch
-            {
-                "admin" => RedirectToAction("Index", "Admin"),
-                "staff" => RedirectToAction("Index", "StaffAssessment"),
-                "patient" => RedirectToAction("Index", "PatientAssessment"),
-                _ => RedirectToAction("Login")
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Ett fel uppstod vid inloggning.");
-            ViewBag.Error = "Det gick inte att kontakta servern. Försök igen senare.";
+            ViewBag.Error = "Felaktigt användarnamn, lösenord eller serverfel.";
             return View();
         }
+
+        HttpContext.Session.SetInt32("UserID", user.UserID);
+        HttpContext.Session.SetString("Username", user.Username);
+        HttpContext.Session.SetString("Role", user.Role);
+
+        return user.Role.ToLower() switch
+        {
+            "admin" => RedirectToAction("Index", "Admin"),
+            "staff" => RedirectToAction("Index", "StaffAssessment"),
+            "patient" => RedirectToAction("Index", "PatientAssessment"),
+            _ => RedirectToAction("Login")
+        };
     }
 
+    /// <summary>
+    /// Loggar ut användaren genom att rensa sessionen.
+    /// </summary>
+    /// <returns>Redirect till inloggningssidan.</returns>
     [HttpPost]
     public IActionResult Logout()
     {

@@ -1,169 +1,108 @@
 ﻿using DLDA.GUI.Authorization;
-using DLDA.GUI.DTOs;
+using DLDA.GUI.DTOs.Question;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Text.Json;
 
-namespace DLDA.GUI.Controllers
+/// <summary>
+/// Admincontroller för att hantera skapande, redigering och borttagning av frågor.
+/// </summary>
+[RoleAuthorize("admin")]
+public class AdminQuestionController : Controller
 {
-    [RoleAuthorize("admin")]
-    public class AdminQuestionController : Controller
+    private readonly QuestionAdminService _service;
+
+    /// <summary>
+    /// Konstruktor som injicerar QuestionAdminService.
+    /// </summary>
+    public AdminQuestionController(QuestionAdminService service)
     {
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<AdminQuestionController> _logger;
+        _service = service;
+    }
 
-        public AdminQuestionController(IHttpClientFactory httpClientFactory, ILogger<AdminQuestionController> logger)
+    /// <summary>
+    /// Visar en lista av alla frågor.
+    /// </summary>
+    public async Task<IActionResult> Index()
+    {
+        var questions = await _service.GetAllQuestionsAsync();
+        return View("Index", questions);
+    }
+
+    /// <summary>
+    /// Visar vyn för att skapa en ny fråga.
+    /// </summary>
+    public IActionResult Create() => View("Create", new QuestionDto());
+
+    /// <summary>
+    /// Skapar en ny fråga.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> Create(QuestionDto dto)
+    {
+        if (!ModelState.IsValid) return View("Create", dto);
+
+        var success = await _service.CreateQuestionAsync(dto);
+        TempData[success ? "Success" : "Error"] = success
+            ? "Frågan skapades."
+            : "Kunde inte skapa frågan.";
+        return success ? RedirectToAction("Index") : View("Create", dto);
+    }
+
+    /// <summary>
+    /// Visar redigeringsvyn för en viss fråga.
+    /// </summary>
+    public async Task<IActionResult> Edit(int id)
+    {
+        var question = await _service.GetQuestionByIdAsync(id);
+        if (question == null)
         {
-            _httpClient = httpClientFactory.CreateClient("DLDA");
-            _logger = logger;
+            TempData["Error"] = "Kunde inte hitta frågan.";
+            return RedirectToAction("Index");
         }
 
-        public async Task<IActionResult> Index()
+        return View("Edit", question);
+    }
+
+    /// <summary>
+    /// Uppdaterar en fråga.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> Edit(int id, QuestionDto dto)
+    {
+        if (id != dto.QuestionID) return BadRequest();
+        if (!ModelState.IsValid) return View("Edit", dto);
+
+        var success = await _service.UpdateQuestionAsync(id, dto);
+        TempData[success ? "Success" : "Error"] = success
+            ? "Frågan uppdaterades."
+            : "Kunde inte uppdatera frågan.";
+        return success ? RedirectToAction("Index") : View("Edit", dto);
+    }
+
+    /// <summary>
+    /// Visar bekräftelsesidan för borttagning av en fråga.
+    /// </summary>
+    public async Task<IActionResult> Delete(int id)
+    {
+        var question = await _service.GetQuestionByIdAsync(id);
+        if (question == null)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync("Question");
-                if (!response.IsSuccessStatusCode)
-                {
-                    _logger.LogError("API-svaret misslyckades med status: {Status}", response.StatusCode);
-                    TempData["Error"] = "Kunde inte hämta frågorna från API:t.";
-                    return View("Index", new List<QuestionDto>());
-                }
-
-                var json = await response.Content.ReadAsStringAsync();
-                var questions = JsonSerializer.Deserialize<List<QuestionDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                return View("Index", questions);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Fel vid anrop till API:t.");
-                TempData["Error"] = "Ett fel uppstod vid kontakt med API:t.";
-                return View("Index", new List<QuestionDto>());
-            }
+            TempData["Error"] = "Kunde inte hitta frågan.";
+            return RedirectToAction("Index");
         }
 
-        public IActionResult Create()
-        {
-            return View("Create", new QuestionDto());
-        }
+        return View("Delete", question);
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> Create(QuestionDto dto)
-        {
-            if (!ModelState.IsValid) return View("Create", dto);
-
-            try
-            {
-                var response = await _httpClient.PostAsJsonAsync("Question", dto);
-                if (response.IsSuccessStatusCode)
-                {
-                    TempData["Success"] = "Frågan skapades.";
-                    return RedirectToAction("Index");
-                }
-
-                TempData["Error"] = "Kunde inte skapa frågan.";
-                return View("Create", dto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Fel vid försök att skapa fråga.");
-                TempData["Error"] = "API-fel vid skapande.";
-                return View("Create", dto);
-            }
-        }
-
-        public async Task<IActionResult> Edit(int id)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"Question/{id}");
-                if (!response.IsSuccessStatusCode) return RedirectToAction("Index");
-
-                var json = await response.Content.ReadAsStringAsync();
-                var question = JsonSerializer.Deserialize<QuestionDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                return View("Edit", question);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Kunde inte ladda fråga ID {Id}.", id);
-                TempData["Error"] = "API-fel vid laddning av fråga.";
-                return RedirectToAction("Index");
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Edit(int id, QuestionDto dto)
-        {
-            if (id != dto.QuestionID) return BadRequest();
-            if (!ModelState.IsValid) return View("Edit", dto);
-
-            try
-            {
-                var response = await _httpClient.PutAsJsonAsync($"Question/{id}", dto);
-                if (response.IsSuccessStatusCode)
-                {
-                    TempData["Success"] = "Frågan uppdaterades.";
-                    return RedirectToAction("Index");
-                }
-
-                TempData["Error"] = "Kunde inte uppdatera frågan.";
-                return View("Edit", dto);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "API-fel vid uppdatering av fråga ID {Id}.", id);
-                TempData["Error"] = "Ett fel uppstod vid kontakt med API:t.";
-                return View("Edit", dto);
-            }
-        }
-
-        public async Task<IActionResult> Delete(int id)
-        {
-            try
-            {
-                var response = await _httpClient.GetAsync($"Question/{id}");
-                if (!response.IsSuccessStatusCode) return RedirectToAction("Index");
-
-                var json = await response.Content.ReadAsStringAsync();
-                var question = JsonSerializer.Deserialize<QuestionDto>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                return View("Delete", question);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "API-fel vid laddning av fråga för borttagning ID {Id}.", id);
-                TempData["Error"] = "Ett fel uppstod vid hämtning av fråga.";
-                return RedirectToAction("Index");
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            try
-            {
-                var response = await _httpClient.DeleteAsync($"Question/{id}");
-                if (response.IsSuccessStatusCode)
-                {
-                    TempData["Success"] = "Frågan togs bort.";
-                    return RedirectToAction("Index");
-                }
-
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Misslyckades ta bort fråga ID {Id}. Status: {StatusCode}, Svar: {Response}", id, response.StatusCode, errorContent);
-                TempData["Error"] = "Kunde inte ta bort frågan.";
-                return RedirectToAction("Index");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "API-fel vid borttagning av fråga ID {Id}.", id);
-                TempData["Error"] = "Ett fel uppstod vid borttagning.";
-                return RedirectToAction("Index");
-            }
-        }
+    /// <summary>
+    /// Bekräftar och tar bort frågan.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        var success = await _service.DeleteQuestionAsync(id);
+        TempData[success ? "Success" : "Error"] = success
+            ? "Frågan togs bort."
+            : "Kunde inte ta bort frågan.";
+        return RedirectToAction("Index");
     }
 }

@@ -1,4 +1,5 @@
-﻿@model DLDA.GUI.DTOs.StaffResultOverviewDto
+﻿@using DLDA.GUI.DTOs.Staff
+@model StaffResultOverviewDto
 @{
     ViewData["Title"] = "Resultatöversikt";
     var isLocked = Model.IsStaffComplete;
@@ -170,3 +171,5 @@
    asp-route-userId="@Model.UserId">
     ⬅ Tillbaka till patientens bedömningar
 </a>
+
+

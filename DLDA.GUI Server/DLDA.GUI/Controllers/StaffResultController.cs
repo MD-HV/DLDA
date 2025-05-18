@@ -1,123 +1,91 @@
 ﻿using DLDA.GUI.Authorization;
-using DLDA.GUI.DTOs;
+using DLDA.GUI.DTOs.Staff;
+using DLDA.GUI.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
 
 namespace DLDA.GUI.Controllers
 {
+    /// <summary>
+    /// Controller som hanterar personalens resultatöversikt för bedömningar.
+    /// </summary>
     [RoleAuthorize("staff")]
     public class StaffResultController : Controller
     {
-        private readonly HttpClient _httpClient;
+        private readonly StaffResultService _service;
 
-        public StaffResultController(IHttpClientFactory httpClientFactory)
+        public StaffResultController(StaffResultService service)
         {
-            _httpClient = httpClientFactory.CreateClient("DLDA");
+            _service = service;
         }
 
-        // GET: /StaffResult/Index/{id}
+        /// <summary>
+        /// Visar personalens sammanställning av en bedömning.
+        /// </summary>
         public async Task<IActionResult> Index(int id)
         {
-            try
-            {
-                var response = await _httpClient.GetAsync($"AssessmentItem/staff/assessment/{id}/overview");
-                if (!response.IsSuccessStatusCode)
-                {
-                    TempData["Error"] = "Kunde inte hämta personalsammanställning.";
-                    return RedirectToAction("Index", "StaffAssessment");
-                }
+            var overview = await _service.GetOverviewAsync(id);
 
-                var overview = await response.Content.ReadFromJsonAsync<StaffResultOverviewDto>();
-                if (overview == null)
-                {
-                    TempData["Error"] = "Data saknas för sammanställningen.";
-                    return RedirectToAction("Index", "StaffAssessment");
-                }
-
-                return View("Index", overview);
-            }
-            catch (Exception ex)
+            if (overview == null)
             {
-                TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
+                TempData["Error"] = "Kunde inte hämta personalsammanställning.";
                 return RedirectToAction("Index", "StaffAssessment");
             }
+
+            return View("Index", overview);
         }
 
-        // POST: /StaffResult/UpdateStaffAnswer
+        /// <summary>
+        /// Uppdaterar ett personal-svar, kommentar och flagga i sammanställningen.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> UpdateStaffAnswer(int itemId, int assessmentId, int answer, string? comment, bool flag)
         {
-            try
+            var dto = new SubmitStaffAnswerDto
             {
-                var dto = new SubmitStaffAnswerDto
-                {
-                    ItemID = itemId,
-                    Answer = answer,
-                    Comment = comment,
-                    Flag = flag
-                };
+                ItemID = itemId,
+                Answer = answer,
+                Comment = comment,
+                Flag = flag
+            };
 
-                var response = await _httpClient.PostAsJsonAsync("Question/quiz/staff/submit", dto);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    TempData["Error"] = "Kunde inte spara ändringar.";
-                }
-                else
-                {
-                    TempData["Success"] = "Svar uppdaterat.";
-                }
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
-            }
+            var success = await _service.UpdateStaffAnswerAsync(dto);
+            TempData[success ? "Success" : "Error"] = success
+                ? "Svar uppdaterat."
+                : "Kunde inte spara ändringar.";
 
             return RedirectToAction("Index", new { id = assessmentId });
         }
 
-        // POST: /StaffResult/Complete
+        /// <summary>
+        /// Markerar personalens bedömning som komplett.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Complete(int assessmentId, int userId)
         {
-            try
-            {
-                var response = await _httpClient.PostAsync($"AssessmentItem/assessment/{assessmentId}/staff-complete", null);
+            var success = await _service.CompleteStaffAssessmentAsync(assessmentId);
+            TempData[success ? "Success" : "Error"] = success
+                ? "Personalens bedömning har markerats som klar."
+                : "Kunde inte markera bedömningen som klar. Kontrollera att alla frågor är besvarade.";
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    TempData["Error"] = "Kunde inte markera bedömningen som klar. Kontrollera att alla frågor är besvarade.";
-                    return RedirectToAction("Index", new { id = assessmentId });
-                }
-
-                TempData["Success"] = "Personalens bedömning har markerats som klar.";
-                return RedirectToAction("Assessments", "StaffAssessment", new { userId });
-            }
-            catch (Exception ex)
-            {
-                TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
-                return RedirectToAction("Index", new { id = assessmentId });
-            }
+            return success
+                ? RedirectToAction("Assessments", "StaffAssessment", new { userId })
+                : RedirectToAction("Index", new { id = assessmentId });
         }
 
-        // POST: /StaffAssessment/Unlock
-        // låser upp en redan avklarad bedömning
+        /// <summary>
+        /// Låser upp en bedömning som tidigare markerats som klar.
+        /// </summary>
         [HttpPost]
         public async Task<IActionResult> Unlock(int assessmentId, int userId)
         {
-            var response = await _httpClient.PostAsync(
-                $"assessment/unlock/{assessmentId}",
-                null
-            );
+            var success = await _service.UnlockAssessmentAsync(assessmentId);
+            TempData[success ? "Success" : "Error"] = success
+                ? "Bedömningen har låsts upp."
+                : "Misslyckades med att låsa upp bedömningen.";
 
-            if (!response.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Misslyckades med att låsa upp bedömningen.";
-                return RedirectToAction("Assessments", new { userId });
-            }
-
-            TempData["Success"] = "Bedömningen har låsts upp.";
-            return RedirectToAction("Index", new { id = assessmentId });
+            return success
+                ? RedirectToAction("Index", new { id = assessmentId })
+                : RedirectToAction("Assessments", "StaffAssessment", new { userId });
         }
     }
 }

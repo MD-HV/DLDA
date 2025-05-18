@@ -1,59 +1,48 @@
 ﻿using DLDA.GUI.Authorization;
-using DLDA.GUI.DTOs;
+using DLDA.GUI.DTOs.Staff;
+using DLDA.GUI.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using System.Net.Http.Json;
 
-[RoleAuthorize("staff")]
-public class StaffQuizController : Controller
+namespace DLDA.GUI.Controllers
 {
-    private readonly HttpClient _httpClient;
-
-    public StaffQuizController(IHttpClientFactory httpClientFactory)
+    /// <summary>
+    /// Controller för personalens frågeflöde under bedömning.
+    /// </summary>
+    [RoleAuthorize("staff")]
+    public class StaffQuizController : Controller
     {
-        _httpClient = httpClientFactory.CreateClient("DLDA");
-    }
+        private readonly StaffQuizService _service;
 
-    // GET: /StaffQuiz/Resume?assessmentId=66&userId=6
-    [HttpGet("StaffQuiz/Resume")]
-    public async Task<IActionResult> Resume(int assessmentId, int userId)
-    {
-        try
+        public StaffQuizController(StaffQuizService service)
         {
-            Console.WriteLine($"[STAFF QUIZ] Resume: assessmentId={assessmentId}, userId={userId}");
+            _service = service;
+        }
 
-            var response = await _httpClient.GetAsync($"Question/quiz/staff/next/{assessmentId}");
+        /// <summary>
+        /// Återupptar personalens bedömning – visar nästa fråga.
+        /// </summary>
+        [HttpGet("StaffQuiz/Resume")]
+        public async Task<IActionResult> Resume(int assessmentId, int userId)
+        {
+            var question = await _service.GetNextQuestionAsync(assessmentId);
 
-            if (response.StatusCode == HttpStatusCode.NotFound)
+            if (question == null)
             {
                 TempData["Success"] = "Du har gått igenom alla frågor.";
                 return RedirectToAction("Index", "StaffResult", new { id = assessmentId });
             }
 
-            if (!response.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Kunde inte hämta nästa fråga.";
-                return RedirectToAction("Assessments", "StaffAssessment", new { userId });
-            }
-
-            var question = await response.Content.ReadFromJsonAsync<StaffQuestionDto>();
+            ViewBag.AssessmentId = assessmentId;
+            ViewBag.UserId = userId;
             return View("Question", question);
         }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Tekniskt fel: {ex.Message}";
-            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
-        }
-    }
 
-    // POST: /StaffQuiz/SubmitAnswer
-    [HttpPost]
-    public async Task<IActionResult> SubmitAnswer(int itemId, int assessmentId, int answer, string? comment, bool flag, int userId)
-    {
-        try
+        /// <summary>
+        /// Skickar in personalens svar, kommentar och flagga för en fråga.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SubmitAnswer(int itemId, int assessmentId, int answer, string? comment, bool flag, int userId)
         {
-            Console.WriteLine($"[DEBUG] SubmitAnswer: userId={userId}");
-
             var dto = new SubmitStaffAnswerDto
             {
                 ItemID = itemId,
@@ -62,52 +51,40 @@ public class StaffQuizController : Controller
                 Flag = flag
             };
 
-            var response = await _httpClient.PostAsJsonAsync("Question/quiz/staff/submit", dto);
-
-            if (!response.IsSuccessStatusCode)
-            {
+            var success = await _service.SubmitAnswerAsync(dto);
+            if (!success)
                 TempData["Error"] = "Kunde inte spara svaret.";
-            }
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Fel vid inskick av svar: {ex.Message}";
+
+            return RedirectToAction("Resume", new { assessmentId, userId });
         }
 
-        return RedirectToAction("Resume", new { assessmentId, userId });
-    }
-
-    // POST: /StaffQuiz/Previous
-    [HttpPost]
-    public async Task<IActionResult> Previous(int assessmentId, int currentOrder, int userId)
-    {
-        try
+        /// <summary>
+        /// Hämtar föregående fråga i personalens frågeflöde.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> Previous(int assessmentId, int currentOrder, int userId)
         {
-            Console.WriteLine($"[STAFF QUIZ] Previous: assessmentId={assessmentId}, order={currentOrder}");
+            var question = await _service.GetPreviousQuestionAsync(assessmentId, currentOrder);
 
-            var response = await _httpClient.GetAsync($"Question/quiz/staff/previous/{assessmentId}/{currentOrder}");
-
-            if (!response.IsSuccessStatusCode)
+            if (question == null)
             {
                 TempData["Error"] = "Kunde inte hämta föregående fråga.";
                 return RedirectToAction("Resume", new { assessmentId, userId });
             }
 
-            var question = await response.Content.ReadFromJsonAsync<StaffQuestionDto>();
+            ViewBag.AssessmentId = assessmentId;
+            ViewBag.UserId = userId;
             return View("Question", question);
         }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
-            return RedirectToAction("Resume", new { assessmentId, userId });
-        }
-    }
 
-    // POST: /StaffQuiz/Pause
-    [HttpPost("StaffQuiz/Pause")]
-    public IActionResult Pause(int assessmentId, int userId)
-    {
-        TempData["Info"] = "Bedömningen är pausad. Du kan återuppta den senare.";
-        return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        /// <summary>
+        /// Pausar bedömningen och går tillbaka till översikten.
+        /// </summary>
+        [HttpPost("StaffQuiz/Pause")]
+        public IActionResult Pause(int assessmentId, int userId)
+        {
+            TempData["Info"] = "Bedömningen är pausad. Du kan återuppta den senare.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
     }
 }

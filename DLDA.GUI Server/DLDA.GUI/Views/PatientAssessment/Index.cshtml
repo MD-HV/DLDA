@@ -1,4 +1,5 @@
-﻿@model List<DLDA.GUI.DTOs.AssessmentDto>
+﻿@using DLDA.GUI.DTOs.Assessment
+@model List<AssessmentDto>
 @{
     ViewData["Title"] = "Mina bedömningar";
     var completedCount = Model.Count(m => m.IsComplete);

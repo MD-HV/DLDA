@@ -1,5 +1,7 @@
-﻿@model DLDA.GUI.DTOs.PatientChangeOverviewDto
+﻿@model PatientChangeOverviewDto
 @using System.Text.Json
+@using DLDA.GUI.DTOs.Patient
+@using Microsoft.AspNetCore.Html
 
 @{
     ViewData["Title"] = "Förbättring över tid";
@@ -12,9 +14,9 @@
         .OrderBy(k => k)
         .ToList();
 
-    var labelsJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Question));
-    var previousJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Previous));
-    var currentJson = JsonSerializer.Serialize(förbättringar.Select(f => f.Current));
+    var labelsJson = new HtmlString(JsonSerializer.Serialize(förbättringar.Select(f => f.Question)));
+    var previousJson = new HtmlString(JsonSerializer.Serialize(förbättringar.Select(f => f.Previous)));
+    var currentJson = new HtmlString(JsonSerializer.Serialize(förbättringar.Select(f => f.Current)));
 
     string FormatScore(int score) => score switch
     {
@@ -47,7 +49,6 @@
         Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning.
         <br />
         <strong>Jämförelse mellan bedömningen den @Model.PreviousDate.ToString("yyyy-MM-dd") och @Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
-
     </p>
 
     @if (!förbättringar.Any())
@@ -98,7 +99,7 @@
             </div>
         </div>
 
-        <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetails()">
+        <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetailsPatient()">
             🔍 Visa detaljer per fråga
         </button>
 
@@ -154,7 +155,7 @@
             const labels = @Html.Raw(labelsJson);
             const previousData = @Html.Raw(previousJson);
             const currentData = @Html.Raw(currentJson);
-            renderImprovementChart(labels, previousData, currentData); // ⬅ definieras i site.js
+            renderImprovementChart(labels, previousData, currentData); // definieras i extern JS
         });
     </script>
 }

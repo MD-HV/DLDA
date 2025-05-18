@@ -1,121 +1,79 @@
 ﻿using DLDA.GUI.Authorization;
-using DLDA.GUI.DTOs;
+using DLDA.GUI.DTOs.Patient;
+using DLDA.GUI.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http.Json;
-using System.Text.Json;
 
 [Route("PatientStatistics")]
 [RoleAuthorize("patient")]
 public class PatientStatisticsController : Controller
 {
-    private readonly HttpClient _httpClient;
+    private readonly PatientStatisticsService _service;
 
-    public PatientStatisticsController(IHttpClientFactory httpClientFactory)
+    public PatientStatisticsController(PatientStatisticsService service)
     {
-        _httpClient = httpClientFactory.CreateClient("DLDA");
+        _service = service;
     }
 
-    // GET: /PatientStatistics/Single/82
+    /// <summary>
+    /// Visar statistik för en enskild bedömning (rådata per fråga).
+    /// </summary>
     [HttpGet("Single/{assessmentId}")]
     public async Task<IActionResult> Single(int assessmentId)
     {
-        try
+        var answers = await _service.GetAnswersForAssessmentAsync(assessmentId);
+        if (answers.Count == 0)
         {
-            var response = await _httpClient.GetAsync($"AssessmentItem/patient/assessment/{assessmentId}");
-            if (!response.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Kunde inte hämta bedömningssvar.";
-                return RedirectToAction("Index", "PatientAssessment");
-            }
-
-            var answers = await response.Content.ReadFromJsonAsync<List<PatientAnswerStatsDto>>();
-            if (answers == null)
-            {
-                TempData["Error"] = "Inga svar kunde läsas in.";
-                return RedirectToAction("Index", "PatientAssessment");
-            }
-
-            var assessmentResp = await _httpClient.GetAsync($"Assessment/{assessmentId}");
-            if (!assessmentResp.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Kunde inte hämta bedömningsinformation.";
-                return RedirectToAction("Index", "PatientAssessment");
-            }
-
-            var assessment = await assessmentResp.Content.ReadFromJsonAsync<AssessmentDto>();
-
-            var model = new PatientStatisticsDto
-            {
-                AssessmentId = assessmentId,
-                CreatedAt = assessment?.CreatedAt ?? DateTime.MinValue,
-                Answers = answers
-            };
-
-            return View("Single", model);
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Tekniskt fel: {ex.Message}";
+            TempData["Error"] = "Inga svar kunde läsas in.";
             return RedirectToAction("Index", "PatientAssessment");
         }
+
+        var assessment = await _service.GetAssessmentAsync(assessmentId);
+        if (assessment == null)
+        {
+            TempData["Error"] = "Kunde inte hämta bedömningsinformation.";
+            return RedirectToAction("Index", "PatientAssessment");
+        }
+
+        var model = new PatientStatisticsDto
+        {
+            AssessmentId = assessmentId,
+            CreatedAt = assessment.CreatedAt,
+            Answers = answers
+        };
+
+        return View("Single", model);
     }
 
-    // GET: /PatientStatistics/Overview or /PatientStatistics/Overview/82
+    /// <summary>
+    /// Visar sammanfattande statistik för en bedömning (sammanställd vy).
+    /// </summary>
     [HttpGet("Overview")]
     [HttpGet("Overview/{assessmentId}")]
     public async Task<IActionResult> Overview(int assessmentId)
     {
-        try
+        var summary = await _service.GetSummaryAsync(assessmentId);
+        if (summary == null)
         {
-            var response = await _httpClient.GetAsync($"statistics/summary/patient/{assessmentId}");
-            if (!response.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Kunde inte hämta statistik.";
-                return RedirectToAction("Index", "PatientAssessment");
-            }
-
-            var summary = await response.Content.ReadFromJsonAsync<PatientSingleSummaryDto>();
-            return View("Single", summary);
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Tekniskt fel: {ex.Message}";
+            TempData["Error"] = "Kunde inte hämta statistik.";
             return RedirectToAction("Index", "PatientAssessment");
         }
+
+        return View("Single", summary);
     }
 
-    // GET: /PatientStatistics/Improvement/{userId}
+    /// <summary>
+    /// Visar förbättringar över tid (kräver minst två avslutade bedömningar).
+    /// </summary>
     [HttpGet("Improvement/{userId}")]
     public async Task<IActionResult> Improvement(int userId)
     {
-        try
+        var data = await _service.GetImprovementDataAsync(userId);
+        if (data == null)
         {
-            var response = await _httpClient.GetAsync($"statistics/patient-change-overview/{userId}");
-            if (!response.IsSuccessStatusCode)
-            {
-                TempData["Error"] = "Det gick inte att hämta förbättringsdata.";
-                return RedirectToAction("Index", "PatientAssessment");
-            }
-
-            var jsonString = await response.Content.ReadAsStringAsync();
-
-            if (jsonString.Contains("inte tillräckligt"))
-            {
-                TempData["Error"] = "Du måste ha minst två avslutade bedömningar för att visa förbättringar över tid.";
-                return RedirectToAction("Index", "PatientAssessment");
-            }
-
-            var data = JsonSerializer.Deserialize<PatientChangeOverviewDto>(jsonString, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return View("Improvement", data);
-        }
-        catch (Exception ex)
-        {
-            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
+            TempData["Error"] = "Du måste ha minst två avslutade bedömningar för att visa förbättringar över tid.";
             return RedirectToAction("Index", "PatientAssessment");
         }
+
+        return View("Improvement", data);
     }
 }

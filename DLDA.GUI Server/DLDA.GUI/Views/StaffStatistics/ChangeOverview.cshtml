@@ -1,5 +1,6 @@
-﻿@model DLDA.GUI.DTOs.StaffChangeOverviewDto
+﻿@model StaffChangeOverviewDto
 @using System.Text.Json
+@using DLDA.GUI.DTOs.Staff
 
 @{
     ViewData["Title"] = "Förändringar över tid (personal)";
@@ -82,7 +83,7 @@
 
             <!-- 🟢 Knappen ligger nu UTANFÖR kortet -->
             <div class="mt-3">
-                <button class="btn btn-outline-secondary" onclick="toggleDetails()" id="toggleButton">
+                <button class="btn btn-outline-secondary" onclick="toggleDetailsStaff()" id="toggleButton">
                     🔍 Visa detaljer
                 </button>
             </div>
@@ -175,7 +176,6 @@
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script>
         const rawLabels = @Html.Raw(labelsJson);
         const rawPrevious = @Html.Raw(previousJson);
