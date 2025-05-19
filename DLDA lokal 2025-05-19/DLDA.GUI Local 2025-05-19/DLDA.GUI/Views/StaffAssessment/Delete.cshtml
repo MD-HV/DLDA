@@ -1,0 +1,34 @@
+﻿@using DLDA.GUI.DTOs.Assessment
+@model AssessmentDto
+@{
+    ViewData["Title"] = "Bekräfta borttagning";
+}
+
+<div class="container mt-5">
+    <h3 class="text-danger">🗑️ Bekräfta borttagning</h3>
+
+    <p class="text-muted">Du håller på att ta bort en bedömning. Denna åtgärd är permanent och kan <strong>inte</strong> ångras.</p>
+
+    <!-- Bedömningsinfo -->
+    <ul>
+        <li><strong>ID:</strong> @Model.AssessmentID</li>
+        <li><strong>Skattningsskala:</strong> @Model.ScaleType</li>
+        <li><strong>Skapad:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")</li>
+    </ul>
+
+    <!-- Formulär -->
+    <form asp-controller="StaffAssessment" asp-action="DeleteConfirmed" method="post" class="mt-4">
+        <input type="hidden" name="id" value="@Model.AssessmentID" />
+        <input type="hidden" name="userId" value="@Model.UserId" />
+
+        <button type="submit" class="btn btn-danger">
+            🗑 Ja, ta bort denna bedömning
+        </button>
+        <a asp-controller="StaffAssessment"
+           asp-action="Assessments"
+           asp-route-userId="@Model.UserId"
+           class="btn btn-outline-secondary ms-2">
+            ⬅ Avbryt
+        </a>
+    </form>
+</div>
