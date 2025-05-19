@@ -21,13 +21,13 @@ public class QuestionAdminService
     /// <summary>
     /// Hämtar alla frågor från API:t.
     /// </summary>
-    public async Task<List<QuestionDto>> GetAllQuestionsAsync()
+    public async Task<List<Question>> GetAllQuestionsAsync()
     {
         try
         {
             var response = await _httpClient.GetAsync("Question");
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<List<QuestionDto>>() ?? new();
+            return await response.Content.ReadFromJsonAsync<List<Question>>() ?? new();
         }
         catch (Exception ex)
         {
@@ -39,13 +39,13 @@ public class QuestionAdminService
     /// <summary>
     /// Hämtar en enskild fråga med ID.
     /// </summary>
-    public async Task<QuestionDto?> GetQuestionByIdAsync(int id)
+    public async Task<Question?> GetQuestionByIdAsync(int id)
     {
         try
         {
             var response = await _httpClient.GetAsync($"Question/{id}");
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<QuestionDto>();
+            return await response.Content.ReadFromJsonAsync<Question>();
         }
         catch (Exception ex)
         {
@@ -57,7 +57,7 @@ public class QuestionAdminService
     /// <summary>
     /// Skickar in en ny fråga till API:t.
     /// </summary>
-    public async Task<bool> CreateQuestionAsync(QuestionDto dto)
+    public async Task<bool> CreateQuestionAsync(Question dto)
     {
         try
         {
@@ -74,7 +74,7 @@ public class QuestionAdminService
     /// <summary>
     /// Uppdaterar en befintlig fråga i API:t.
     /// </summary>
-    public async Task<bool> UpdateQuestionAsync(int id, QuestionDto dto)
+    public async Task<bool> UpdateQuestionAsync(int id, Question dto)
     {
         try
         {

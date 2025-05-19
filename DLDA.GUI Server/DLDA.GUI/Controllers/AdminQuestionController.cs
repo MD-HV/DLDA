@@ -30,13 +30,13 @@ public class AdminQuestionController : Controller
     /// <summary>
     /// Visar vyn för att skapa en ny fråga.
     /// </summary>
-    public IActionResult Create() => View("Create", new QuestionDto());
+    public IActionResult Create() => View("Create", new Question());
 
     /// <summary>
     /// Skapar en ny fråga.
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> Create(QuestionDto dto)
+    public async Task<IActionResult> Create(Question dto)
     {
         if (!ModelState.IsValid) return View("Create", dto);
 
@@ -66,7 +66,7 @@ public class AdminQuestionController : Controller
     /// Uppdaterar en fråga.
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> Edit(int id, QuestionDto dto)
+    public async Task<IActionResult> Edit(int id, Question dto)
     {
         if (id != dto.QuestionID) return BadRequest();
         if (!ModelState.IsValid) return View("Edit", dto);

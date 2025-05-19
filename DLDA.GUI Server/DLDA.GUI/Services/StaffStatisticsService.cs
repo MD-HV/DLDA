@@ -22,7 +22,7 @@ namespace DLDA.GUI.Services
         /// <summary>
         /// Hämtar jämförelsedata mellan patient och personal samt bedömningsinfo.
         /// </summary>
-        public async Task<(List<StaffComparisonRowDto>? Comparison, AssessmentDto? Assessment)> GetComparisonAsync(int assessmentId)
+        public async Task<(List<StaffStatistics>? Comparison, AssessmentDto? Assessment)> GetComparisonAsync(int assessmentId)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace DLDA.GUI.Services
                 }
 
                 var comparisonJson = await comparisonResponse.Content.ReadAsStringAsync();
-                var comparison = JsonSerializer.Deserialize<List<StaffComparisonRowDto>>(comparisonJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var comparison = JsonSerializer.Deserialize<List<StaffStatistics>>(comparisonJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 var assessmentResponse = await _httpClient.GetAsync($"assessment/{assessmentId}");
                 if (!assessmentResponse.IsSuccessStatusCode)

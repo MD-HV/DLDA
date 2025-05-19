@@ -63,14 +63,14 @@ namespace DLDA.GUI.Services
         /// <summary>
         /// Hämtar nästa obesvarade fråga i quizflödet för en given bedömning.
         /// </summary>
-        public async Task<QuestionDto?> GetNextQuestionAsync(int assessmentId)
+        public async Task<Question?> GetNextQuestionAsync(int assessmentId)
         {
             try
             {
                 var response = await _httpClient.GetAsync($"Question/quiz/patient/next/{assessmentId}");
                 if (!response.IsSuccessStatusCode) return null;
 
-                return await response.Content.ReadFromJsonAsync<QuestionDto>();
+                return await response.Content.ReadFromJsonAsync<Question>();
             }
             catch (Exception ex)
             {
@@ -82,14 +82,14 @@ namespace DLDA.GUI.Services
         /// <summary>
         /// Hämtar föregående fråga utifrån aktuell position i bedömningen.
         /// </summary>
-        public async Task<QuestionDto?> GetPreviousQuestionAsync(int assessmentId, int order)
+        public async Task<Question?> GetPreviousQuestionAsync(int assessmentId, int order)
         {
             try
             {
                 var response = await _httpClient.GetAsync($"Question/quiz/patient/previous/{assessmentId}/{order}");
                 if (!response.IsSuccessStatusCode) return null;
 
-                return await response.Content.ReadFromJsonAsync<QuestionDto>();
+                return await response.Content.ReadFromJsonAsync<Question>();
             }
             catch (Exception ex)
             {

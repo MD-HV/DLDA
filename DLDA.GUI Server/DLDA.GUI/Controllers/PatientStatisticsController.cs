@@ -34,7 +34,7 @@ public class PatientStatisticsController : Controller
             return RedirectToAction("Index", "PatientAssessment");
         }
 
-        var model = new PatientStatisticsDto
+        var model = new PatientStatistics
         {
             AssessmentId = assessmentId,
             CreatedAt = assessment.CreatedAt,

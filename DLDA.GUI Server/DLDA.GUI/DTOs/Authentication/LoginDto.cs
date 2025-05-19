@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-// Inloggningsuppgifter som skickas från frontend till API.
-
+// DTO för inloggningsuppgifter som skickas från frontend till API
 namespace DLDA.GUI.DTOs.Authentication
 {
     public class LoginDto
     {
-        public string Username { get; set; } = "";
-        public string Password { get; set; } = "";
+        public string Username { get; set; } = ""; // Användarens användarnamn, som är tomt som standard
+
+        public string Password { get; set; } = ""; // Användarens lösenord, som är tomt som standard
     }
 }

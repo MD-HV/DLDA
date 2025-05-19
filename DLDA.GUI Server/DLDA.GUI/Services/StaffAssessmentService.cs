@@ -1,5 +1,4 @@
 ﻿using DLDA.GUI.DTOs.Assessment;
-using DLDA.GUI.DTOs.Patient;
 using DLDA.GUI.DTOs.User;
 using System.Net.Http.Json;
 
