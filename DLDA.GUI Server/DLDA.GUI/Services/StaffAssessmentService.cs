@@ -157,5 +157,47 @@ namespace DLDA.GUI.Services
                 return new List<UserDto>();
             }
         }
+
+        /// <summary>
+        /// Hämtar en lista av patienter tillsammans med deras senaste bedömning,
+        /// med möjlighet att filtrera på sökord, pågående status och datumintervall.
+        /// </summary>
+        public async Task<List<PatientWithAssessmentStatusDto>> GetFilteredPatientsAsync(
+            string? search, bool? ongoing, bool? notOngoing, string? recent)
+        {
+            try
+            {
+                var queryParams = new List<string>();
+
+                if (!string.IsNullOrWhiteSpace(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search)}");
+
+                if (ongoing == true)
+                    queryParams.Add("ongoing=true");
+
+                if (notOngoing == true)
+                    queryParams.Add("notOngoing=true");
+
+                if (!string.IsNullOrWhiteSpace(recent))
+                    queryParams.Add($"recent={Uri.EscapeDataString(recent)}");
+
+                var query = queryParams.Any()
+                    ? "user/with-latest-assessment?" + string.Join("&", queryParams)
+                    : "user/with-latest-assessment";
+
+                var response = await _httpClient.GetAsync(query);
+                if (!response.IsSuccessStatusCode)
+                    return new List<PatientWithAssessmentStatusDto>();
+
+                var result = await response.Content.ReadFromJsonAsync<List<PatientWithAssessmentStatusDto>>();
+                return result ?? new List<PatientWithAssessmentStatusDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid hämtning av filtrerad patientlista.");
+                return new List<PatientWithAssessmentStatusDto>();
+            }
+        }
+
     }
 }

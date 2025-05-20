@@ -519,3 +519,14 @@ function validateDates() {
     errorDiv.style.display = "none";
     return true;
 }
+
+// ==============================
+// 📊 StaffAssessment söka i patient lista)
+// ==============================
+function clearSearch() {
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    window.location.href = searchInput?.closest("form")?.getAttribute("action") || window.location.href;
+}

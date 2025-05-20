@@ -20,28 +20,12 @@ namespace DLDA.GUI.Controllers
         }
 
         /// <summary>
-        /// Visar alla patienter med senaste bedömning.
+        /// Visar filtrerbar lista över patienter med deras senaste bedömning.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(string? search, bool? ongoing, bool? notOngoing, string? recent)
         {
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var results = await _service.SearchPatientsAsync(search);
-
-                // Konvertera UserDto till PatientWithLatestAssessmentDto (utan bedömning)
-                var converted = results.Select(u => new PatientWithLatestAssessmentDto
-                {
-                    UserID = u.UserID,
-                    Username = u.Username,
-                    LastAssessmentDate = null
-                }).ToList();
-
-                return View(converted);
-            }
-
-            // Om ingen sökning – visa alla som vanligt
-            var patients = await _service.GetPatientsWithLatestAsync();
+            var patients = await _service.GetFilteredPatientsAsync(search, ongoing, notOngoing, recent);
             return View(patients);
         }
 

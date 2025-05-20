@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using BCrypt.Net;
+﻿using BCrypt.Net;
 using DLDA.API.Data;
 using DLDA.API.DTOs;
+using DLDA.API.DTOs.Patient;
 using DLDA.API.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -144,23 +145,69 @@ public class UserController : ControllerBase
     // GET api/user/5
     // visa användarnamn och senaste bedömningens datum
     [HttpGet("with-latest-assessment")]
-    public ActionResult<IEnumerable<PatientWithLatestAssessmentDto>> GetUsersWithLatestAssessment()
+    public async Task<ActionResult<IEnumerable<PatientWithAssessmentStatusDto>>> GetUsersWithLatestAssessment(
+    [FromQuery] string? search,
+    [FromQuery] bool? ongoing,
+    [FromQuery] bool? notOngoing,
+    [FromQuery] string? recent)
     {
-        var result = _context.Users
-            .Where(u => u.Role.ToLower() == "patient")
-            .Select(u => new PatientWithLatestAssessmentDto
+        var patients = await _context.Users
+            .Where(u => u.Role.ToLower() == "patient" &&
+                        (string.IsNullOrWhiteSpace(search) || u.Username.ToLower().Contains(search.ToLower())))
+            .Select(u => new PatientWithAssessmentStatusDto
             {
                 UserID = u.UserID,
                 Username = u.Username,
-                LastAssessmentDate = _context.Assessments
-                    .Where(a => a.UserId == u.UserID)
+                LastAssessment = u.Assessments
                     .OrderByDescending(a => a.CreatedAt)
-                    .Select(a => (DateTime?)a.CreatedAt) // 👈 detta gör att null returneras om inget finns
+                    .Select(a => new AssessmentDto
+                    {
+                        AssessmentID = a.AssessmentID,
+                        UserId = a.UserId,
+                        CreatedAt = a.CreatedAt ?? DateTime.MinValue,
+                        IsComplete = a.IsComplete,
+                        IsStaffComplete = a.IsStaffComplete,
+                        ScaleType = a.ScaleType,
+                        HasStarted = a.AssessmentItems.Any(i => i.PatientAnswer != null || i.SkippedByPatient),
+                        AnsweredCount = a.AssessmentItems.Count(i => i.PatientAnswer != null || i.SkippedByPatient),
+                        TotalQuestions = a.AssessmentItems.Count()
+                    })
                     .FirstOrDefault()
             })
-            .ToList();
+            .ToListAsync();
 
-        return Ok(result);
+        var filtered = patients.Where(p =>
+        {
+            var a = p.LastAssessment;
+
+            // Tillåt patienter utan bedömning om inget filter kräver en
+            if (a == null)
+            {
+                if (ongoing == true || notOngoing == true || !string.IsNullOrWhiteSpace(recent))
+                    return false;
+
+                return true; // ingen bedömning, men inga filter = visa
+            }
+
+            // Bedömning finns – tillämpa filter
+            if (ongoing == true && notOngoing != true && a.IsComplete)
+                return false;
+
+            if (notOngoing == true && ongoing != true && !a.IsComplete)
+                return false;
+
+            if (recent == "week" && a.CreatedAt < DateTime.Today.AddDays(-7))
+                return false;
+
+            if (recent == "month" && a.CreatedAt < DateTime.Today.AddMonths(-1))
+                return false;
+
+            if (recent == "older" && a.CreatedAt >= DateTime.Today.AddMonths(-1))
+                return false;
+
+            return true;
+        });
+
+        return Ok(filtered);
     }
-
 }
