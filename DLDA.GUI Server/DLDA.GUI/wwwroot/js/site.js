@@ -476,3 +476,46 @@ function applyPatientAnswerFilter() {
     });
 }
 
+// ==============================
+// 📊 Patient – Jämför förbättring över tid
+// ==============================
+
+function validateDates() {
+    const first = document.getElementById("firstSelect");
+    const second = document.getElementById("secondSelect");
+
+    const firstDate = new Date(first.options[first.selectedIndex].getAttribute("data-date"));
+    const secondDate = new Date(second.options[second.selectedIndex].getAttribute("data-date"));
+
+    const errorDiv = document.getElementById("dateError");
+
+    if (firstDate >= secondDate) {
+        errorDiv.style.display = "block";
+        return false;
+    }
+
+    errorDiv.style.display = "none";
+    return true;
+}
+
+// ==============================
+// 📊 StaffStatistics – Validera datum för jämförelse (bedömning 1 måste vara äldre)
+// ==============================
+
+function validateDates() {
+    const first = document.getElementById("firstSelect");
+    const second = document.getElementById("secondSelect");
+
+    const firstDate = new Date(first.options[first.selectedIndex].getAttribute("data-date"));
+    const secondDate = new Date(second.options[second.selectedIndex].getAttribute("data-date"));
+
+    const errorDiv = document.getElementById("dateError");
+
+    if (firstDate >= secondDate) {
+        errorDiv.style.display = "block";
+        return false;
+    }
+
+    errorDiv.style.display = "none";
+    return true;
+}

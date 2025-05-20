@@ -86,6 +86,28 @@ namespace DLDA.GUI.Services
             return response.IsSuccessStatusCode;
         }
 
+        /// <summary>
+        /// Hämtar totalt antal frågor i ett assessment för personalen (baserat på Order).
+        /// </summary>
+        public async Task<int?> GetTotalQuestionCountForStaffAsync(int assessmentId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"assessment/{assessmentId}/question-count");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+                return int.TryParse(content, out var count) ? count : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid GetTotalQuestionCountForStaffAsync för assessment {AssessmentId}", assessmentId);
+                return null;
+            }
+        }
+
 
     }
 }

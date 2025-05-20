@@ -100,5 +100,24 @@ namespace DLDA.GUI.Services
                 return null;
             }
         }
+
+        /// <summary>
+        /// Hämtar förbättringar över tid genom att jämföra två valda bedömningar.
+        /// </summary>
+        public async Task<PatientChangeOverviewDto?> CompareAssessmentsAsync(int id1, int id2)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"statistics/compare-assessments/{id1}/{id2}");
+                if (!response.IsSuccessStatusCode) return null;
+
+                return await response.Content.ReadFromJsonAsync<PatientChangeOverviewDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid CompareAssessmentsAsync({Id1}, {Id2})", id1, id2);
+                return null;
+            }
+        }
     }
 }

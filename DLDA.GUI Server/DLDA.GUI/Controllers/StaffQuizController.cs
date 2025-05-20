@@ -32,8 +32,12 @@ namespace DLDA.GUI.Controllers
                 return RedirectToAction("Index", "StaffResult", new { id = assessmentId });
             }
 
+            var totalQuestions = await _service.GetTotalQuestionCountForStaffAsync(assessmentId);
+
             ViewBag.AssessmentId = assessmentId;
             ViewBag.UserId = userId;
+            ViewBag.TotalQuestions = totalQuestions ?? 0;
+
             return View("Question", question);
         }
 
@@ -72,10 +76,15 @@ namespace DLDA.GUI.Controllers
                 return RedirectToAction("Resume", new { assessmentId, userId });
             }
 
+            var totalQuestions = await _service.GetTotalQuestionCountForStaffAsync(assessmentId);
+
             ViewBag.AssessmentId = assessmentId;
             ViewBag.UserId = userId;
+            ViewBag.TotalQuestions = totalQuestions ?? 0;
+
             return View("Question", question);
         }
+
 
         /// <summary>
         /// Pausar bedömningen och går tillbaka till översikten.

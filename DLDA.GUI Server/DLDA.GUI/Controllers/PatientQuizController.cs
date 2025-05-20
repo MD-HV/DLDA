@@ -82,7 +82,10 @@ namespace DLDA.GUI.Controllers
                 return RedirectToAction("Index", "PatientResult", new { assessmentId = id });
             }
 
+            var totalQuestions = await _service.GetTotalQuestionCountAsync(id);
+            ViewBag.TotalQuestions = totalQuestions ?? 0; // Fallback: 0 om fel
             ViewBag.AssessmentId = id;
+
             return View("Question", question);
         }
 
@@ -125,7 +128,6 @@ namespace DLDA.GUI.Controllers
         /// <summary>
         /// Hämtar föregående fråga baserat på nuvarande ordning.
         /// </summary>
-        [HttpPost]
         public async Task<IActionResult> Previous(int assessmentId, int currentOrder)
         {
             var question = await _service.GetPreviousQuestionAsync(assessmentId, currentOrder);
@@ -135,7 +137,10 @@ namespace DLDA.GUI.Controllers
                 return RedirectToAction("Resume", new { id = assessmentId });
             }
 
+            var totalQuestions = await _service.GetTotalQuestionCountAsync(assessmentId);
+            ViewBag.TotalQuestions = totalQuestions ?? 0; // fallback om något går fel
             ViewBag.AssessmentId = assessmentId;
+
             return View("Question", question);
         }
 

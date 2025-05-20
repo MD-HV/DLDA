@@ -1,5 +1,6 @@
 ﻿using DLDA.GUI.Authorization;
 using DLDA.GUI.DTOs;
+using DLDA.GUI.DTOs.Assessment;
 using DLDA.GUI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,9 +23,35 @@ namespace DLDA.GUI.Controllers
         /// Visar alla patienter med senaste bedömning.
         /// </summary>
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var results = await _service.SearchPatientsAsync(search);
+
+                // Konvertera UserDto till PatientWithLatestAssessmentDto (utan bedömning)
+                var converted = results.Select(u => new PatientWithLatestAssessmentDto
+                {
+                    UserID = u.UserID,
+                    Username = u.Username,
+                    LastAssessmentDate = null
+                }).ToList();
+
+                return View(converted);
+            }
+
+            // Om ingen sökning – visa alla som vanligt
             var patients = await _service.GetPatientsWithLatestAsync();
+            return View(patients);
+        }
+
+
+        /// <summary>
+        /// söka på patienter med söksträng.
+        /// </summary>
+        public async Task<IActionResult> Patients(string? search)
+        {
+            var patients = await _service.SearchPatientsAsync(search);
             return View(patients);
         }
 

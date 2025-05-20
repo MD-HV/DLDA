@@ -2,16 +2,19 @@
 using DLDA.GUI.DTOs.Patient;
 using DLDA.GUI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 [Route("PatientStatistics")]
 [RoleAuthorize("patient")]
 public class PatientStatisticsController : Controller
 {
     private readonly PatientStatisticsService _service;
+    private readonly ILogger<PatientStatisticsController> _logger;
 
-    public PatientStatisticsController(PatientStatisticsService service)
+    public PatientStatisticsController(PatientStatisticsService service, ILogger<PatientStatisticsController> logger)
     {
         _service = service;
+        _logger = logger;
     }
 
     /// <summary>
@@ -67,13 +70,38 @@ public class PatientStatisticsController : Controller
     [HttpGet("Improvement/{userId}")]
     public async Task<IActionResult> Improvement(int userId)
     {
+        // Hämta förbättringsdatan från servicen
         var data = await _service.GetImprovementDataAsync(userId);
+
+        // Kontrollera om data saknas
         if (data == null)
         {
+            _logger.LogWarning("Förbättringsdatan är null för användaren {UserId}. Kontrollera att två avslutade bedömningar finns.", userId);
             TempData["Error"] = "För att kunna visa förbättringar över tid behöver du ha gjort minst två bedömningar.";
             return RedirectToAction("Index", "PatientAssessment");
         }
 
+        // Om data finns, visa förbättringen
         return View("Improvement", data);
     }
+
+    [HttpPost("Compare")]
+    public async Task<IActionResult> Compare(int firstId, int secondId)
+    {
+        if (firstId == secondId)
+        {
+            TempData["Error"] = "Du måste välja två olika bedömningar att jämföra.";
+            return RedirectToAction("Index", "PatientAssessment");
+        }
+
+        var data = await _service.CompareAssessmentsAsync(firstId, secondId);
+        if (data == null)
+        {
+            TempData["Error"] = "Jämförelsen kunde inte göras. Kontrollera att båda bedömningarna har besvarade frågor.";
+            return RedirectToAction("Index", "PatientAssessment");
+        }
+
+        return View("Improvement", data); // återanvänder din befintliga vy
+    }
+
 }

@@ -16,7 +16,8 @@
 
     public class PatientChangeOverviewDto
     {
-        public List<ImprovementDto> Förbättringar { get; set; } = new();
+        public List<ImprovementApiDto> Förbättringar { get; set; } = new();
+
         public DateTime PreviousDate { get; set; }
         public DateTime CurrentDate { get; set; }
 
@@ -36,11 +37,11 @@
 
     public class ImprovementDto
     {
-        public string Question { get; set; } = string.Empty;
+        public string? Question { get; set; } = string.Empty;
         public int Previous { get; set; }
         public int Current { get; set; }
         public int Change => Previous - Current;
-        public string Category { get; set; } = string.Empty;
+        public string? Category { get; set; } = string.Empty;
         public int QuestionId { get; set; }
 
         // 🔍 Hoppade över-data

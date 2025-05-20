@@ -3,8 +3,14 @@
 
 @{
     ViewData["Title"] = "Bedömningar för patient";
-    var completedStaffCount = Model.Count(m => m.IsStaffComplete);
-    var enableComparison = completedStaffCount >= 1;
+    var completed = Model
+        .Where(m => m.IsStaffComplete)
+        .OrderBy(m => m.CreatedAt)
+        .ToList();
+
+    var completedStaffCount = completed.Count;
+    var firstDefault = completed.FirstOrDefault()?.AssessmentID ?? 0;
+    var secondDefault = completed.LastOrDefault()?.AssessmentID ?? 0;
 }
 
 <div class="container mt-5">
@@ -12,18 +18,52 @@
 
     <p><strong>👤 Användare:</strong> @ViewBag.Username (ID: @ViewBag.UserId)</p>
 
-    <!-- 📈 Förändring över tid för personal -->
-    <div class="mb-4">
-        <a class="btn btn-outline-secondary @(completedStaffCount < 2 ? "disabled text-muted pe-none" : "")"
-           asp-controller="StaffStatistics"
-           asp-action="ChangeOverview"
-           asp-route-userId="@ViewBag.UserId">
-            📈 Jämför förändring över tid
-        </a>
-        <span class="text-muted small ms-2">
-            (Minst två avslutade personalbedömningar krävs)
-        </span>
-    </div>
+    @if (completedStaffCount >= 2)
+    {
+        <form asp-controller="StaffStatistics" asp-action="Compare" method="post" class="row g-2 mb-4 align-items-end" onsubmit="return validateDates()">
+            <input type="hidden" name="userId" value="@ViewBag.UserId" />
+
+            <div class="col-md-4">
+                <label class="form-label">Första bedömning</label>
+                <select name="firstId" id="firstSelect" class="form-select" required>
+                    @foreach (var item in completed)
+                    {
+                        var dateStr = item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss");
+                        var selectedAttr = item.AssessmentID == firstDefault ? "selected" : "";
+                        @Html.Raw($"<option value=\"{item.AssessmentID}\" data-date=\"{dateStr}\" {selectedAttr}>{item.CreatedAt:yyyy-MM-dd} (ID: {item.AssessmentID})</option>")
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Andra bedömning</label>
+                <select name="secondId" id="secondSelect" class="form-select" required>
+                    @foreach (var item in completed)
+                    {
+                        var dateStr = item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss");
+                        var selectedAttr = item.AssessmentID == secondDefault ? "selected" : "";
+                        @Html.Raw($"<option value=\"{item.AssessmentID}\" data-date=\"{dateStr}\" {selectedAttr}>{item.CreatedAt:yyyy-MM-dd} (ID: {item.AssessmentID})</option>")
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-success w-100">📈 Jämför förändring över tid</button>
+            </div>
+
+            <div class="col-12 mt-2">
+                <div id="dateError" class="text-danger" style="display: none;">
+                    ❗ Första bedömningen måste vara äldre än den andra. Justera urvalet.
+                </div>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="mb-4 text-muted">
+            📈 Minst två avslutade personalbedömningar krävs för att jämföra över tid.
+        </div>
+    }
 
     @if (!Model.Any())
     {
@@ -62,9 +102,7 @@
                                    title="Fortsätt quiz">
                                     ▶ Till quiz
                                 </a>
-                            }
-                            else
-                            {
+
                                 <a class="btn btn-sm btn-info"
                                    asp-controller="StaffResult"
                                    asp-action="Index"
@@ -72,18 +110,27 @@
                                    title="Visa resultat">
                                     📄 Visa resultat
                                 </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-info"
+                                   asp-controller="StaffResult"
+                                   asp-action="Index"
+                                   asp-route-id="@item.AssessmentID"
+                                   title="Visa översikt">
+                                    📊 Översikt
+                                </a>
+                            }
 
-                                <!-- Statistikkknapp visas endast om både patient och personal har avslutat sin bedömning -->
-                                @if (item.IsComplete && item.IsStaffComplete)
-                                {
-                                    <a class="btn btn-sm btn-outline-success"
-                                       asp-controller="StaffStatistics"
-                                       asp-action="Comparison"
-                                       asp-route-assessmentId="@item.AssessmentID"
-                                       title="Visa jämförelse">
-                                        📊 Statistik
-                                    </a>
-                                }
+                            @if (item.IsComplete && item.IsStaffComplete)
+                            {
+                                <a class="btn btn-sm btn-outline-success"
+                                   asp-controller="StaffStatistics"
+                                   asp-action="Comparison"
+                                   asp-route-assessmentId="@item.AssessmentID"
+                                   title="Visa jämförelse">
+                                    📊 Statistik
+                                </a>
                             }
 
                             <a class="btn btn-outline-danger btn-sm"

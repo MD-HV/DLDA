@@ -132,5 +132,30 @@ namespace DLDA.GUI.Services
                 return false;
             }
         }
+
+        /// <summary>
+        /// Hämtar  användare baserat på söksträng.
+        /// </summary>
+        public async Task<List<UserDto>> SearchPatientsAsync(string? search)
+        {
+            try
+            {
+                var endpoint = string.IsNullOrWhiteSpace(search)
+                    ? "user/patients"
+                    : $"user/patients?search={Uri.EscapeDataString(search)}";
+
+                var response = await _httpClient.GetAsync(endpoint);
+                if (!response.IsSuccessStatusCode)
+                    return new List<UserDto>();
+
+                var result = await response.Content.ReadFromJsonAsync<List<UserDto>>();
+                return result ?? new List<UserDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid sökning av patienter");
+                return new List<UserDto>();
+            }
+        }
     }
 }

@@ -1,26 +1,69 @@
 ﻿@using DLDA.GUI.DTOs.Assessment
 @model List<AssessmentDto>
+
 @{
     ViewData["Title"] = "Mina bedömningar";
-    var completedCount = Model.Count(m => m.IsComplete);
-    var disableImprovement = completedCount < 2;
+
+    var completed = Model
+        .Where(m => m.IsComplete)
+        .OrderBy(m => m.CreatedAt)
+        .ToList();
+
+    var completedCount = completed.Count;
+    var firstDefault = completed.FirstOrDefault()?.AssessmentID ?? 0;
+    var secondDefault = completed.LastOrDefault()?.AssessmentID ?? 0;
 }
 
 <div class="container mt-5">
     <h2 class="mb-4">Mina bedömningar</h2>
 
-    <!-- 📈 Förbättring över tid-knapp -->
-    <div class="mb-4">
-        <a class="btn btn-outline-secondary @(disableImprovement ? "disabled text-muted pe-none" : "")"
-           asp-controller="PatientStatistics"
-           asp-action="Improvement"
-           asp-route-userId="@Context.Session.GetInt32("UserID")">
-            📈 Jämför förbättring över tid
-        </a>
-        <span class="text-muted small ms-2">
-            (Minst två avslutade bedömningar krävs)
-        </span>
-    </div>
+    <!-- 📈 Välj två bedömningar att jämföra -->
+    @if (completedCount >= 2)
+    {
+        <form asp-controller="PatientStatistics" asp-action="Compare" method="post" class="row g-2 mb-4 align-items-end" onsubmit="return validateDates()">
+            <div class="col-md-4">
+                <label class="form-label">Första bedömning</label>
+                <select name="firstId" id="firstSelect" class="form-select" required>
+                    @foreach (var item in completed)
+                    {
+                        var dateStr = item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss");
+                        var selectedAttr = item.AssessmentID == firstDefault ? "selected" : "";
+                        @Html.Raw($"<option value=\"{item.AssessmentID}\" data-date=\"{dateStr}\" {selectedAttr}>{item.CreatedAt:yyyy-MM-dd} (ID: {item.AssessmentID})</option>")
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Andra bedömning</label>
+                <select name="secondId" id="secondSelect" class="form-select" required>
+                    @foreach (var item in completed)
+                    {
+                        var dateStr = item.CreatedAt.ToString("yyyy-MM-ddTHH:mm:ss");
+                        var selectedAttr = item.AssessmentID == secondDefault ? "selected" : "";
+                        @Html.Raw($"<option value=\"{item.AssessmentID}\" data-date=\"{dateStr}\" {selectedAttr}>{item.CreatedAt:yyyy-MM-dd} (ID: {item.AssessmentID})</option>")
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-outline-success w-100">
+                    📈 Jämför förbättring över tid
+                </button>
+            </div>
+
+            <div class="col-12 mt-2">
+                <div id="dateError" class="text-danger" style="display: none;">
+                    ❗ Första bedömningen måste vara äldre än den andra. Justera urvalet.
+                </div>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="mb-4 text-muted">
+            📈 Minst två avslutade bedömningar krävs för att kunna jämföra förbättring över tid.
+        </div>
+    }
 
     @if (!Model.Any())
     {

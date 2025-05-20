@@ -47,7 +47,7 @@
     // DTO för förbättring i en fråga mellan två bedömningar
     public class ImprovementDto
     {
-        public string Question { get; set; } = string.Empty; // Text för frågan, som är tom som standard
+        public string? Question { get; set; } = string.Empty; // Text för frågan, som är tom som standard
 
         public int Previous { get; set; } // Resultat för föregående bedömning
 

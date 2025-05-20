@@ -1,48 +1,62 @@
 using DLDA.API.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));  // LocalConnection=lokalDB, DefaultConnection=ServerDB
-
+// ========================
+// ? Tjänsteregistrering
+// ========================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "DLDA API",
+        Version = "v1"
+    });
+});
 
+// ========================
+// ? DbContext
+// ========================
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// ========================
+// ? CORS-policy
+// ========================
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowGUI", policy =>
     {
         policy.WithOrigins("https://informatik3.ei.hv.se")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowAnyHeader();
     });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("v1/swagger.json", "My API v1");
-    });
-}
-
+// ========================
+// ? Middleware
+// ========================
 app.UseHttpsRedirection();
-
 app.UseCors("AllowGUI");
-
 app.UseAuthorization();
-
 app.MapControllers();
+
+// ========================
+// ? Swagger-konfiguration (fungerar på server med subpath)
+// ========================
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    // OBS: Absolut URL till swagger.json – inte relativ!
+    c.SwaggerEndpoint("/DLDA.API/swagger/v1/swagger.json", "DLDA API v1");
+    c.RoutePrefix = "swagger"; // så /DLDA.API/swagger visar UI:t
+});
+
 
 app.Run();

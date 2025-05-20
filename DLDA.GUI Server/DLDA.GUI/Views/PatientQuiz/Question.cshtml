@@ -19,7 +19,11 @@
 }
 
 <div class="container mt-5">
-
+    <div class="d-flex justify-content-end">
+        <span class="text-muted fw-semibold">
+            Fråga @(@Model.Order + 1) av @(ViewBag.TotalQuestions ?? 0)
+        </span>
+    </div>
     <div class="alert alert-info">
         <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
         Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />

@@ -62,6 +62,22 @@ public class AssessmentController : ControllerBase
         };
     }
 
+    /// <summary>
+    /// Returnerar totalt antal frågor i en bedömning baserat på max(Order).
+    /// </summary>
+    [HttpGet("{id}/question-count")]
+    public async Task<ActionResult<int>> GetQuestionCount(int id)
+    {
+        var count = await _context.AssessmentItems
+            .Where(i => i.AssessmentID == id)
+            .MaxAsync(i => (int?)i.Order);
+
+        if (count == null)
+            return NotFound("Inga frågor hittades.");
+
+        return Ok(count.Value + 1);
+    }
+
     // --------------------------
     // [PERSONAL] – Full åtkomst till alla bedömningar
     // --------------------------
@@ -188,6 +204,8 @@ public class AssessmentController : ControllerBase
 
         return Ok(results);
     }
+
+
 
     // PUT: api/Assessment/{id}
     // Uppdaterar en befintlig bedömning (endast för personal)

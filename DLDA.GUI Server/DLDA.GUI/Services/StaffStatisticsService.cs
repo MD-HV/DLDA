@@ -112,5 +112,30 @@ namespace DLDA.GUI.Services
                 return new();
             }
         }
+
+        /// <summary>
+        /// Jämför två valda avslutade personalbedömningar för en patient.
+        /// </summary>
+        public async Task<StaffChangeOverviewDto?> CompareAssessmentsAsync(int firstId, int secondId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"statistics/staff-compare-assessments/{firstId}/{secondId}");
+                if (!response.IsSuccessStatusCode) return null;
+
+                var json = await response.Content.ReadAsStringAsync();
+                if (json.Contains("inte tillräckligt")) return null;
+
+                return JsonSerializer.Deserialize<StaffChangeOverviewDto>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid CompareAssessmentsAsync({FirstId}, {SecondId})", firstId, secondId);
+                return null;
+            }
+        }
     }
 }

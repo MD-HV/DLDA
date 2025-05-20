@@ -2,6 +2,7 @@
 using DLDA.GUI.DTOs.Patient;
 using DLDA.GUI.DTOs.Question;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace DLDA.GUI.Services
 {
@@ -129,6 +130,28 @@ namespace DLDA.GUI.Services
             {
                 _logger.LogError(ex, "Fel vid SkipQuestionAsync({ItemId})", itemId);
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Hämtar totalt antal frågor i ett assessment (baserat på Order).
+        /// </summary>
+        public async Task<int?> GetTotalQuestionCountAsync(int assessmentId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"assessment/{assessmentId}/question-count");
+
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var content = await response.Content.ReadAsStringAsync();
+                return int.TryParse(content, out var count) ? count : null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid GetTotalQuestionCountAsync för assessment {AssessmentId}", assessmentId);
+                return null;
             }
         }
     }

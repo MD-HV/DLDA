@@ -116,4 +116,27 @@ public class StaffStatisticsController : Controller
             return RedirectToAction("Comparison", new { assessmentId });
         }
     }
+
+    /// <summary>
+    /// Jämför två avslutade personalbedömningar för en patient och visar förändringar över tid.
+    /// </summary>
+    [HttpPost("Compare")]
+    public async Task<IActionResult> Compare(int userId, int firstId, int secondId)
+    {
+        if (firstId == secondId)
+        {
+            TempData["Error"] = "Du måste välja två olika bedömningar att jämföra.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
+
+        var result = await _service.CompareAssessmentsAsync(firstId, secondId);
+        if (result == null)
+        {
+            TempData["Error"] = "Jämförelsen kunde inte göras. Kontrollera att båda bedömningarna har tillräckligt med svar.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
+
+        ViewBag.UserId = userId;
+        return View("ChangeOverview", result); 
+    }
 }

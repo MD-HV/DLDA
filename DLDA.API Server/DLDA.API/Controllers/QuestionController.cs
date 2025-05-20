@@ -260,8 +260,8 @@ public class QuestionController : ControllerBase
             Order = item.Order,
             Total = total,
             ScaleType = assessment?.ScaleType ?? "Numerisk",
-            PatientAnswer = item.PatientAnswer, // 👈 Lägger till svar
-            PatientComment = item.PatientComment // 👈 Lägger till kommentar
+            PatientAnswer = item.PatientAnswer, 
+            PatientComment = item.PatientComment 
         });
     }
 

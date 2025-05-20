@@ -42,7 +42,13 @@
             </ul>
 
             <div class="mt-3">
-                @if (total > 0 && (utanProblem * 100.0 / total) >= 70)
+                @if (utanProblem == 0 && måttligtProblem == 0 && hoppadeÖver > 0)
+                {
+                    <p class="alert alert-info">
+                        Du har valt att hoppa över alla frågor i denna bedömning.
+                    </p>
+                }
+                else if (total > 0 && (utanProblem * 100.0 / total) >= 70)
                 {
                     <p class="alert alert-success">Din egenbedömning visar att de flesta områden fungerar bra för dig.</p>
                 }
@@ -55,6 +61,7 @@
                     <p class="alert alert-secondary">Bedömningen visar att du identifierar flera områden som kan behöva stöd – det är ett viktigt steg mot förbättring.</p>
                 }
             </div>
+
 
             @if (bästaOmråden.Any())
             {
