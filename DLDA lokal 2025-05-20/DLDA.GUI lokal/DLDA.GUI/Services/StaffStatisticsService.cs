@@ -85,5 +85,34 @@ namespace DLDA.GUI.Services
                 return null;
             }
         }
+
+        /// <summary>
+        /// Hämtar patientens egna svar för en bedömning (används för sammanställning).
+        /// </summary>
+        public async Task<List<StaffStatistics>> GetPatientAnswerSummaryAsync(int assessmentId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"statistics/patient-answer-summary/{assessmentId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Misslyckades att hämta patientens svarssammanställning: {StatusCode}", response.StatusCode);
+                    return new();
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var stats = JsonSerializer.Deserialize<List<StaffStatistics>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                return stats ?? new();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Undantag i GetPatientAnswerSummaryAsync({AssessmentId})", assessmentId);
+                return new();
+            }
+        }
     }
 }

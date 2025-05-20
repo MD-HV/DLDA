@@ -386,3 +386,82 @@ function applyComparisonFilters() {
         row.style.display = show ? "table-row" : "none";
     });
 }
+
+// StaffStatistics/PatientAnswerSummary
+// === Piechart: Sammanställning av patientens egna svar ===
+function renderPatientAnswerSummaryPie(labels, data) {
+    const ctx = document.getElementById('patientAnswerPie');
+    if (!ctx) return;
+
+    Chart.register(ChartDataLabels);
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#198754', // 0 - grön
+                    '#74c37e', // 1 - ljusgrön
+                    '#ffc107', // 2 - gul
+                    '#fd7e14', // 3 - orange
+                    '#dc3545', // 4 - röd
+                    '#dee2e6'  // null - grå
+                ]
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                            const label = ctx.label || '';
+                            const value = ctx.parsed || 0;
+                            return `${label}: ${value} frågor`;
+                        }
+                    }
+                },
+                datalabels: {
+                    color: '#000',
+                    font: { weight: 'bold', size: 14 },
+                    formatter: (value, ctx) => {
+                        const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        if (total === 0 || value === 0) return '';
+                        const percent = Math.round((value / total) * 100);
+                        return `${percent}%`;
+                    }
+                }
+            }
+        },
+        plugins: [ChartDataLabels]
+    });
+}
+
+// ==============================
+// 📋 PatientAnswerSummary – Visa/dölj och filtrera frågetabell
+// ==============================
+
+function togglePatientAnswerTable() {
+    const section = document.getElementById("patientAnswerTableSection");
+    if (!section) return;
+    section.style.display = section.style.display === "none" ? "block" : "none";
+}
+
+function applyPatientAnswerFilter() {
+    const filter = document.getElementById("patientAnswerFilter")?.value;
+    const rows = document.querySelectorAll("#patientAnswerTable tbody tr");
+
+    rows.forEach(row => {
+        const svar = row.dataset.svar;
+        let show = false;
+
+        if (filter === "all") show = true;
+        else if (filter === "null") show = svar === "null";
+        else show = svar === filter;
+
+        row.style.display = show ? "table-row" : "none";
+    });
+}
+

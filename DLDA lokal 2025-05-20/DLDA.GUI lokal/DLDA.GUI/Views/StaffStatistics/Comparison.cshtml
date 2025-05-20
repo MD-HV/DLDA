@@ -32,12 +32,42 @@
         .ToList();
 }
 
+@{
+    var patientSvar_0_1 = Model.Count(m => m.PatientAnswer is 0 or 1);
+    var patientSvar_2 = Model.Count(m => m.PatientAnswer == 2);
+    var patientSvar_3 = Model.Count(m => m.PatientAnswer == 3);
+    var patientSvar_4 = Model.Count(m => m.PatientAnswer == 4);
+    var patientSvar_Null = Model.Count(m => m.PatientAnswer == null);
+
+    var patientSvarLabelsJson = JsonSerializer.Serialize(new[] {
+        "Utan problem (0–1)", "Måttligt problem (2)", "Stort problem (3)", "Mycket stort problem (4)", "Hoppad över"
+    });
+    var patientSvarDataJson = JsonSerializer.Serialize(new[] {
+        patientSvar_0_1, patientSvar_2, patientSvar_3, patientSvar_4, patientSvar_Null
+    });
+}
+
 <a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
     ⬅ Tillbaka till bedömningar
 </a>
 
+<div id="patientPieSection" class="mt-4" style="display: none;">
+    <h5>🧩 Fördelning av patientens svar</h5>
+    <canvas id="patientAnswerPie" style="max-height: 400px;"></canvas>
+</div>
+
+
 <div class="container mt-5">
     <h2 class="mb-4">📊 Jämförelse av skattningar mellan patient och personal</h2>
+
+    <div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-outline-primary"
+       asp-controller="StaffStatistics"
+       asp-action="PatientAnswerSummary"
+       asp-route-assessmentId="@ViewBag.AssessmentId">
+        Visa patientens svar
+    </a>
+    </div>
 
     <p>
         <strong>👤 Patient:</strong> @ViewBag.PatientName <br />

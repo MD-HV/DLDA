@@ -164,12 +164,23 @@
         </tbody>
     </table>
 </div>
+<div class="mt-4 d-flex gap-3">
+    <a class="btn btn-outline-secondary"
+       asp-controller="StaffAssessment"
+       asp-action="Assessments"
+       asp-route-userId="@Model.UserId">
+        ⬅ Tillbaka till patientens bedömningar
+    </a>
 
-<a class="btn btn-outline-secondary"
-   asp-controller="StaffAssessment"
-   asp-action="Assessments"
-   asp-route-userId="@Model.UserId">
-    ⬅ Tillbaka till patientens bedömningar
-</a>
-
+    @if (!Model.IsStaffComplete)
+    {
+        <form asp-action="Complete" method="post">
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentId" />
+            <input type="hidden" name="userId" value="@Model.UserId" />
+            <button type="submit" class="btn btn-success">
+                ✔️ Markera personalbedömning som klar
+            </button>
+        </form>
+    }
+</div>
 

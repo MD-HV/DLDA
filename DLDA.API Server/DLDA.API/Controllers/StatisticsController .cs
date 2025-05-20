@@ -393,5 +393,45 @@ namespace DLDA.API.Controllers
                 Hoppade = skipped
             });
         }
+
+        // GET: api/statistics/patient-answer-summary/{assessmentId}
+        // Returnerar patientens svar för sammanställning (piechart)
+        [HttpGet("patient-answer-summary/{assessmentId}")]
+        public ActionResult<List<StaffComparisonRowDto>> GetPatientAnswerSummaryRaw(int assessmentId)
+        {
+            var assessment = _context.Assessments
+                .Include(a => a.User)
+                .FirstOrDefault(a => a.AssessmentID == assessmentId);
+
+            if (assessment == null)
+                return NotFound("Bedömningen kunde inte hittas.");
+
+            var items = _context.AssessmentItems
+                .Where(i => i.AssessmentID == assessmentId)
+                .Include(i => i.Question)
+                .ToList();
+
+            var result = items.Select((i, index) => new StaffComparisonRowDto
+            {
+                QuestionNumber = index + 1,
+                QuestionText = i.Question?.QuestionText ?? "",
+                Category = i.Question?.Category ?? "",
+                PatientAnswer = i.PatientAnswer,
+                PatientComment = i.PatientComment,
+
+                // Övriga lämnas tomma
+                StaffAnswer = null,
+                StaffComment = null,
+                Classification = "",
+                SkippedByPatient = !i.PatientAnswer.HasValue,
+                IsFlagged = false,
+
+                CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
+                Username = assessment.User?.Username ?? "Okänd"
+            }).ToList();
+
+            return Ok(result);
+        }
+
     }
 }

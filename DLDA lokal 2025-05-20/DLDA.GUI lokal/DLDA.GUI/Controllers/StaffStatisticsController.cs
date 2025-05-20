@@ -1,5 +1,6 @@
 ﻿using DLDA.GUI.Authorization;
 using DLDA.GUI.DTOs;
+using DLDA.GUI.DTOs.Staff;
 using DLDA.GUI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,6 +40,7 @@ public class StaffStatisticsController : Controller
 
             // ✅ Förbered data till vyn
             ViewBag.UserId = assessment.UserId;
+            ViewBag.AssessmentId = assessment.AssessmentID;
             ViewBag.PatientName = comparison.First().Username;
             ViewBag.AssessmentDate = comparison.First().CreatedAt;
 
@@ -74,6 +76,40 @@ public class StaffStatisticsController : Controller
         {
             TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
             return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
+    }
+
+    /// <summary>
+    /// Visar patientens egen svarsfördelning i en piechart.
+    /// </summary>
+    [HttpGet("PatientAnswerSummary/{assessmentId}")]
+    public async Task<IActionResult> PatientAnswerSummary(int assessmentId)
+    {
+        try
+        {
+            var result = await _service.GetComparisonAsync(assessmentId);
+            var data = result.Comparison;
+            var assessment = result.Assessment;
+
+            if (data == null || !data.Any() || assessment == null)
+            {
+                TempData["Error"] = "Kunde inte hämta patientens svar.";
+                return RedirectToAction("Comparison", new { assessmentId });
+            }
+
+            var first = data.First();
+
+            ViewBag.PatientName = first.Username;
+            ViewBag.AssessmentDate = first.CreatedAt;
+            ViewBag.UserId = assessment.UserId;
+            ViewBag.AssessmentId = assessment.AssessmentID;
+
+            return View("PatientAnswerSummary", data);
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
+            return RedirectToAction("Comparison", new { assessmentId });
         }
     }
 }
