@@ -350,6 +350,10 @@ public class AssessmentItemController : ControllerBase
         return NoContent();
     }
 
+    // POST: api/AssessmentItem/assessment/{assessmentId}/staff-complete
+    /// <summary>
+    /// Markerar att personalen är klar med en bedömning, även om vissa frågor inte är besvarade.
+    /// </summary>
     [HttpPost("assessment/{assessmentId}/staff-complete")]
     public IActionResult CompleteStaffAssessment(int assessmentId)
     {
@@ -357,22 +361,23 @@ public class AssessmentItemController : ControllerBase
             .Include(a => a.AssessmentItems)
             .FirstOrDefault(a => a.AssessmentID == assessmentId);
 
-        if (assessment == null) return NotFound();
+        if (assessment == null)
+            return NotFound();
 
-        // Kontrollera om alla frågor har personalens svar
-        var unanswered = assessment.AssessmentItems
-            .Any(i => !i.StaffAnswer.HasValue);
+        // Räkna obesvarade frågor
+        var unansweredCount = assessment.AssessmentItems
+            .Count(i => !i.StaffAnswer.HasValue);
 
-        if (unanswered)
+        // Logga information om eventuella obesvarade frågor
+        if (unansweredCount > 0)
         {
-            return BadRequest("Alla frågor måste besvaras innan bedömningen kan markeras som klar.");
+            Console.WriteLine($"[INFO] Bedömning {assessmentId} klarmarkerad trots {unansweredCount} obesvarade frågor av personal.");
         }
 
+        // Markera som klar oavsett svar
         assessment.IsStaffComplete = true;
         _context.SaveChanges();
 
         return NoContent();
     }
-
-
 }

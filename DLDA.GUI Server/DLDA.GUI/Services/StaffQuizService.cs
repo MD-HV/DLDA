@@ -71,5 +71,21 @@ namespace DLDA.GUI.Services
                 return false;
             }
         }
+
+        public async Task<bool> SkipQuestionAsync(int itemId, string? comment, bool flag)
+        {
+            var dto = new SubmitStaffAnswerDto
+            {
+                ItemID = itemId,
+                Answer = null, 
+                Comment = comment,
+                Flag = flag
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("question/quiz/staff/submit", dto);
+            return response.IsSuccessStatusCode;
+        }
+
+
     }
 }

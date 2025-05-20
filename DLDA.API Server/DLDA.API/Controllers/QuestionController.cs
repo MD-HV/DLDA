@@ -281,7 +281,8 @@ public class QuestionController : ControllerBase
             .Include(ai => ai.Question)
             .Where(ai =>
                 ai.AssessmentID == assessmentId &&
-                (ai.StaffAnswer == null || ai.StaffAnswer == -1))
+                ai.StaffAnswer == null &&
+                ai.AnsweredAt == null)
             .OrderBy(ai => ai.Order)
             .FirstOrDefaultAsync();
 
@@ -297,9 +298,7 @@ public class QuestionController : ControllerBase
         if (assessment == null)
             return NotFound(new { message = "Bedömning hittades inte." });
 
-        // ✅ Hämta användaren baserat på assessment.UserId
         var user = await _context.Users.FirstOrDefaultAsync(u => u.UserID == assessment.UserId);
-
         if (user == null)
             return NotFound(new { message = "Patienten hittades inte." });
 
@@ -319,9 +318,10 @@ public class QuestionController : ControllerBase
             StaffComment = item.StaffComment,
             Flag = item.Flag,
             UserID = assessment.UserId,
-            PatientName = user.Username // ✅ Nu fungerar detta!
+            PatientName = user.Username
         });
     }
+
 
 
     // GET: api/Question/quiz/staff/previous/{assessmentId}/{currentOrder}

@@ -23,14 +23,14 @@ public class PatientStatisticsController : Controller
         var answers = await _service.GetAnswersForAssessmentAsync(assessmentId);
         if (answers.Count == 0)
         {
-            TempData["Error"] = "Inga svar kunde läsas in.";
+            TempData["Error"] = "Statistiken kan inte visas eftersom denna bedömning saknar besvarade frågor.";
             return RedirectToAction("Index", "PatientAssessment");
         }
 
         var assessment = await _service.GetAssessmentAsync(assessmentId);
         if (assessment == null)
         {
-            TempData["Error"] = "Kunde inte hämta bedömningsinformation.";
+            TempData["Error"] = "Bedömningen kunde inte hittas.";
             return RedirectToAction("Index", "PatientAssessment");
         }
 
@@ -54,7 +54,7 @@ public class PatientStatisticsController : Controller
         var summary = await _service.GetSummaryAsync(assessmentId);
         if (summary == null)
         {
-            TempData["Error"] = "Kunde inte hämta statistik.";
+            TempData["Error"] = "Statistiken kunde inte visas eftersom denna bedömning saknar besvarade frågor.";
             return RedirectToAction("Index", "PatientAssessment");
         }
 
@@ -70,7 +70,7 @@ public class PatientStatisticsController : Controller
         var data = await _service.GetImprovementDataAsync(userId);
         if (data == null)
         {
-            TempData["Error"] = "Du måste ha minst två avslutade bedömningar för att visa förbättringar över tid.";
+            TempData["Error"] = "För att kunna visa förbättringar över tid behöver du ha gjort minst två bedömningar.";
             return RedirectToAction("Index", "PatientAssessment");
         }
 

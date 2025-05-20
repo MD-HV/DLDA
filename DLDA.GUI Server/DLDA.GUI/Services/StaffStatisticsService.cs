@@ -26,25 +26,23 @@ namespace DLDA.GUI.Services
         {
             try
             {
+                // Hämta jämförelsedata
                 var comparisonResponse = await _httpClient.GetAsync($"statistics/comparison-table-staff/{assessmentId}");
-                if (!comparisonResponse.IsSuccessStatusCode)
+                List<StaffStatistics>? comparison = null;
+                if (comparisonResponse.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Misslyckades att hämta jämförelsedata: {StatusCode}", comparisonResponse.StatusCode);
-                    return (null, null);
+                    var comparisonJson = await comparisonResponse.Content.ReadAsStringAsync();
+                    comparison = JsonSerializer.Deserialize<List<StaffStatistics>>(comparisonJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
 
-                var comparisonJson = await comparisonResponse.Content.ReadAsStringAsync();
-                var comparison = JsonSerializer.Deserialize<List<StaffStatistics>>(comparisonJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
+                // Hämta bedömning
                 var assessmentResponse = await _httpClient.GetAsync($"assessment/{assessmentId}");
-                if (!assessmentResponse.IsSuccessStatusCode)
+                AssessmentDto? assessment = null;
+                if (assessmentResponse.IsSuccessStatusCode)
                 {
-                    _logger.LogError("Misslyckades att hämta bedömningsinfo: {StatusCode}", assessmentResponse.StatusCode);
-                    return (comparison, null); // comparison kan vara null eller ej
+                    var assessmentJson = await assessmentResponse.Content.ReadAsStringAsync();
+                    assessment = JsonSerializer.Deserialize<AssessmentDto>(assessmentJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                 }
-
-                var assessmentJson = await assessmentResponse.Content.ReadAsStringAsync();
-                var assessment = JsonSerializer.Deserialize<AssessmentDto>(assessmentJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 return (comparison, assessment);
             }

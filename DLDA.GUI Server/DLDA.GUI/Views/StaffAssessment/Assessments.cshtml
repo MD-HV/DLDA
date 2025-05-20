@@ -3,7 +3,6 @@
 
 @{
     ViewData["Title"] = "Bedömningar för patient";
-
     var completedStaffCount = Model.Count(m => m.IsStaffComplete);
     var enableComparison = completedStaffCount >= 1;
 }
@@ -63,14 +62,6 @@
                                    title="Fortsätt quiz">
                                     ▶ Till quiz
                                 </a>
-
-                                <a class="btn btn-outline-success btn-sm"
-                                   asp-controller="StaffResult"
-                                   asp-action="Index"
-                                   asp-route-id="@item.AssessmentID"
-                                   title="Gå till resultat">
-                                    📄 Resultat
-                                </a>
                             }
                             else
                             {
@@ -82,13 +73,17 @@
                                     📄 Visa resultat
                                 </a>
 
-                                <a class="btn btn-sm btn-outline-success"
-                                   asp-controller="StaffStatistics"
-                                   asp-action="Comparison"
-                                   asp-route-assessmentId="@item.AssessmentID"
-                                   title="Visa jämförelse">
-                                    📊 Statistik
-                                </a>
+                                <!-- Statistikkknapp visas endast om både patient och personal har avslutat sin bedömning -->
+                                @if (item.IsComplete && item.IsStaffComplete)
+                                {
+                                    <a class="btn btn-sm btn-outline-success"
+                                       asp-controller="StaffStatistics"
+                                       asp-action="Comparison"
+                                       asp-route-assessmentId="@item.AssessmentID"
+                                       title="Visa jämförelse">
+                                        📊 Statistik
+                                    </a>
+                                }
                             }
 
                             <a class="btn btn-outline-danger btn-sm"

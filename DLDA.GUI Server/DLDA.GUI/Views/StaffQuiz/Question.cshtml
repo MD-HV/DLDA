@@ -21,10 +21,8 @@
 }
 
 <div class="container mt-5">
-    <!-- Centralt hanterade alerts -->
     <partial name="_AlertPartial" />
 
-    <!-- 👁 Tidigare svar från patient -->
     @if (!string.IsNullOrWhiteSpace(Model.PatientName))
     {
         <div class="alert alert-primary">
@@ -58,14 +56,12 @@
         </div>
     }
 
-    <!-- 📋 Frågeblock -->
     <div class="bg-white p-4 rounded shadow-sm mb-4 border-start border-4 border-primary">
         <small class="text-muted d-block">Fråga @(@Model.Order + 1)</small>
         <h5 class="fw-semibold mt-2 mb-1">Hur bedömer du patientens:</h5>
         <h4 class="fw-bold text-primary">@Model.QuestionText</h4>
     </div>
 
-    <!-- Svarsalternativ -->
     <form asp-action="SubmitAnswer" method="post">
         <input type="hidden" name="itemId" value="@Model.ItemID" />
         <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
@@ -90,7 +86,6 @@
             </div>
         </div>
 
-        <!-- Kommentar och flagga -->
         <div class="mb-4">
             <label class="form-label">Kommentar (frivilligt)</label>
             <textarea class="form-control" name="comment" rows="3">@Model.StaffComment</textarea>
@@ -108,13 +103,22 @@
         </div>
     </form>
 
-    <!-- Navigering -->
+    <!-- Hoppa över / Navigering -->
     <div class="d-flex gap-3 mt-4 flex-wrap">
         <form asp-action="Previous" method="post">
             <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
             <input type="hidden" name="currentOrder" value="@Model.Order" />
             <input type="hidden" name="userId" value="@Model.UserID" />
             <button type="submit" class="btn btn-outline-secondary">⬅ Föregående</button>
+        </form>
+
+        <form asp-action="SkipQuestion" method="post">
+            <input type="hidden" name="itemId" value="@Model.ItemID" />
+            <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+            <input type="hidden" name="userId" value="@Model.UserID" />
+            <input type="hidden" name="comment" value="@Model.StaffComment" />
+            <input type="hidden" name="flag" value="@Model.Flag.ToString().ToLower()" />
+            <button type="submit" class="btn btn-secondary">⏭ Hoppa över</button>
         </form>
 
         <form asp-action="Pause" method="post">

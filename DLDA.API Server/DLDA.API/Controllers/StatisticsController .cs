@@ -42,7 +42,7 @@ namespace DLDA.API.Controllers
         }
 
         // GET: api/statistics/summary/{assessmentId}
-        // Returnerar summering av patientens senaste bedömning (enbart patientens svar)
+        // Returnerar summering av patientens svar i en bedömning
         [HttpGet("summary/{assessmentId}")]
         public ActionResult<object> GetSingleAssessmentSummary(int assessmentId)
         {
@@ -51,7 +51,7 @@ namespace DLDA.API.Controllers
                 .ToList();
 
             if (!items.Any())
-                return NotFound("Inga besvarade frågor hittades.");
+                return BadRequest("Bedömningen saknar besvarade frågor och kan inte sammanfattas.");
 
             int noProblem = items.Count(i => i.PatientAnswer is 0 or 1);
             int someProblem = items.Count(i => i.PatientAnswer is 2 or 3);
@@ -80,6 +80,7 @@ namespace DLDA.API.Controllers
         }
 
         // GET: api/statistics/summary/patient/{assessmentId}
+        // Returnerar patientens svar som DTO för statistikvisning
         [HttpGet("summary/patient/{assessmentId}")]
         public ActionResult<PatientSingleSummaryDto> GetSingleSummary(int assessmentId)
         {
@@ -91,11 +92,10 @@ namespace DLDA.API.Controllers
                     .ToList();
 
                 var assessment = _context.Assessments
-                    .Where(a => a.AssessmentID == assessmentId)
-                    .FirstOrDefault();
+                    .FirstOrDefault(a => a.AssessmentID == assessmentId);
 
                 if (assessment == null)
-                    return NotFound("Bedömningen kunde inte hittas.");
+                    return NotFound("Bedömningen innehåller inga besvarade frågor.");
 
                 var summary = new PatientSingleSummaryDto
                 {
@@ -113,95 +113,16 @@ namespace DLDA.API.Controllers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] Fel i GetSingleSummary: {ex.Message}");
-                return StatusCode(500, "Ett internt fel uppstod vid hämtning av statistik.");
+                return StatusCode(500, $"Ett internt fel uppstod: {ex.Message}");
             }
         }
-
-        // GET: api/statistics/patient-change-overview/{userId}
-        // Returnerar förändringar mellan två senaste bedömningar, uppdelat i tre grupper
-        [HttpGet("patient-change-overview/{userId}")]
-        public ActionResult<PatientChangeOverviewDto> GetPatientChangeOverviewGrouped(int userId)
-        {
-            var assessments = _context.Assessments
-                .Where(a => a.UserId == userId && a.IsComplete)
-                .OrderByDescending(a => a.CreatedAt)
-                .Take(2)
-                .ToList();
-
-            if (assessments.Count < 2)
-                return Ok("Det finns inte tillräckligt många bedömningar för att visa förändringar.");
-
-            var latest = assessments[0];
-            var previousAssessment = assessments[1];
-
-            var latestItems = _context.AssessmentItems
-                .Where(i => i.AssessmentID == latest.AssessmentID)
-                .Include(i => i.Question)
-                .ToList();
-
-            var previousItems = _context.AssessmentItems
-                .Where(i => i.AssessmentID == previousAssessment.AssessmentID)
-                .ToDictionary(i => i.QuestionID, i => i);
-
-            var improvements = new List<ImprovementApiDto>();
-
-            foreach (var item in latestItems)
-            {
-                if (!previousItems.ContainsKey(item.QuestionID)) continue;
-
-                var previousItem = previousItems[item.QuestionID];
-                if (!item.PatientAnswer.HasValue || !previousItem.PatientAnswer.HasValue) continue;
-
-                var previousValue = previousItem.PatientAnswer.Value;
-                var currentValue = item.PatientAnswer.Value;
-
-                if (currentValue < previousValue)
-                {
-                    improvements.Add(new ImprovementApiDto
-                    {
-                        QuestionID = item.QuestionID, // 👈 Lägg till fråge-ID
-                        Question = item.Question?.QuestionText ?? "(okänd fråga)",
-                        Previous = previousValue,
-                        Current = currentValue,
-                        Category = item.Question?.Category ?? "",
-                        SkippedPrevious = !previousItem.PatientAnswer.HasValue,
-                        SkippedCurrent = !item.PatientAnswer.HasValue
-                    });
-                }
-            }
-
-            var sortedImprovements = improvements.OrderByDescending(i => i.Change).ToList();
-
-            var result = new PatientChangeOverviewDto
-            {
-                PreviousDate = previousAssessment.CreatedAt ?? DateTime.MinValue,
-                CurrentDate = latest.CreatedAt ?? DateTime.MinValue,
-                Förbättringar = sortedImprovements.Select(i => new ImprovementDto
-                {
-                    QuestionId = i.QuestionID,
-                    Question = i.Question,
-                    Previous = i.Previous,
-                    Current = i.Current,
-                    Category = i.Category,
-                    SkippedPrevious = i.SkippedPrevious,
-                    SkippedCurrent = i.SkippedCurrent
-                }).ToList()
-            };
-
-            return Ok(result);
-        }
-
-
-
-
 
         // --------------------------
-        // [PERSONAL] – Fördjupad analys och jämförelse
+        // [STAFF] – Matchning och jämförelse
         // --------------------------
 
         // GET: api/statistics/match/{assessmentId}
-        // Returnerar matchningsstatistik mellan patient och personal
+        // Returnerar antal och procentuell matchning mellan patient och personal
         [HttpGet("match/{assessmentId}")]
         public ActionResult<object> GetMatchStatistics(int assessmentId)
         {
@@ -211,7 +132,7 @@ namespace DLDA.API.Controllers
                 .ToList();
 
             if (!items.Any())
-                return NotFound("Inga jämförbara svar hittades.");
+                return BadRequest("Inga jämförbara svar hittades mellan patient och personal.");
 
             int matchCount = items.Count(i => i.PatientAnswer == i.StaffAnswer);
             int total = items.Count;
@@ -225,33 +146,8 @@ namespace DLDA.API.Controllers
             });
         }
 
-        // GET: api/statistics/total/{assessmentId}
-        // Returnerar totalt antal frågor i en bedömning
-        [HttpGet("total/{assessmentId}")]
-        public ActionResult<int> GetTotalQuestions(int assessmentId)
-        {
-            int total = _context.AssessmentItems
-                .Count(i => i.AssessmentID == assessmentId);
-
-            return Ok(total);
-        }
-
-        // GET: api/statistics/skipped/{assessmentId}
-        // Returnerar alla obesvarade frågor för en bedömning (används internt)
-        [HttpGet("skipped/{assessmentId}")]
-        public ActionResult<IEnumerable<string>> GetSkippedQuestions(int assessmentId)
-        {
-            var skipped = _context.AssessmentItems
-                .Where(i => i.AssessmentID == assessmentId && !i.PatientAnswer.HasValue)
-                .Include(i => i.Question)
-                .Select(i => i.Question != null ? i.Question.QuestionText : "[Fråga saknas]")
-                .ToList();
-
-            return Ok(skipped);
-        }
-
         // GET: api/statistics/comparison-table-staff/{assessmentId}
-        // Returnerar detaljerad rad-för-rad jämförelse av svar (patient & personal)
+        // Returnerar rad-för-rad jämförelse mellan patient och personal
         [HttpGet("comparison-table-staff/{assessmentId}")]
         public ActionResult<List<StaffComparisonRowDto>> GetAssessmentComparisonForStaff(int assessmentId)
         {
@@ -267,6 +163,9 @@ namespace DLDA.API.Controllers
                 .Include(i => i.Question)
                 .OrderBy(i => i.QuestionID)
                 .ToList();
+
+            if (items.All(i => !i.PatientAnswer.HasValue && !i.StaffAnswer.HasValue))
+                return BadRequest("Det finns inga svar att jämföra – alla frågor är obesvarade.");
 
             var result = items.Select(i =>
             {
@@ -285,18 +184,13 @@ namespace DLDA.API.Controllers
                     QuestionNumber = i.QuestionID,
                     QuestionText = i.Question?.QuestionText ?? "",
                     Category = i.Question?.Category ?? "",
-
                     PatientAnswer = p,
                     PatientComment = i.PatientComment,
-
                     StaffAnswer = s,
                     StaffComment = i.StaffComment,
-
                     Classification = status,
                     SkippedByPatient = !p.HasValue,
                     IsFlagged = i.Flag,
-
-                    // 🔹 Nytt: lägg till datum och användarnamn
                     CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
                     Username = assessment.User?.Username ?? "Okänd"
                 };
@@ -304,134 +198,5 @@ namespace DLDA.API.Controllers
 
             return Ok(result);
         }
-
-
-
-        // GET: api/statistics/staff-change-overview/{userId}
-        [HttpGet("staff-change-overview/{userId}")]
-        public ActionResult<StaffChangeOverviewDto> GetStaffChangeOverview(int userId)
-        {
-            var assessments = _context.Assessments
-                .Where(a => a.UserId == userId && a.IsComplete)
-                .Include(a => a.User) // 👈 behövs för Username
-                .OrderByDescending(a => a.CreatedAt)
-                .Take(2)
-                .ToList();
-
-            if (assessments.Count < 2)
-                return Ok("Det finns inte tillräckligt många bedömningar för att visa förändringar.");
-
-            var latest = assessments[0];
-            var previous = assessments[1];
-
-            var latestItems = _context.AssessmentItems
-                .Where(i => i.AssessmentID == latest.AssessmentID)
-                .Include(i => i.Question)
-                .ToList();
-
-            var previousItems = _context.AssessmentItems
-                .Where(i => i.AssessmentID == previous.AssessmentID)
-                .ToDictionary(i => i.QuestionID, i => i);
-
-            var improvements = new List<ImprovementDto>();
-            var deteriorations = new List<ImprovementDto>();
-            var flags = new List<ImprovementDto>();
-            var skipped = new List<ImprovementDto>();
-
-            foreach (var item in latestItems)
-            {
-                if (!previousItems.ContainsKey(item.QuestionID)) continue;
-
-                var previousItem = previousItems[item.QuestionID];
-
-                if (!item.PatientAnswer.HasValue || !previousItem.PatientAnswer.HasValue)
-                {
-                    skipped.Add(new ImprovementDto
-                    {
-                        QuestionId = item.QuestionID,
-                        Question = item.Question?.QuestionText ?? "(okänd)",
-                        Category = item.Question?.Category ?? "",
-                        Previous = previousItem.PatientAnswer ?? -1,
-                        Current = item.PatientAnswer ?? -1,
-                        SkippedPrevious = !previousItem.PatientAnswer.HasValue,
-                        SkippedCurrent = !item.PatientAnswer.HasValue
-                    });
-                    continue;
-                }
-
-                var current = item.PatientAnswer.Value;
-                var previousVal = previousItem.PatientAnswer.Value;
-
-                var dto = new ImprovementDto
-                {
-                    QuestionId = item.QuestionID,
-                    Question = item.Question?.QuestionText ?? "(okänd)",
-                    Category = item.Question?.Category ?? "",
-                    Previous = previousVal,
-                    Current = current,
-                    SkippedPrevious = false,
-                    SkippedCurrent = false
-                };
-
-                if (current < previousVal)
-                    improvements.Add(dto);
-                else if (current > previousVal)
-                    deteriorations.Add(dto);
-
-                if (item.Flag)
-                    flags.Add(dto);
-            }
-
-            return Ok(new StaffChangeOverviewDto
-            {
-                Username = latest.User?.Username ?? "Okänd",
-                PreviousDate = previous.CreatedAt ?? DateTime.MinValue,
-                CurrentDate = latest.CreatedAt ?? DateTime.MinValue,
-                Förbättringar = improvements.OrderByDescending(i => i.Change).ToList(),
-                Försämringar = deteriorations.OrderByDescending(i => i.Change).ToList(),
-                Flaggade = flags,
-                Hoppade = skipped
-            });
-        }
-
-        // GET: api/statistics/patient-answer-summary/{assessmentId}
-        // Returnerar patientens svar för sammanställning (piechart)
-        [HttpGet("patient-answer-summary/{assessmentId}")]
-        public ActionResult<List<StaffComparisonRowDto>> GetPatientAnswerSummaryRaw(int assessmentId)
-        {
-            var assessment = _context.Assessments
-                .Include(a => a.User)
-                .FirstOrDefault(a => a.AssessmentID == assessmentId);
-
-            if (assessment == null)
-                return NotFound("Bedömningen kunde inte hittas.");
-
-            var items = _context.AssessmentItems
-                .Where(i => i.AssessmentID == assessmentId)
-                .Include(i => i.Question)
-                .ToList();
-
-            var result = items.Select((i, index) => new StaffComparisonRowDto
-            {
-                QuestionNumber = index + 1,
-                QuestionText = i.Question?.QuestionText ?? "",
-                Category = i.Question?.Category ?? "",
-                PatientAnswer = i.PatientAnswer,
-                PatientComment = i.PatientComment,
-
-                // Övriga lämnas tomma
-                StaffAnswer = null,
-                StaffComment = null,
-                Classification = "",
-                SkippedByPatient = !i.PatientAnswer.HasValue,
-                IsFlagged = false,
-
-                CreatedAt = assessment.CreatedAt ?? DateTime.MinValue,
-                Username = assessment.User?.Username ?? "Okänd"
-            }).ToList();
-
-            return Ok(result);
-        }
-
     }
 }

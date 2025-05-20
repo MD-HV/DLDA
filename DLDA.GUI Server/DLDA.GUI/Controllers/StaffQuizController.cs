@@ -86,5 +86,19 @@ namespace DLDA.GUI.Controllers
             TempData["Info"] = "Bedömningen är pausad. Du kan återuppta den senare.";
             return RedirectToAction("Assessments", "StaffAssessment", new { userId });
         }
+
+        /// <summary>
+        /// Hoppar över aktuell fråga i personalens bedömning.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> SkipQuestion(int itemId, int assessmentId, string? comment, bool flag, int userId)
+        {
+            var success = await _service.SkipQuestionAsync(itemId, comment, flag);
+
+            if (!success)
+                TempData["Error"] = "Kunde inte hoppa över frågan.";
+
+            return RedirectToAction("Resume", new { assessmentId, userId });
+        }
     }
 }

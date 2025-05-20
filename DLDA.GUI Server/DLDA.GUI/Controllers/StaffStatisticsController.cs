@@ -18,28 +18,30 @@ public class StaffStatisticsController : Controller
         _service = service;
     }
 
-    /// <summary>
-    /// Visar jämförelse mellan patientens och personalens svar för en specifik bedömning.
-    /// </summary>
     [HttpGet("Comparison/{assessmentId}")]
     public async Task<IActionResult> Comparison(int assessmentId)
     {
         try
         {
-            // 🧠 Hämta data via tjänst
             var result = await _service.GetComparisonAsync(assessmentId);
             var comparison = result.Comparison;
             var assessment = result.Assessment;
 
-            // ❌ Kontrollera om data saknas
-            if (comparison == null || !comparison.Any() || assessment == null)
+            if (assessment == null)
             {
-                TempData["Error"] = "Kunde inte hämta jämförelsedata eller bedömning.";
+                TempData["Error"] = "Bedömningen kunde inte hittas.";
                 return RedirectToAction("Index", "StaffAssessment");
             }
 
-            // ✅ Förbered data till vyn
-            ViewBag.UserId = assessment.UserId;
+            int userId = assessment.UserId; // 👈 nu har vi userId säkert
+
+            if (comparison == null || !comparison.Any())
+            {
+                TempData["Error"] = "Jämförelsen kan inte visas eftersom patienten eller personalen inte har svarat på några frågor i denna bedömning.";
+                return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+            }
+
+            ViewBag.UserId = userId;
             ViewBag.AssessmentId = assessment.AssessmentID;
             ViewBag.PatientName = comparison.First().Username;
             ViewBag.AssessmentDate = comparison.First().CreatedAt;
@@ -49,9 +51,11 @@ public class StaffStatisticsController : Controller
         catch (Exception ex)
         {
             TempData["Error"] = $"Ett tekniskt fel uppstod: {ex.Message}";
-            return RedirectToAction("Index", "StaffAssessment");
+            return RedirectToAction("Assessments", "StaffAssessment");
         }
     }
+
+
 
     /// <summary>
     /// Visar förbättringar och försämringar över tid för patientens bedömningar.
@@ -65,7 +69,7 @@ public class StaffStatisticsController : Controller
 
             if (overview == null)
             {
-                TempData["Error"] = "Kunde inte hämta översiktsdata.";
+                TempData["Error"] = "Det finns inte tillräckligt med svar i bedömningarna för att visa en jämförelse över tid.";
                 return RedirectToAction("Assessments", "StaffAssessment", new { userId });
             }
 

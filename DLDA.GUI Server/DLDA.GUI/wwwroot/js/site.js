@@ -309,21 +309,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 // StaffStatistics/Comparison
-// === Chart: Fördelning av skillnader mellan svar ===
+// === Chart: Fördelning av skillnader mellan svar (utan 'Obesvarad') ===
 function renderStaffComparisonPie(labels, values) {
     const ctx = document.getElementById('comparisonPie');
     if (!ctx) return;
-    if (window.Chart && window.ChartDataLabels) {
-        Chart.register(ChartDataLabels);
-    }
+
+    // Registrera plugin för att visa procent
+    Chart.register(ChartDataLabels);
+
+    // Filtrera bort "Obesvarad" (eller vad som motsvarar det)
+    const filtered = labels
+        .map((label, index) => ({ label, value: values[index] }))
+        .filter(entry => !entry.label.includes("Obesvarad") && entry.value > 0);
+
+    const filteredLabels = filtered.map(entry => entry.label);
+    const filteredValues = filtered.map(entry => entry.value);
+
+    const filteredColors = ['#dc3545', '#ffc107', '#198754']; // Anpassa färger om fler kategorier
 
     new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: labels,
+            labels: filteredLabels,
             datasets: [{
-                data: values,
-                backgroundColor: ['#dc3545', '#ffc107', '#198754', '#adb5bd']
+                data: filteredValues,
+                backgroundColor: filteredColors
             }]
         },
         options: {
@@ -342,7 +352,7 @@ function renderStaffComparisonPie(labels, values) {
                     color: '#000',
                     font: {
                         weight: 'bold',
-                        size: 16
+                        size: 14
                     },
                     formatter: (value, ctx) => {
                         const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
@@ -352,9 +362,11 @@ function renderStaffComparisonPie(labels, values) {
                     }
                 }
             }
-        }
+        },
+        plugins: [ChartDataLabels]
     });
 }
+
 
 
 // StaffStatistics/Comparison
@@ -380,7 +392,6 @@ function applyComparisonFilters() {
         if (filter === "all") show = true;
         else if (filter === "flagged") show = flagged;
         else if (filter === "commented") show = commented;
-        else if (filter === "skipped") show = type === "skipped" || type === "staff-skipped";
         else show = type === filter;
 
         row.style.display = show ? "table-row" : "none";
