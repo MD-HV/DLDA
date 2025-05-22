@@ -198,6 +198,5 @@ namespace DLDA.GUI.Services
                 return new List<PatientWithAssessmentStatusDto>();
             }
         }
-
     }
 }

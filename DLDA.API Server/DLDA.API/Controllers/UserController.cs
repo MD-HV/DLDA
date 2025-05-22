@@ -180,22 +180,28 @@ public class UserController : ControllerBase
         {
             var a = p.LastAssessment;
 
-            // Tillåt patienter utan bedömning om inget filter kräver en
+            // Inga bedömningar
             if (a == null)
             {
                 if (ongoing == true || notOngoing == true || !string.IsNullOrWhiteSpace(recent))
                     return false;
 
-                return true; // ingen bedömning, men inga filter = visa
+                return true; // Visa om inga filter är aktiva
             }
 
-            // Bedömning finns – tillämpa filter
+            // Pågående-filter
             if (ongoing == true && notOngoing != true && a.IsComplete)
                 return false;
 
+            // Not ongoing-filter 
             if (notOngoing == true && ongoing != true && !a.IsComplete)
                 return false;
 
+            // Korrekt logik:
+            if (notOngoing == true && ongoing != true && a.IsComplete == false)
+                return false;
+
+            // Tidsfilter
             if (recent == "week" && a.CreatedAt < DateTime.Today.AddDays(-7))
                 return false;
 
