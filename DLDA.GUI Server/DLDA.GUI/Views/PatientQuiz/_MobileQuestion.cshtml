@@ -21,21 +21,6 @@
 
 <div class="container px-3 mt-3 text-center">
 
-    <!-- Informationsknapp med kollapsbar text -->
-    <div class="mb-3 text-start">
-        <button class="btn btn-outline-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#patientInfo">
-            ℹ️ Visa information om frågorna
-        </button>
-
-        <div class="collapse mt-2" id="patientInfo">
-            <div class="alert alert-info text-start mb-0">
-                <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
-                Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
-                <em>Tänk på hur det varit den senaste veckan.</em>
-            </div>
-        </div>
-    </div>
-
     <!-- Progressbar -->
     <div class="mb-3">
         <small class="text-muted">Fråga @current av @total</small>
@@ -74,14 +59,29 @@
             }
         </div>
 
+        <!-- Nästa-knapp -->
+        <div class="d-grid mb-4">
+            <button type="submit" class="btn btn-primary btn-lg">Nästa</button>
+        </div>
+
         <!-- Kommentar -->
         <div class="mb-3">
             <textarea class="form-control" name="comment" rows="2" placeholder="Kommentar (frivilligt)">@Model.PatientComment</textarea>
         </div>
 
-        <!-- Nästa-knapp -->
-        <div class="d-grid mb-4">
-            <button type="submit" class="btn btn-primary btn-lg">Nästa</button>
+        <!-- Informationsknapp med kollapsbar text -->
+        <div class="mb-3 text-start">
+            <button class="btn btn-outline-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#patientInfo">
+                ℹ️ Visa information om frågorna
+            </button>
+
+            <div class="collapse mt-2" id="patientInfo">
+                <div class="alert alert-info text-start mb-0">
+                    <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
+                    Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
+                    <em>Tänk på hur det varit den senaste veckan.</em>
+                </div>
+            </div>
         </div>
     </form>
 
