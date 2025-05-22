@@ -20,5 +20,4 @@ Detta projekt ska endast ge en prototyp som visar vad en digital version av det 
 
 1. Fixa export to pdf i statestik vyer
 2. Buggfixa sökfunktion "Har bedömningen Nej" fungerar ej
-3. Lägga till en notis på staff skapa ny patient tar en till login och att man måste logga in som Admin för att göra det.
-4.
+3.
