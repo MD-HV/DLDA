@@ -578,13 +578,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const wasHidden = tableSection?.style.display === "none";
         if (wasHidden) tableSection.style.display = "block";
 
+        // Temporär stil för att dölja knappar i PDF
         const style = document.createElement("style");
         style.innerHTML = "@media screen {.no-print { display: none !important; }}";
         document.head.appendChild(style);
 
         try {
+            // ✅ Justerad sökväg för servermiljö (lägg till projektmapp om nödvändigt)
             const logo = new Image();
-            logo.src = "/images/dlda_logo.png";
+            logo.src = "/DLDA.GUI/images/dlda_logo.png"; // <-- Lägg till projektmapp!
             await new Promise(resolve => logo.onload = resolve);
 
             const canvas = await html2canvas(container, { scale: 2 });
