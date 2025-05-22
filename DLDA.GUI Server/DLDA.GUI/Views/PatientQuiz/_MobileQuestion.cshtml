@@ -21,6 +21,21 @@
 
 <div class="container px-3 mt-3 text-center">
 
+    <!-- Informationsknapp med kollapsbar text -->
+    <div class="mb-3 text-start">
+        <button class="btn btn-outline-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#patientInfo">
+            ℹ️ Visa information om frågorna
+        </button>
+
+        <div class="collapse mt-2" id="patientInfo">
+            <div class="alert alert-info text-start mb-0">
+                <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
+                Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
+                <em>Tänk på hur det varit den senaste veckan.</em>
+            </div>
+        </div>
+    </div>
+
     <!-- Progressbar -->
     <div class="mb-3">
         <small class="text-muted">Fråga @current av @total</small>
@@ -29,9 +44,11 @@
         </div>
     </div>
 
-    <!-- Frågetext -->
-    <div class="rounded bg-light p-3 border border-2 border-primary mb-3">
-        <h5 class="fw-bold text-primary mb-0">@Model.QuestionText</h5>
+    <!-- Frågetext + introduktion -->
+    <div class="rounded bg-light p-3 border border-2 border-primary mb-3 text-start">
+        <small class="text-muted">Fråga @current av @total</small>
+        <p class="fw-semibold mt-2 mb-1">Hur bedömer du din:</p>
+        <h5 class="fw-bold text-primary">@Model.QuestionText</h5>
     </div>
 
     <!-- Svarsalternativ -->
