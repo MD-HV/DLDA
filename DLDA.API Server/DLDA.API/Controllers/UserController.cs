@@ -180,25 +180,27 @@ public class UserController : ControllerBase
         {
             var a = p.LastAssessment;
 
-            // Inga bedömningar
+            // 🟡 Fall: ingen bedömning alls
             if (a == null)
             {
-                if (ongoing == true || notOngoing == true || !string.IsNullOrWhiteSpace(recent))
-                    return false;
+                // Visa endast om NOT ongoing är markerad (ej pågående) och INTE ongoing
+                if (notOngoing == true && ongoing != true)
+                    return true;
 
-                return true; // Visa om inga filter är aktiva
+                // Annars döljs de utan bedömning om något filter är aktivt
+                return ongoing != true && notOngoing != true && string.IsNullOrWhiteSpace(recent);
             }
 
-            // Pågående-filter
+            //  Om både ongoing + notOngoing är valda → visa alla med bedömning
+            if (ongoing == true && notOngoing == true)
+                return true;
+
+            // Endast pågående
             if (ongoing == true && notOngoing != true && a.IsComplete)
                 return false;
 
-            // Not ongoing-filter 
+            // Endast ej pågående (❗ Visa endast om bedömning är klar)
             if (notOngoing == true && ongoing != true && !a.IsComplete)
-                return false;
-
-            // Korrekt logik:
-            if (notOngoing == true && ongoing != true && a.IsComplete == false)
                 return false;
 
             // Tidsfilter
@@ -213,7 +215,6 @@ public class UserController : ControllerBase
 
             return true;
         });
-
         return Ok(filtered);
     }
 }
