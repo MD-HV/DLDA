@@ -17,6 +17,3 @@ Detta projekt ska endast ge en prototyp som visar vad en digital version av det 
 **PPB302 Grupp DLDA:** _André, Filip, Jesper, Julia, Merhawit, Mikael, Victor_
 
 ## To do list
-
-1. Fixa export to pdf i statestik vyer, får använda jsPDF
-2. ta bort "Fråga 22 av 38" ifrån mobil vy då det redan står i stapeln, det ska bara stå exempel fråga 24 på fråga 24
