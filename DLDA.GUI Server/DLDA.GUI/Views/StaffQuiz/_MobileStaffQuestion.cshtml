@@ -1,0 +1,154 @@
+﻿@model DLDA.GUI.DTOs.Staff.StaffQuestionDto
+
+@{
+    var current = Model.Order + 1;
+    var total = ViewBag.TotalQuestions as int? ?? 0;
+    var progressPercent = total > 0 ? (int)((double)current / total * 100) : 0;
+
+    string FormatAnswer(int value) => value switch
+    {
+        0 => "Inget problem",
+        1 => "Litet problem",
+        2 => "Måttligt problem",
+        3 => "Stort problem",
+        4 => "Mycket stort problem",
+        _ => "Okänt"
+    };
+}
+
+<div class="container px-3 mt-3 text-center">
+
+    <!-- Progressbar -->
+    <div class="mb-3">
+        <small class="text-muted">Fråga @current av @total</small>
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-primary" style="width: @progressPercent%;"></div>
+        </div>
+    </div>
+
+    <!-- Visa patientens svar-knapp -->
+    @if (!string.IsNullOrWhiteSpace(Model.PatientName))
+    {
+        <div class="mb-3">
+            <button class="btn btn-outline-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#patientAnswer">
+                👤 Visa patientens svar
+            </button>
+
+            <div class="collapse mt-2 text-start" id="patientAnswer">
+                <div class="alert alert-primary">
+                    <div><strong>Patient:</strong> @Model.PatientName</div>
+                    <hr class="my-2" />
+                    <div>
+                        <strong>Patientens svar:</strong>
+                        @if (Model.PatientAnswer.HasValue)
+                        {
+                            <span>@Model.PatientAnswer – @FormatAnswer(Model.PatientAnswer.Value)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Ej besvarad</span>
+                        }
+                    </div>
+                    <div class="mt-2">
+                        <strong>Kommentar från patient:</strong>
+                        @if (!string.IsNullOrWhiteSpace(Model.PatientComment))
+                        {
+                            <span>@Model.PatientComment</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Ingen kommentar</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Frågetext -->
+    <div class="rounded bg-light p-3 border border-2 border-primary mb-3">
+        <h5 class="fw-bold text-primary mb-0">@Model.QuestionText</h5>
+    </div>
+
+    <!-- Formulär: SubmitAnswer -->
+    <form asp-action="SubmitAnswer" method="post">
+        <input type="hidden" name="itemId" value="@Model.ItemID" />
+        <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+        <input type="hidden" name="userId" value="@Model.UserID" />
+
+        <!-- Svarsalternativ -->
+        <div class="d-grid gap-2 mb-3">
+            @for (int i = 0; i <= 4; i++)
+            {
+                var inputId = $"staff-a{i}";
+                var imagePath = Url.Content($"~/Images/Number {i}.png");
+
+                <div>
+                    <input class="btn-check" type="radio" name="answer" id="@inputId" value="@i"
+                           @(Model.StaffAnswer == i ? "checked" : "") required />
+                    <label class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-start py-2 px-3"
+                           for="@inputId" style="min-height: 60px;">
+                        <img src="@imagePath" alt="Svar @i" width="40" class="me-3" />
+                        <span class="fw-semibold">@FormatAnswer(i)</span>
+                    </label>
+                </div>
+            }
+        </div>
+
+        <!-- Flagga -->
+        <div class="form-check mb-3 text-start">
+            <input class="form-check-input" type="checkbox" name="flag" id="flag" value="true"
+                   @(Model.Flag ? "checked" : "") />
+            <label class="form-check-label" for="flag">
+                🚩 Diskutera vidare med patient
+            </label>
+        </div>
+
+        <!-- Kommentar -->
+        <div class="mb-3 text-start">
+            <label class="form-label">Kommentar (frivilligt)</label>
+            <textarea class="form-control" name="comment" rows="2">@Model.StaffComment</textarea>
+        </div>
+
+        <!-- Nästa-knapp -->
+        <div class="d-grid mb-4">
+            <button type="submit" class="btn btn-primary btn-lg">💾 Nästa</button>
+        </div>
+    </form>
+
+    <!-- Övriga knappar -->
+    <div class="container">
+
+        <!-- Höger sida: Föregående + Hoppa över -->
+        <div class="row mb-3 justify-content-end text-end">
+            <div class="col-12 col-sm-6">
+                <form asp-action="Previous" method="post">
+                    <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+                    <input type="hidden" name="currentOrder" value="@Model.Order" />
+                    <input type="hidden" name="userId" value="@Model.UserID" />
+                    <button type="submit" class="btn btn-outline-secondary w-100 mb-2">⬅ Föregående</button>
+                </form>
+
+                <form asp-action="SkipQuestion" method="post">
+                    <input type="hidden" name="itemId" value="@Model.ItemID" />
+                    <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+                    <input type="hidden" name="userId" value="@Model.UserID" />
+                    <input type="hidden" name="comment" value="@Model.StaffComment" />
+                    <input type="hidden" name="flag" value="@Model.Flag.ToString().ToLower()" />
+                    <button type="submit" class="btn btn-outline-secondary w-100">⏭ Hoppa över</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vänster sida: Pausa -->
+        <div class="row text-start">
+            <div class="col-12 col-sm-6">
+                <form asp-action="Pause" method="post">
+                    <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
+                    <input type="hidden" name="userId" value="@Model.UserID" />
+                    <button type="submit" class="btn btn-outline-warning w-100">⏸ Pausa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

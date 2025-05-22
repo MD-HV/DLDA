@@ -1,136 +1,18 @@
 ﻿@using DLDA.GUI.DTOs.Staff
 @model StaffQuestionDto
+
 @{
     ViewData["Title"] = "Fråga (personal)";
-    var prefix = "Number";
 }
 
-@functions {
-    string FormatAnswer(int value)
-    {
-        return value switch
-        {
-            0 => "Inget problem",
-            1 => "Litet problem",
-            2 => "Måttligt problem",
-            3 => "Stort problem",
-            4 => "Mycket stort problem",
-            _ => "Okänt"
-        };
-    }
-}
+<link rel="stylesheet" href="~/css/StaffQuestion.css" />
 
-<div class="container mt-5">
-    <partial name="_AlertPartial" />
-    <div class="d-flex justify-content-end">
-        <span class="text-muted fw-semibold">
-            Fråga @(@Model.Order + 1) av @(ViewBag.TotalQuestions ?? 0)
-        </span>
+<div class="container mt-4">
+    <div class="only-desktop">
+        @await Html.PartialAsync("_DesktopStaffQuestion", Model)
     </div>
 
-
-    @if (!string.IsNullOrWhiteSpace(Model.PatientName))
-    {
-        <div class="alert alert-primary">
-            <div>
-                👤 <strong>Patient:</strong> @Model.PatientName
-            </div>
-
-            <div class="mt-2">
-                <strong>Patientens svar:</strong>
-                @if (Model.PatientAnswer.HasValue)
-                {
-                    <span>@Model.PatientAnswer – @FormatAnswer(Model.PatientAnswer.Value)</span>
-                }
-                else
-                {
-                    <span class="text-muted">Ej besvarad</span>
-                }
-            </div>
-
-            <div>
-                <strong>Kommentar från patient:</strong>
-                @if (!string.IsNullOrWhiteSpace(Model.PatientComment))
-                {
-                    <span>@Model.PatientComment</span>
-                }
-                else
-                {
-                    <span class="text-muted">Ingen kommentar</span>
-                }
-            </div>
-        </div>
-    }
-
-    <div class="bg-white p-4 rounded shadow-sm mb-4 border-start border-4 border-primary">
-        <small class="text-muted d-block">Fråga @(@Model.Order + 1)</small>
-        <h5 class="fw-semibold mt-2 mb-1">Hur bedömer du patientens:</h5>
-        <h4 class="fw-bold text-primary">@Model.QuestionText</h4>
-    </div>
-
-    <form asp-action="SubmitAnswer" method="post">
-        <input type="hidden" name="itemId" value="@Model.ItemID" />
-        <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
-        <input type="hidden" name="userId" value="@Model.UserID" />
-
-        <div class="mb-4">
-            <label class="form-label fw-semibold">Bedömning</label>
-            <div class="d-flex gap-3 flex-wrap">
-                @for (int i = 0; i <= 4; i++)
-                {
-                    var inputId = $"s{i}";
-                    var imagePath = Url.Content($"~/Images/{prefix} {i}.png");
-
-                    <div class="form-check text-center">
-                        <input type="radio" class="btn-check" name="answer" id="@inputId" value="@i" @(Model.StaffAnswer == i ? "checked" : "") required />
-                        <label class="btn" for="@inputId">
-                            <img src="@imagePath" alt="Svar @i" width="60" />
-                            <div class="small mt-1 fw-semibold">@FormatAnswer(i)<br /><small class="text-muted">(@i)</small></div>
-                        </label>
-                    </div>
-                }
-            </div>
-        </div>
-
-        <div class="mb-4">
-            <label class="form-label">Kommentar (frivilligt)</label>
-            <textarea class="form-control" name="comment" rows="3">@Model.StaffComment</textarea>
-        </div>
-
-        <div class="form-check mb-4">
-            <input class="form-check-input" type="checkbox" name="flag" id="flag" value="true" @(Model.Flag ? "checked" : "") />
-            <label class="form-check-label" for="flag">
-                🚩 Diskutera vidare med patient
-            </label>
-        </div>
-
-        <div class="d-flex gap-3">
-            <button type="submit" class="btn btn-primary">💾 Nästa fråga</button>
-        </div>
-    </form>
-
-    <!-- Hoppa över / Navigering -->
-    <div class="d-flex gap-3 mt-4 flex-wrap">
-        <form asp-action="Previous" method="post">
-            <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
-            <input type="hidden" name="currentOrder" value="@Model.Order" />
-            <input type="hidden" name="userId" value="@Model.UserID" />
-            <button type="submit" class="btn btn-outline-secondary">⬅ Föregående</button>
-        </form>
-
-        <form asp-action="SkipQuestion" method="post">
-            <input type="hidden" name="itemId" value="@Model.ItemID" />
-            <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
-            <input type="hidden" name="userId" value="@Model.UserID" />
-            <input type="hidden" name="comment" value="@Model.StaffComment" />
-            <input type="hidden" name="flag" value="@Model.Flag.ToString().ToLower()" />
-            <button type="submit" class="btn btn-secondary">⏭ Hoppa över</button>
-        </form>
-
-        <form asp-action="Pause" method="post">
-            <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
-            <input type="hidden" name="userId" value="@Model.UserID" />
-            <button type="submit" class="btn btn-outline-warning">⏸ Pausa</button>
-        </form>
+    <div class="only-mobile">
+        @await Html.PartialAsync("_MobileStaffQuestion", Model)
     </div>
 </div>
