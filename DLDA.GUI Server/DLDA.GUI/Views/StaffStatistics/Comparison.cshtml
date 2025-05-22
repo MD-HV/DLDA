@@ -1,4 +1,7 @@
 ﻿@model List<StaffStatistics>
+@{
+    ViewData["BodyId"] = "comparison-page";
+}
 @using System.Text.Json
 @using DLDA.GUI.DTOs.Staff
 
@@ -32,41 +35,30 @@
         .ToList();
 }
 
-@{
-    var patientSvar_0_1 = Model.Count(m => m.PatientAnswer is 0 or 1);
-    var patientSvar_2 = Model.Count(m => m.PatientAnswer == 2);
-    var patientSvar_3 = Model.Count(m => m.PatientAnswer == 3);
-    var patientSvar_4 = Model.Count(m => m.PatientAnswer == 4);
-    var patientSvar_Null = Model.Count(m => m.PatientAnswer == null);
+<link rel="stylesheet" href="/css/pdf.css" />
 
-    var patientSvarLabelsJson = JsonSerializer.Serialize(new[] {
-        "Utan problem (0–1)", "Måttligt problem (2)", "Stort problem (3)", "Mycket stort problem (4)", "Hoppad över"
-    });
-    var patientSvarDataJson = JsonSerializer.Serialize(new[] {
-        patientSvar_0_1, patientSvar_2, patientSvar_3, patientSvar_4, patientSvar_Null
-    });
-}
+<div id="pdf-content" class="container mt-2">
 
-<a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
-    ⬅ Tillbaka till bedömningar
-</a>
+    <!-- 🧭 Översta navigering -->
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+            ⬅ Tillbaka till bedömningar
+        </a>
 
-<div id="patientPieSection" class="mt-4" style="display: none;">
-    <h5>🧩 Fördelning av patientens svar</h5>
-    <canvas id="patientAnswerPie" style="max-height: 400px;"></canvas>
-</div>
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">
+            📄 Exportera som PDF
+        </button>
+    </div>
 
-
-<div class="container mt-5">
     <h2 class="mb-4">📊 Jämförelse av skattningar mellan patient och personal</h2>
 
-    <div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="btn btn-outline-primary"
-       asp-controller="StaffStatistics"
-       asp-action="PatientAnswerSummary"
-       asp-route-assessmentId="@ViewBag.AssessmentId">
-        Visa patientens svar
-    </a>
+    <div class="d-flex flex-wrap gap-2 mb-3 no-print">
+        <a class="btn btn-outline-primary"
+           asp-controller="StaffStatistics"
+           asp-action="PatientAnswerSummary"
+           asp-route-assessmentId="@ViewBag.AssessmentId">
+            Visa patientens svar
+        </a>
     </div>
 
     <p>
@@ -74,7 +66,8 @@
         <strong>🗓️ Bedömningsdatum:</strong> @ViewBag.AssessmentDate?.ToString("yyyy-MM-dd")
     </p>
 
-    <div class="row mb-4">
+    <!-- 🟣 Pie + kategorier -->
+    <div class="row mt-4">
         <div class="col-md-6">
             <canvas id="comparisonPie" style="max-height: 500px;"></canvas>
         </div>
@@ -82,34 +75,31 @@
             <div class="alert alert-warning">
                 Det finns <strong>@strong.Count</strong> frågor med större skillnader i skattning mellan patient och personal.
             </div>
-            <div class="row">
-                <div class="col-12 mb-3">
-                    <div class="card border-success">
-                        <div class="card-header bg-success text-white">✅ Kategorier med mest överensstämmelse</div>
-                        <div class="card-body">
-                            <ul class="mb-0">
-                                @foreach (var cat in topMatchCategories)
-                                {
-                                    <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
-                                }
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="card border-danger">
-                        <div class="card-header bg-danger text-white">❗ Kategorier med störst skillnader</div>
-                        <div class="card-body">
-                            <ul class="mb-0">
-                                @foreach (var cat in topStrongCategories)
-                                {
-                                    <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
-                                }
-                            </ul>
-                        </div>
-                    </div>
+
+            <div class="card border-success mb-3">
+                <div class="card-header bg-success text-white">✅ Kategorier med mest överensstämmelse</div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @foreach (var cat in topMatchCategories)
+                        {
+                            <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
+                        }
+                    </ul>
                 </div>
             </div>
+
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">❗ Kategorier med störst skillnader</div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @foreach (var cat in topStrongCategories)
+                        {
+                            <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
             <ul class="list-unstyled mt-4">
                 <li>✅ Match: <strong>@match.Count</strong></li>
                 <li>⚠ Mindre skillnader: <strong>@mild.Count</strong></li>
@@ -121,7 +111,8 @@
         </div>
     </div>
 
-    <div class="mb-3 d-flex flex-wrap gap-2">
+    <!-- 🔍 Filter och tabell -->
+    <div class="mb-3 d-flex flex-wrap gap-2 no-print">
         <button class="btn btn-outline-secondary" onclick="toggleComparisonTable()">🔍 Visa/dölj frågetabell</button>
         <select class="form-select w-auto" onchange="applyComparisonFilters()" id="filterSelector">
             <option value="all">Visa alla</option>
@@ -178,9 +169,7 @@
         </table>
     </div>
 
-    <a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
-        ⬅ Tillbaka till bedömningar
-    </a>
+    <div style="padding-bottom: 80px;"></div>
 </div>
 
 @functions {

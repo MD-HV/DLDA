@@ -1,9 +1,9 @@
-﻿@model PatientSingleSummaryDto
-@using System.Text.Json
+﻿@using System.Text.Json
 @using DLDA.GUI.DTOs.Patient
-
+@model PatientSingleSummaryDto
 @{
     ViewData["Title"] = "Egenbedömning – sammanställning";
+    ViewData["BodyId"] = "patient-summary-single";
 
     var utanProblem = Model.Answers.Count(a => a.Answer is 0 or 1);
     var måttligtProblem = Model.Answers.Count(a => a.Answer == 2);
@@ -18,13 +18,20 @@
         .ToList();
 }
 
-<div class="mt-5">
-    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
-        ⬅ Tillbaka till mina bedömningar
-    </a>
-</div>
+<link rel="stylesheet" href="/css/pdf.css" />
 
-<div class="container mt-5">
+<div id="pdf-content" class="container mt-4">
+
+    <!-- Navigering och PDF-knapp -->
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="PatientAssessment" asp-action="Index">
+            ⬅ Tillbaka till mina bedömningar
+        </a>
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">
+            📄 Exportera som PDF
+        </button>
+    </div>
+
     <h2 class="mb-4">🟢 Sammanställning av egenbedömning</h2>
     <p><strong>Datum:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd")</p>
 
@@ -44,9 +51,7 @@
             <div class="mt-3">
                 @if (utanProblem == 0 && måttligtProblem == 0 && hoppadeÖver > 0)
                 {
-                    <p class="alert alert-info">
-                        Du har valt att hoppa över alla frågor i denna bedömning.
-                    </p>
+                    <p class="alert alert-info">Du har valt att hoppa över alla frågor i denna bedömning.</p>
                 }
                 else if (total > 0 && (utanProblem * 100.0 / total) >= 70)
                 {
@@ -61,7 +66,6 @@
                     <p class="alert alert-secondary">Bedömningen visar att du identifierar flera områden som kan behöva stöd – det är ett viktigt steg mot förbättring.</p>
                 }
             </div>
-
 
             @if (bästaOmråden.Any())
             {
@@ -78,7 +82,8 @@
         </div>
     </div>
 
-    <div class="mt-5">
+    <!-- Sekundär navigering -->
+    <div class="mt-5 no-print">
         <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
             ⬅ Tillbaka till mina bedömningar
         </a>

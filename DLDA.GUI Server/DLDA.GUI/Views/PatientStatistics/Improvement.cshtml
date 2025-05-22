@@ -1,11 +1,13 @@
 ﻿@model PatientChangeOverviewDto
+@{
+    ViewData["Title"] = "Förbättring över tid";
+    ViewData["BodyId"] = "patient-change-page";
+}
 @using System.Text.Json
 @using DLDA.GUI.DTOs.Patient
 @using Microsoft.AspNetCore.Html
 
 @{
-    ViewData["Title"] = "Förbättring över tid";
-
     var förbättringar = Model.Förbättringar;
     var kategorier = förbättringar
         .Where(f => !string.IsNullOrWhiteSpace(f.Category))
@@ -37,13 +39,16 @@
     };
 }
 
-<div class="mt-4">
-    <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
-        ⬅ Tillbaka till mina bedömningar
-    </a>
-</div>
+<link rel="stylesheet" href="/css/pdf.css" />
 
-<div class="container mt-5">
+<div id="pdf-content" class="container mt-2">
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="PatientAssessment" asp-action="Index">
+            ⬅ Tillbaka till mina bedömningar
+        </a>
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">📄 Exportera som PDF</button>
+    </div>
+
     <h2 class="mb-2">📈 Förbättring över tid</h2>
     <p>
         Denna vy visar specifika områden där du skattat dig själv lägre nu än vid föregående bedömning.
@@ -67,11 +72,10 @@
                     </div>
                 </div>
             </div>
-
             <div class="col-md-4">
                 <div class="card shadow-sm border-0 mb-4">
                     <div class="card-body">
-                        <h5 class="mb-3">📜 Återkoppling</h5>
+                        <h5 class="mb-3">📋 Återkoppling</h5>
                         <ul class="list-unstyled mb-3">
                             <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
                             <li><strong>@kategorier.Count</strong> kategorier innehöll förbättringar.</li>
@@ -99,7 +103,7 @@
             </div>
         </div>
 
-        <button class="btn btn-outline-secondary mb-3" id="toggleButton" onclick="toggleDetailsPatient()">
+        <button class="btn btn-outline-secondary mb-3 no-print" id="toggleButton" onclick="toggleDetailsPatient()">
             🔍 Visa detaljer per fråga
         </button>
 
@@ -142,7 +146,7 @@
     }
 </div>
 
-<div class="mt-4">
+<div class="mt-4 no-print">
     <a class="btn btn-secondary" asp-controller="PatientAssessment" asp-action="Index">
         ⬅ Tillbaka till mina bedömningar
     </a>
@@ -155,7 +159,7 @@
             const labels = @Html.Raw(labelsJson);
             const previousData = @Html.Raw(previousJson);
             const currentData = @Html.Raw(currentJson);
-            renderImprovementChart(labels, previousData, currentData); 
+            renderImprovementChart(labels, previousData, currentData);
         });
     </script>
 }

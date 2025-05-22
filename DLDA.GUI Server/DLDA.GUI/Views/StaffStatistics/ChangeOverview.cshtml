@@ -1,4 +1,7 @@
 ﻿@model StaffChangeOverviewDto
+@{
+    ViewData["BodyId"] = "staff-change-page";
+}
 @using System.Text.Json
 @using DLDA.GUI.DTOs.Staff
 
@@ -10,19 +13,8 @@
     var flaggade = Model.Flaggade;
     var hoppade = Model.Hoppade;
 
-    var förbättradeKategorier = förbättringar
-        .Where(f => !string.IsNullOrWhiteSpace(f.Category))
-        .Select(f => f.Category.Trim())
-        .Distinct()
-        .OrderBy(k => k)
-        .ToList();
-
-    var försämradeKategorier = försämringar
-        .Where(f => !string.IsNullOrWhiteSpace(f.Category))
-        .Select(f => f.Category.Trim())
-        .Distinct()
-        .OrderBy(k => k)
-        .ToList();
+    var förbättradeKategorier = förbättringar.Where(f => !string.IsNullOrWhiteSpace(f.Category)).Select(f => f.Category.Trim()).Distinct().OrderBy(k => k).ToList();
+    var försämradeKategorier = försämringar.Where(f => !string.IsNullOrWhiteSpace(f.Category)).Select(f => f.Category.Trim()).Distinct().OrderBy(k => k).ToList();
 
     var allLabels = förbättringar.Concat(försämringar).Select(f => f.Question).ToList();
     var previousData = förbättringar.Concat(försämringar).Select(f => f.Previous).ToList();
@@ -45,19 +37,25 @@
     string FormatChange(int prev, int curr) => curr < prev ? "✅ Förbättring" : curr > prev ? "❗ Försämring" : "Oförändrat";
 }
 
-<div class="container mt-5">
-    <h2 class="mb-3">📈 Förändringar över tid (personal)</h2>
+<link rel="stylesheet" href="/css/pdf.css" />
 
+<div id="pdf-content" class="container mt-2">
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+            ⬅ Tillbaka till bedömningar
+        </a>
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">
+            📄 Exportera som PDF
+        </button>
+    </div>
+
+    <h2 class="mb-3">📈 Förändringar över tid (personal)</h2>
     <p>
         👤 <strong>Patient:</strong> @Model.Username<br />
         📅 <strong>@Model.PreviousDate.ToString("yyyy-MM-dd")</strong> och <strong>@Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
     </p>
 
-    <div class="d-flex flex-wrap gap-2 mb-4">
-        <a class="btn btn-secondary" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
-            ⬅ Tillbaka till bedömningar
-        </a>
-
+    <div class="d-flex flex-wrap gap-2 mb-4 no-print">
         <div class="dropdown">
             <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Filter
@@ -80,9 +78,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- 🟢 Knappen ligger nu UTANFÖR kortet -->
-            <div class="mt-3">
+            <div class="mt-3 no-print">
                 <button class="btn btn-outline-secondary" onclick="toggleDetailsStaff()" id="toggleButton">
                     🔍 Visa detaljer
                 </button>
@@ -150,9 +146,7 @@
                     <tbody>
                         @foreach (var f in förbättringar.Concat(försämringar))
                         {
-                            var rowClass = f.Current < f.Previous ? "table-success" :
-                            f.Current > f.Previous ? "table-danger" : "";
-
+                            var rowClass = f.Current < f.Previous ? "table-success" : f.Current > f.Previous ? "table-danger" : "";
                             <tr class="@rowClass">
                                 <td>@f.QuestionId</td>
                                 <td>@f.Question</td>
@@ -169,7 +163,7 @@
         </div>
     </div>
 
-    <a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+    <a class="btn btn-secondary mt-4 no-print" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
         ⬅ Tillbaka till bedömningar
     </a>
 </div>

@@ -530,3 +530,100 @@ function clearSearch() {
     }
     window.location.href = searchInput?.closest("form")?.getAttribute("action") || window.location.href;
 }
+
+// ==============================
+// 📄 PDF-export för olika sidor
+// ==============================
+document.addEventListener("DOMContentLoaded", function () {
+    const pageId = document.body.id;
+    const exportBtn = document.getElementById("downloadPdfBtn");
+    if (!exportBtn) return;
+
+    exportBtn.addEventListener("click", async () => {
+        const { jsPDF } = window.jspdf;
+        let containerSelector = ".container";
+        let tableSection = null;
+        let filename = "rapport.pdf";
+
+        switch (pageId) {
+            case "patient-summary-page":
+                tableSection = document.getElementById("patientAnswerTableSection");
+                filename = "patient-sammanstallning.pdf";
+                break;
+
+            case "comparison-page":
+                containerSelector = "#pdf-content";
+                tableSection = document.getElementById("questionTableSection");
+                filename = "jamforelse-sammanstallning.pdf";
+                break;
+
+            case "staff-change-page":
+                tableSection = document.getElementById("detailsSection");
+                filename = "forandring-over-tid.pdf";
+                break;
+
+            case "patient-summary-single":
+                filename = "egenbedomning-sammanstallning.pdf";
+                break;
+
+            case "patient-change-page":
+                tableSection = document.getElementById("detailsSection");
+                filename = "forbattring-over-tid.pdf";
+                break;
+        }
+
+        const container = document.querySelector(containerSelector);
+        if (!container) return;
+
+        const wasHidden = tableSection?.style.display === "none";
+        if (wasHidden) tableSection.style.display = "block";
+
+        const style = document.createElement("style");
+        style.innerHTML = "@media screen {.no-print { display: none !important; }}";
+        document.head.appendChild(style);
+
+        try {
+            const logo = new Image();
+            logo.src = "/images/dlda_logo.png";
+            await new Promise(resolve => logo.onload = resolve);
+
+            const canvas = await html2canvas(container, { scale: 2 });
+            const imgData = canvas.toDataURL("image/png");
+
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgWidth = pdfWidth;
+            const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+            const logoWidth = 40;
+            const logoHeight = (logo.height * logoWidth) / logo.width;
+            const offset = 5 + logoHeight + 3;
+
+            let position = 0;
+            while (position < imgHeight) {
+                pdf.addImage(logo, "PNG", 10, 5, logoWidth, logoHeight);
+                pdf.addImage(imgData, "PNG", 0, offset - position, imgWidth, imgHeight);
+
+                const pageNum = pdf.internal.getNumberOfPages();
+                const today = new Date().toLocaleDateString();
+
+                pdf.setFontSize(10);
+                pdf.text(`Sida ${pageNum}`, pdfWidth - 30, pdfHeight - 10);
+                pdf.text(`DLDA – ${today}`, 10, pdfHeight - 10);
+
+                position += pdfHeight;
+                if (position < imgHeight) pdf.addPage();
+            }
+
+            pdf.save(filename);
+        } catch (err) {
+            console.error("❌ PDF-fel:", err);
+        } finally {
+            document.head.removeChild(style);
+            if (wasHidden) tableSection.style.display = "none";
+        }
+    });
+});

@@ -1,5 +1,8 @@
 ﻿@using DLDA.GUI.DTOs.Staff
 @using System.Text.Json
+@{
+    ViewData["BodyId"] = "patient-summary-page";
+}
 @model List<StaffStatistics>
 
 @{
@@ -22,14 +25,24 @@
     });
 }
 
-<a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
-    ⬅ Tillbaka till bedömningar
-</a>
+<link rel="stylesheet" href="/css/pdf.css" />
 
-<div class="container mt-5">
+<div id="pdf-content" class="container mt-0">
+
+    <!-- Navigeringsknappar och export -->
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+            ⬅ Tillbaka till bedömningar
+        </a>
+
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">
+            📄 Exportera som PDF
+        </button>
+    </div>
+
     <h2 class="mb-4">🧑 Sammanställning av patientens egna svar</h2>
 
-    <div class="d-flex flex-wrap gap-2 mb-3">
+    <div class="d-flex flex-wrap gap-2 mb-3 no-print">
         <a class="btn btn-outline-primary"
            asp-controller="StaffStatistics"
            asp-action="Comparison"
@@ -63,8 +76,9 @@
     </div>
 </div>
 
+<!-- Tabellfilter och frågetabell -->
 <hr />
-<div class="d-flex flex-wrap gap-2 my-4">
+<div class="d-flex flex-wrap gap-2 my-4 no-print">
     <button class="btn btn-outline-secondary" onclick="togglePatientAnswerTable()">
         🔍 Visa/dölj frågetabell
     </button>
@@ -114,6 +128,8 @@
     </table>
 </div>
 
+<div style="padding-bottom: 80px;"></div>
+
 @functions {
     string FormatAnswer(int? value) => value switch
     {
@@ -133,11 +149,7 @@
         document.addEventListener("DOMContentLoaded", function () {
             const labels = @Html.Raw(labelsJson);
             const data = @Html.Raw(valuesJson);
-            renderPatientAnswerSummaryPie(labels, data); // 🔁 Kör funktionen från site.js
+            renderPatientAnswerSummaryPie(labels, data);
         });
     </script>
 }
-
-<a class="btn btn-secondary mt-4" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
-    ⬅ Tillbaka till bedömningar
-</a>
