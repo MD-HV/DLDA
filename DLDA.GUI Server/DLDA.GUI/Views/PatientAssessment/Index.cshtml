@@ -14,10 +14,11 @@
     var secondDefault = completed.LastOrDefault()?.AssessmentID ?? 0;
 }
 
+<link rel="stylesheet" href="~/css/PatientAssessment.css" asp-append-version="true" />
+
 <div class="container mt-5">
     <h2 class="mb-4">Mina bedömningar</h2>
 
-    <!-- 📈 Välj två bedömningar att jämföra -->
     @if (completedCount >= 2)
     {
         <form asp-controller="PatientStatistics" asp-action="Compare" method="post" class="row g-2 mb-4 align-items-end" onsubmit="return validateDates()">
@@ -71,7 +72,7 @@
     }
     else
     {
-        <table class="table table-bordered">
+        <table class="table table-bordered table-patient">
             <thead class="table-light">
                 <tr>
                     <th>ID</th>
@@ -95,7 +96,7 @@
                             }
                             else
                             {
-                                <span class="text-warning fw-semibold">
+                                <span class="status-ongoing">
                                     Pågående – @item.AnsweredCount av @item.TotalQuestions frågor
                                 </span>
                             }
@@ -104,7 +105,7 @@
                             @if (!item.IsComplete)
                             {
                                 var action = item.HasStarted ? "Fortsätt" : "Starta";
-                                var btnClass = item.HasStarted ? "btn-warning" : "btn-primary";
+                                var btnClass = item.HasStarted ? "btn-warning btn-continue" : "btn-primary btn-start";
                                 <a class="btn btn-sm @btnClass"
                                    asp-controller="PatientQuiz"
                                    asp-action="Info"
@@ -113,7 +114,7 @@
                             else
                             {
                                 <div class="d-flex gap-2 flex-wrap">
-                                    <a class="btn btn-sm btn-info"
+                                    <a class="btn btn-sm btn-visa"
                                        asp-controller="PatientResult"
                                        asp-action="Index"
                                        asp-route-assessmentId="@item.AssessmentID">Visa</a>

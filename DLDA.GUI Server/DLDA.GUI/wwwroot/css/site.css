@@ -89,7 +89,7 @@ body.patient .navbar-nav .nav-link:hover,
 body.patient .navbar-nav .nav-link.active,
 body.patient .navbar-nav .nav-link.active:focus {
     background-color: #BDD9C4;
-    color: white !important;
+    color: #000 !important;
 }
 
 /* 🎨 Personal: Blå */
@@ -97,7 +97,7 @@ body.staff .navbar-nav .nav-link:hover,
 body.staff .navbar-nav .nav-link.active,
 body.staff .navbar-nav .nav-link.active:focus {
     background-color: #A7C7E7;
-    color: white !important;
+    color: #000 !important;
 }
 
 /* 🎨 Admin: Röd */
@@ -105,7 +105,7 @@ body.admin .navbar-nav .nav-link:hover,
 body.admin .navbar-nav .nav-link.active,
 body.admin .navbar-nav .nav-link.active:focus {
     background-color: #F5B7B1;
-    color: white !important;
+    color: #000 !important;
 }
 
 /* 🔄 Rollbaserad bakgrund för inloggningsrutan */
