@@ -118,7 +118,7 @@ public class StaffStatisticsController : Controller
     }
 
     /// <summary>
-    /// Jämför två avslutade personalbedömningar för en patient och visar förändringar över tid.
+    /// Jämför två avslutade personalbedömningar för en patient och visar förändringar över tid i personalsvar.
     /// </summary>
     [HttpPost("Compare")]
     public async Task<IActionResult> Compare(int userId, int firstId, int secondId)
@@ -137,6 +137,38 @@ public class StaffStatisticsController : Controller
         }
 
         ViewBag.UserId = userId;
-        return View("ChangeOverview", result); 
+        ViewBag.FirstId = firstId;   // 👈 För att kunna skickas vidare i vyn
+        ViewBag.SecondId = secondId;
+
+        return View("ChangeOverview", result);
+    }
+
+
+    /// <summary>
+    /// Jämför två avslutade patientbedömningar och visar förändringar i patientens egna svar över tid, från personalens vy.
+    /// </summary>
+    /// <summary>
+    /// Jämför två patientbedömningar och visar förändringar i patientens egna svar över tid (för vårdgivare).
+    /// </summary>
+    public async Task<IActionResult> ComparePatientAnswersForStaff(int userId, int firstId, int secondId)
+    {
+        if (firstId == secondId)
+        {
+            TempData["Error"] = "Du måste välja två olika bedömningar att jämföra.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
+
+        var result = await _service.ComparePatientAnswersForStaffAsync(firstId, secondId);
+        if (result == null)
+        {
+            TempData["Error"] = "Kunde inte hämta förändringar i patientens svar över tid.";
+            return RedirectToAction("Assessments", "StaffAssessment", new { userId });
+        }
+
+        ViewBag.UserId = userId;
+        ViewBag.FirstId = firstId;
+        ViewBag.SecondId = secondId;
+
+        return View("PatientChangeOverviewForStaff", result);
     }
 }

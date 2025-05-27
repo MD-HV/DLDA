@@ -1,0 +1,72 @@
+﻿/* Grupp för personalens svarsalternativ */
+.staff-answer label {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background-color: #fff;
+    color: #000;
+}
+
+/* När ett alternativ är valt – blå stil */
+.staff-answer input[type="radio"]:checked + label {
+    border-color: #0d6efd;
+    background-color: #e7f0ff;
+    color: #0d6efd;
+    font-weight: 600;
+}
+
+    /* Förstärk texten inuti markerat alternativ */
+    .staff-answer input[type="radio"]:checked + label span {
+        color: #0d6efd;
+    }
+/* Markerad svarsruta (personal) – blå */
+input[type="radio"]:checked + label.btn.btn-outline-secondary {
+    background-color: #e7f0fd; /* Ljusblå bakgrund */
+    border: 2px solid #0d6efd; /* Bootstrap primary blue */
+    color: #0d6efd; /* Blå text */
+    font-weight: 600;
+}
+
+    /* Bilden i markerad ruta – skalas något för tydlighet */
+    input[type="radio"]:checked + label.btn.btn-outline-secondary img {
+        transform: scale(1.05);
+    }
+
+/* Grundstil för knapprad */
+.btn-check + label.btn {
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    color: #212529;
+    transition: all 0.2s ease-in-out;
+}
+
+/* När markerad (blå) */
+.btn-check:checked + label.btn {
+    background-color: #e7f0fd; /* Ljusblå bakgrund */
+    border: 2px solid #0d6efd; /* Bootstrap blå */
+    color: #0d6efd; /* Textfärg */
+    font-weight: 600;
+}
+
+    /* Bilden i markerat svar förstärks */
+    .btn-check:checked + label.btn img {
+        transform: scale(1.05);
+    }
+
+    /* Text inuti knappen får blå färg */
+    .btn-check:checked + label.btn span {
+        color: #0d6efd;
+    }
+
+
+/* Texten (span) i markerad ruta blir mörkblå */
+.btn-check:checked + label.btn-outline-secondary span {
+    color: #0d6efd;
+}
+
+/* Bilden förstärks lite */
+.btn-check:checked + label.btn-outline-secondary img {
+    transform: scale(1.05);
+}

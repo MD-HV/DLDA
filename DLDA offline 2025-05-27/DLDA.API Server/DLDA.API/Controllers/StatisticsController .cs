@@ -336,5 +336,79 @@ namespace DLDA.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Jämför två patientbedömningar och returnerar förändringar i patientens egna svar över tid (för vårdgivaren).
+        /// </summary>
+        [HttpGet("compare-patient-answers-for-staff/{firstId}/{secondId}")]
+        public ActionResult<PatientChangeOverviewForStaffDto> ComparePatientAnswersForStaff(int firstId, int secondId)
+        {
+            var a1 = _context.Assessments
+                .Include(a => a.User)
+                .Include(a => a.AssessmentItems)
+                .ThenInclude(i => i.Question)
+                .FirstOrDefault(a => a.AssessmentID == firstId);
+
+            var a2 = _context.Assessments
+                .Include(a => a.User)
+                .Include(a => a.AssessmentItems)
+                .ThenInclude(i => i.Question)
+                .FirstOrDefault(a => a.AssessmentID == secondId);
+
+            if (a1 == null || a2 == null)
+                return NotFound("En eller båda bedömningarna kunde inte hittas.");
+
+            if (a1.AssessmentItems.All(i => !i.PatientAnswer.HasValue) ||
+                a2.AssessmentItems.All(i => !i.PatientAnswer.HasValue))
+            {
+                return BadRequest("En eller båda bedömningarna saknar patientens svar.");
+            }
+
+            var förbättringar = new List<ImprovementDto>();
+            var försämringar = new List<ImprovementDto>();
+            var hoppade = new List<ImprovementDto>();
+
+            foreach (var item1 in a1.AssessmentItems)
+            {
+                var item2 = a2.AssessmentItems.FirstOrDefault(i => i.QuestionID == item1.QuestionID);
+                if (item2 == null || item1.Question == null) continue;
+
+                var prev = item1.PatientAnswer;
+                var curr = item2.PatientAnswer;
+
+                var dto = new ImprovementDto
+                {
+                    QuestionId = item1.QuestionID,
+                    Question = item1.Question?.QuestionText ?? "[Okänd fråga]",
+                    Category = item1.Question?.Category ?? "[Okänd kategori]",
+                    Previous = prev ?? -1,
+                    Current = curr ?? -1,
+                    SkippedPrevious = !prev.HasValue,
+                    SkippedCurrent = !curr.HasValue
+                };
+
+                if (!prev.HasValue || !curr.HasValue)
+                {
+                    hoppade.Add(dto);
+                }
+                else if (curr < prev)
+                {
+                    förbättringar.Add(dto);
+                }
+                else if (curr > prev)
+                {
+                    försämringar.Add(dto);
+                }
+            }
+
+            return Ok(new PatientChangeOverviewForStaffDto
+            {
+                Username = a1.User?.Username ?? "Okänd",
+                PreviousDate = a1.CreatedAt ?? DateTime.MinValue,
+                CurrentDate = a2.CreatedAt ?? DateTime.MinValue,
+                Förbättringar = förbättringar,
+                Försämringar = försämringar,
+                Hoppade = hoppade
+            });
+        }
     }
 }

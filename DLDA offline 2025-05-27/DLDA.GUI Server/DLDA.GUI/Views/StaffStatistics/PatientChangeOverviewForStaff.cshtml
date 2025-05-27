@@ -1,37 +1,44 @@
-﻿@model StaffChangeOverviewDto
-@{
-    ViewData["BodyId"] = "staff-change-page";
-}
-@using System.Text.Json
-@using DLDA.GUI.DTOs.Staff
+﻿@using DLDA.GUI.DTOs.Staff
+@model PatientChangeOverviewForStaffDto
 
 @{
-    ViewData["Title"] = "Förändringar över tid (personal)";
+    ViewData["Title"] = "Förändringar över tid (patientens svar)";
+    ViewData["BodyId"] = "staff-patient-change-page";
 
     var förbättringar = Model.Förbättringar;
     var försämringar = Model.Försämringar;
-    var flaggade = Model.Flaggade;
     var hoppade = Model.Hoppade;
 
-    var förbättradeKategorier = förbättringar.Where(f => !string.IsNullOrWhiteSpace(f.Category)).Select(f => f.Category.Trim()).Distinct().OrderBy(k => k).ToList();
-    var försämradeKategorier = försämringar.Where(f => !string.IsNullOrWhiteSpace(f.Category)).Select(f => f.Category.Trim()).Distinct().OrderBy(k => k).ToList();
+    var förbättradeKategorier = förbättringar
+        .Where(f => !string.IsNullOrWhiteSpace(f.Category))
+        .Select(f => f.Category!.Trim())
+        .Distinct()
+        .OrderBy(k => k)
+        .ToList();
+
+    var försämradeKategorier = försämringar
+        .Where(f => !string.IsNullOrWhiteSpace(f.Category))
+        .Select(f => f.Category!.Trim())
+        .Distinct()
+        .OrderBy(k => k)
+        .ToList();
 
     var allLabels = förbättringar.Concat(försämringar).Select(f => f.Question).ToList();
     var previousData = förbättringar.Concat(försämringar).Select(f => f.Previous).ToList();
     var currentData = förbättringar.Concat(försämringar).Select(f => f.Current).ToList();
 
-    var labelsJson = JsonSerializer.Serialize(allLabels);
-    var previousJson = JsonSerializer.Serialize(previousData);
-    var currentJson = JsonSerializer.Serialize(currentData);
+    var labelsJson = System.Text.Json.JsonSerializer.Serialize(allLabels);
+    var previousJson = System.Text.Json.JsonSerializer.Serialize(previousData);
+    var currentJson = System.Text.Json.JsonSerializer.Serialize(currentData);
 
-    string FormatScore(int score) => score switch
+    string FormatScore(int val) => val switch
     {
         0 => "Inget problem",
         1 => "Litet problem",
         2 => "Måttligt problem",
         3 => "Stort problem",
         4 => "Mycket stort problem",
-        _ => score.ToString()
+        _ => "Okänt"
     };
 
     string FormatChange(int prev, int curr) => curr < prev ? "✅ Förbättring" : curr > prev ? "❗ Försämring" : "Oförändrat";
@@ -49,9 +56,9 @@
         </button>
     </div>
 
-    <h2 class="mb-3">📈 Förändringar över tid </h2>
-    <div class="alert alert-info">
-        Du tittar just nu på <strong>vårdgivarens svar</strong> över tid.
+    <h2 class="mb-3">📈 Förändringar över tid</h2>
+    <div class="alert alert-success">
+        Du tittar just nu på <strong>patientens egna svar</strong> över tid.
     </div>
     <p>
         👤 <strong>Patient:</strong> @Model.Username<br />
@@ -69,18 +76,14 @@
                 <li><a class="dropdown-item" href="#" onclick="filterData('deterioration')">Försämringar</a></li>
             </ul>
         </div>
-        <!-- 📈 Ny knapp: Växla till patientens förändringar -->
-        <form asp-controller="StaffStatistics"
-              asp-action="ComparePatientAnswersForStaff"
-              method="post" class="d-inline">
+        <form asp-controller="StaffStatistics" asp-action="Compare" method="post" class="d-inline">
             <input type="hidden" name="userId" value="@ViewBag.UserId" />
             <input type="hidden" name="firstId" value="@ViewBag.FirstId" />
             <input type="hidden" name="secondId" value="@ViewBag.SecondId" />
             <button class="btn btn-outline-primary">
-                📈 Visa förändringar i patientens svar
+                🔄 Visa förändringar i personalens svar
             </button>
         </form>
-
     </div>
 
     <div class="row">
@@ -107,7 +110,6 @@
                     <ul class="list-unstyled">
                         <li><strong>@förbättringar.Count</strong> frågor visade förbättring.</li>
                         <li><strong>@försämringar.Count</strong> frågor visade försämring.</li>
-                        <li><strong>@flaggade.Count</strong> aktuella flaggor.</li>
                         <li><strong>@hoppade.Count</strong> obesvarade frågor.</li>
                     </ul>
 
@@ -146,37 +148,44 @@
     <div id="detailsSection" style="display: none;" class="mt-3">
         <div class="card shadow-sm">
             <div class="card-body">
-                <table class="table table-hover">
-                    <thead class="table-light">
-                        <tr>
-                            <th>#</th>
-                            <th>Fråga</th>
-                            <th>Kategori</th>
-                            <th>Tidigare</th>
-                            <th>Nuvarande</th>
-                            <th>Förändring</th>
-                            <th>Flagga</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var f in förbättringar.Concat(försämringar))
-                        {
-                            var rowClass = f.Current < f.Previous ? "table-success" : f.Current > f.Previous ? "table-danger" : "";
-                            <tr class="@rowClass">
-                                <td>@f.QuestionId</td>
-                                <td>@f.Question</td>
-                                <td>@f.Category</td>
-                                <td>@(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))<br /><small class="text-muted">(@f.Previous)</small></td>
-                                <td>@(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))<br /><small class="text-muted">(@f.Current)</small></td>
-                                <td>@FormatChange(f.Previous, f.Current)</td>
-                                <td>@(flaggade.Any(x => x.QuestionId == f.QuestionId) ? "🚩" : "")</td>
+                @if (!förbättringar.Any() && !försämringar.Any())
+                {
+                    <div class="alert alert-warning">⚠ Inga förändringar att visa.</div>
+                }
+                else
+                {
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Fråga</th>
+                                <th>Kategori</th>
+                                <th>Tidigare</th>
+                                <th>Nuvarande</th>
+                                <th>Förändring</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in förbättringar.Concat(försämringar))
+                            {
+                                var rowClass = f.Current < f.Previous ? "table-success" : f.Current > f.Previous ? "table-danger" : "";
+                                <tr class="@rowClass">
+                                    <td>@f.QuestionId</td>
+                                    <td>@f.Question</td>
+                                    <td>@f.Category</td>
+                                    <td>@(f.SkippedPrevious ? "Hoppad över" : FormatScore(f.Previous))<br /><small class="text-muted">(@f.Previous)</small></td>
+                                    <td>@(f.SkippedCurrent ? "Hoppad över" : FormatScore(f.Current))<br /><small class="text-muted">(@f.Current)</small></td>
+                                    <td>@FormatChange(f.Previous, f.Current)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
             </div>
         </div>
     </div>
+
+    <div style="padding-bottom: 80px;"></div>
 
     <a class="btn btn-secondary mt-4 no-print" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
         ⬅ Tillbaka till bedömningar
@@ -190,4 +199,5 @@
         const rawPrevious = @Html.Raw(previousJson);
         const rawCurrent = @Html.Raw(currentJson);
     </script>
+    <script src="/js/site.js" asp-append-version="true"></script>
 }

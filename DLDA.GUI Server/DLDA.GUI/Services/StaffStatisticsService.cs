@@ -1,5 +1,6 @@
 ﻿using DLDA.GUI.DTOs.Assessment;
 using DLDA.GUI.DTOs.Staff;
+using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -114,7 +115,7 @@ namespace DLDA.GUI.Services
         }
 
         /// <summary>
-        /// Jämför två valda avslutade personalbedömningar för en patient.
+        /// Jämför två valda avslutade personalbedömningar för en patient i vårdgivarens svar.
         /// </summary>
         public async Task<StaffChangeOverviewDto?> CompareAssessmentsAsync(int firstId, int secondId)
         {
@@ -134,6 +135,33 @@ namespace DLDA.GUI.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Fel vid CompareAssessmentsAsync({FirstId}, {SecondId})", firstId, secondId);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Jämför två patientbedömningar och returnerar förändringar i patientens egna svar över tid.
+        /// </summary>
+        public async Task<PatientChangeOverviewForStaffDto?> ComparePatientAnswersForStaffAsync(int firstId, int secondId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"statistics/compare-patient-answers-for-staff/{firstId}/{secondId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Misslyckades att hämta jämförelse av patientens svar: {StatusCode}", response.StatusCode);
+                    return null;
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<PatientChangeOverviewForStaffDto>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fel vid ComparePatientAnswersForStaffAsync({FirstId}, {SecondId})", firstId, secondId);
                 return null;
             }
         }

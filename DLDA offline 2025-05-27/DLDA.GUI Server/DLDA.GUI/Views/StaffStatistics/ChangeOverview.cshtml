@@ -49,7 +49,10 @@
         </button>
     </div>
 
-    <h2 class="mb-3">📈 Förändringar över tid (personal)</h2>
+    <h2 class="mb-3">📈 Förändringar över tid </h2>
+    <div class="alert alert-info">
+        Du tittar just nu på <strong>vårdgivarens svar</strong> över tid.
+    </div>
     <p>
         👤 <strong>Patient:</strong> @Model.Username<br />
         📅 <strong>@Model.PreviousDate.ToString("yyyy-MM-dd")</strong> och <strong>@Model.CurrentDate.ToString("yyyy-MM-dd")</strong>
@@ -66,6 +69,18 @@
                 <li><a class="dropdown-item" href="#" onclick="filterData('deterioration')">Försämringar</a></li>
             </ul>
         </div>
+        <!-- 📈 Ny knapp: Växla till patientens förändringar -->
+        <form asp-controller="StaffStatistics"
+              asp-action="ComparePatientAnswersForStaff"
+              method="post" class="d-inline">
+            <input type="hidden" name="userId" value="@ViewBag.UserId" />
+            <input type="hidden" name="firstId" value="@ViewBag.FirstId" />
+            <input type="hidden" name="secondId" value="@ViewBag.SecondId" />
+            <button class="btn btn-outline-primary">
+                📈 Visa förändringar i patientens svar
+            </button>
+        </form>
+
     </div>
 
     <div class="row">
