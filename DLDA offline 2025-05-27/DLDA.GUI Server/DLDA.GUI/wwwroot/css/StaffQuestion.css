@@ -1,0 +1,19 @@
+﻿@media (max-width: 768px) {
+    .only-desktop {
+        display: none !important;
+    }
+
+    .only-mobile {
+        display: block !important;
+    }
+}
+
+@media (min-width: 769px) {
+    .only-desktop {
+        display: block !important;
+    }
+
+    .only-mobile {
+        display: none !important;
+    }
+}

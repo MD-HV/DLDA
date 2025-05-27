@@ -1,0 +1,155 @@
+﻿@using DLDA.GUI.DTOs.Staff
+@using System.Text.Json
+@{
+    ViewData["BodyId"] = "patient-summary-page";
+}
+@model List<StaffStatistics>
+
+@{
+    ViewData["Title"] = "Patientens svarssammanställning";
+
+    var svar_0 = Model.Count(m => m.PatientAnswer == 0);
+    var svar_1 = Model.Count(m => m.PatientAnswer == 1);
+    var svar_2 = Model.Count(m => m.PatientAnswer == 2);
+    var svar_3 = Model.Count(m => m.PatientAnswer == 3);
+    var svar_4 = Model.Count(m => m.PatientAnswer == 4);
+    var svar_Null = Model.Count(m => m.PatientAnswer == null);
+
+    var labelsJson = JsonSerializer.Serialize(new[] {
+        "Inget problem (0)", "Litet problem (1)", "Måttligt problem (2)",
+        "Stort problem (3)", "Mycket stort problem (4)", "Hoppad över"
+    });
+
+    var valuesJson = JsonSerializer.Serialize(new[] {
+        svar_0, svar_1, svar_2, svar_3, svar_4, svar_Null
+    });
+}
+
+<link rel="stylesheet" href="/DLDA.GUI/css/pdf.css" />
+
+<div id="pdf-content" class="container mt-0">
+
+    <!-- Navigeringsknappar och export -->
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+            ⬅ Tillbaka till bedömningar
+        </a>
+
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">
+            📄 Exportera som PDF
+        </button>
+    </div>
+
+    <h2 class="mb-4">🧑 Sammanställning av patientens egna svar</h2>
+
+    <div class="d-flex flex-wrap gap-2 mb-3 no-print">
+        <a class="btn btn-outline-primary"
+           asp-controller="StaffStatistics"
+           asp-action="Comparison"
+           asp-route-assessmentId="@ViewBag.AssessmentId">
+            📊 Tillbaka till jämförelse
+        </a>
+    </div>
+
+    <p>
+        <strong>👤 Patient:</strong> @ViewBag.PatientName <br />
+        <strong>🗓️ Bedömningsdatum:</strong> @ViewBag.AssessmentDate?.ToString("yyyy-MM-dd")
+    </p>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <canvas id="patientAnswerPie" style="max-height: 500px;"></canvas>
+        </div>
+        <div class="col-md-6">
+            <div class="alert alert-info">
+                Här ser du hur patienten själv har skattat sin vardag i denna bedömning.
+            </div>
+            <ul class="list-unstyled">
+                <li>🟢 Inget problem (0): <strong>@svar_0</strong></li>
+                <li>🟢 Litet problem (1): <strong>@svar_1</strong></li>
+                <li>🟡 Måttligt problem (2): <strong>@svar_2</strong></li>
+                <li>🟠 Stort problem (3): <strong>@svar_3</strong></li>
+                <li>🔴 Mycket stort problem (4): <strong>@svar_4</strong></li>
+                <li>⚪ Hoppad över: <strong>@svar_Null</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Tabellfilter och frågetabell -->
+<hr />
+<div class="d-flex flex-wrap gap-2 my-4 no-print">
+    <button class="btn btn-outline-secondary" onclick="togglePatientAnswerTable()">
+        🔍 Visa/dölj frågetabell
+    </button>
+
+    <select class="form-select w-auto" id="patientAnswerFilter" onchange="applyPatientAnswerFilter()">
+        <option value="all">Visa alla</option>
+        <option value="0">Inget problem (0)</option>
+        <option value="1">Litet problem (1)</option>
+        <option value="2">Måttligt problem (2)</option>
+        <option value="3">Stort problem (3)</option>
+        <option value="4">Mycket stort problem (4)</option>
+        <option value="null">Hoppad över</option>
+    </select>
+</div>
+
+<div id="patientAnswerTableSection" style="display: none;">
+    <table class="table table-bordered table-hover" id="patientAnswerTable">
+        <thead class="table-light">
+            <tr>
+                <th>Nr</th>
+                <th>Fråga</th>
+                <th>Kategori</th>
+                <th>🧑 Patientens svar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Model)
+            {
+                var svar = row.PatientAnswer?.ToString() ?? "null";
+                var rowClass = row.PatientAnswer switch
+                {
+                    0 => "table-success",
+                    1 => "table-success",
+                    2 => "table-warning",
+                    3 => "table-orange",
+                    4 => "table-danger",
+                    _ => "table-secondary"
+                };
+                <tr class="@rowClass" data-svar="@svar">
+                    <td>@row.QuestionNumber</td>
+                    <td>@row.QuestionText</td>
+                    <td>@row.Category</td>
+                    <td>@Html.Raw(FormatAnswer(row.PatientAnswer))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div style="padding-bottom: 80px;"></div>
+
+@functions {
+    string FormatAnswer(int? value) => value switch
+    {
+        0 => "Inget problem (0)",
+        1 => "Litet problem (1)",
+        2 => "Måttligt problem (2)",
+        3 => "Stort problem (3)",
+        4 => "Mycket stort problem (4)",
+        _ => "Ej besvarad"
+    };
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const labels = @Html.Raw(labelsJson);
+            const data = @Html.Raw(valuesJson);
+            renderPatientAnswerSummaryPie(labels, data);
+        });
+    </script>
+}

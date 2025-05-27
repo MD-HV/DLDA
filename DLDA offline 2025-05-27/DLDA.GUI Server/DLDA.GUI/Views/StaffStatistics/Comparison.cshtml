@@ -1,0 +1,200 @@
+﻿@model List<StaffStatistics>
+@{
+    ViewData["BodyId"] = "comparison-page";
+}
+@using System.Text.Json
+@using DLDA.GUI.DTOs.Staff
+
+@{
+    ViewData["Title"] = "Jämförelse av skattningar";
+
+    var match = Model.Where(m => m.Classification == "match").ToList();
+    var mild = Model.Where(m => m.Classification == "mild-diff").ToList();
+    var strong = Model.Where(m => m.Classification == "strong-diff").ToList();
+    var skipped = Model.Where(m => m.Classification == "skipped" || m.Classification == "staff-skipped" || m.SkippedByPatient).ToList();
+    var flagged = Model.Where(m => m.IsFlagged).ToList();
+    var commented = Model.Where(m => !string.IsNullOrWhiteSpace(m.PatientComment) || !string.IsNullOrWhiteSpace(m.StaffComment)).ToList();
+
+    var labelsJson = JsonSerializer.Serialize(new[] { "❗ Stor skillnad", "⚠ Mindre skillnad", "✅ Match", "🚩 Obesvarad" });
+    var valuesJson = JsonSerializer.Serialize(new[] { strong.Count, mild.Count, match.Count, skipped.Count });
+
+    var topMatchCategories = match
+        .Where(m => !string.IsNullOrWhiteSpace(m.Category))
+        .GroupBy(m => m.Category.Trim())
+        .Select(g => new { Category = g.Key, Count = g.Count() })
+        .OrderByDescending(g => g.Count)
+        .Take(5)
+        .ToList();
+
+    var topStrongCategories = strong
+        .Where(m => !string.IsNullOrWhiteSpace(m.Category))
+        .GroupBy(m => m.Category.Trim())
+        .Select(g => new { Category = g.Key, Count = g.Count() })
+        .OrderByDescending(g => g.Count)
+        .Take(5)
+        .ToList();
+}
+
+<link rel="stylesheet" href="/DLDA.GUI/css/pdf.css" />
+
+<div id="pdf-content" class="container mt-2">
+
+    <!-- 🧭 Översta navigering -->
+    <div class="d-flex justify-content-between align-items-start mb-3 no-print">
+        <a class="btn btn-secondary mt-2" asp-controller="StaffAssessment" asp-action="Assessments" asp-route-userId="@ViewBag.UserId">
+            ⬅ Tillbaka till bedömningar
+        </a>
+
+        <button class="btn btn-outline-dark mt-2" id="downloadPdfBtn">
+            📄 Exportera som PDF
+        </button>
+    </div>
+
+    <h2 class="mb-4">📊 Jämförelse av skattningar mellan patient och personal</h2>
+
+    <div class="d-flex flex-wrap gap-2 mb-3 no-print">
+        <a class="btn btn-outline-primary"
+           asp-controller="StaffStatistics"
+           asp-action="PatientAnswerSummary"
+           asp-route-assessmentId="@ViewBag.AssessmentId">
+            Visa patientens svar
+        </a>
+    </div>
+
+    <p>
+        <strong>👤 Patient:</strong> @ViewBag.PatientName <br />
+        <strong>🗓️ Bedömningsdatum:</strong> @ViewBag.AssessmentDate?.ToString("yyyy-MM-dd")
+    </p>
+
+    <!-- 🟣 Pie + kategorier -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <canvas id="comparisonPie" style="max-height: 500px;"></canvas>
+        </div>
+        <div class="col-md-6">
+            <div class="alert alert-warning">
+                Det finns <strong>@strong.Count</strong> frågor med större skillnader i skattning mellan patient och personal.
+            </div>
+
+            <div class="card border-success mb-3">
+                <div class="card-header bg-success text-white">✅ Kategorier med mest överensstämmelse</div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @foreach (var cat in topMatchCategories)
+                        {
+                            <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">❗ Kategorier med störst skillnader</div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        @foreach (var cat in topStrongCategories)
+                        {
+                            <li><strong>@cat.Category</strong>: @cat.Count frågor</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+
+            <ul class="list-unstyled mt-4">
+                <li>✅ Match: <strong>@match.Count</strong></li>
+                <li>⚠ Mindre skillnader: <strong>@mild.Count</strong></li>
+                <li>❗ Större skillnader: <strong>@strong.Count</strong></li>
+                <li>🚩 Hoppade frågor: <strong>@skipped.Count</strong></li>
+                <li>🚩 Flaggade frågor: <strong>@flagged.Count</strong></li>
+                <li>💬 Kommentarer (patient/personal): <strong>@commented.Count</strong></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 🔍 Filter och tabell -->
+    <div class="mb-3 d-flex flex-wrap gap-2 no-print">
+        <button class="btn btn-outline-secondary" onclick="toggleComparisonTable()">🔍 Visa/dölj frågetabell</button>
+        <select class="form-select w-auto" onchange="applyComparisonFilters()" id="filterSelector">
+            <option value="all">Visa alla</option>
+            <option value="match">✅ Match</option>
+            <option value="mild-diff">⚠ Mindre skillnad</option>
+            <option value="strong-diff">❗ Större skillnad</option>
+            <option value="skipped">🚩 Hoppade frågor</option>
+            <option value="flagged">🚩 Flaggade</option>
+            <option value="commented">💬 Kommentarer</option>
+        </select>
+    </div>
+
+    <div id="questionTableSection" style="display:none;">
+        <table class="table table-bordered table-hover" id="comparisonTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Nr</th>
+                    <th>Fråga</th>
+                    <th>Kategori</th>
+                    <th>🧑 Patient</th>
+                    <th>👩‍⚕️ Personal</th>
+                    <th>Kommentarer</th>
+                    <th>Flagga</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model)
+                {
+                    var rowClass = row.Classification switch
+                    {
+                        "strong-diff" => "table-danger",
+                        "mild-diff" => "table-warning",
+                        "match" => "table-success",
+                        _ => "table-secondary"
+                    };
+
+                    <tr class="@rowClass"
+                        data-type="@row.Classification"
+                        data-flagged="@row.IsFlagged.ToString().ToLower()"
+                        data-commented="@( (!string.IsNullOrWhiteSpace(row.PatientComment) || !string.IsNullOrWhiteSpace(row.StaffComment)).ToString().ToLower() )">
+                        <td>@row.QuestionNumber</td>
+                        <td>@row.QuestionText</td>
+                        <td>@row.Category</td>
+                        <td>@Html.Raw(FormatAnswer(row.PatientAnswer))</td>
+                        <td>@Html.Raw(FormatAnswer(row.StaffAnswer))</td>
+                        <td>
+                            <strong>Patient:</strong> @(string.IsNullOrWhiteSpace(row.PatientComment) ? "-" : row.PatientComment)<br />
+                            <strong>Personal:</strong> @(string.IsNullOrWhiteSpace(row.StaffComment) ? "-" : row.StaffComment)
+                        </td>
+                        <td>@(row.IsFlagged ? "🚩" : "")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div style="padding-bottom: 80px;"></div>
+</div>
+
+@functions {
+    string FormatAnswer(int? value)
+    {
+        return value switch
+        {
+            0 => "Inget problem<br /><small class=\"text-muted\">(0)</small>",
+            1 => "Litet problem<br /><small class=\"text-muted\">(1)</small>",
+            2 => "Måttligt problem<br /><small class=\"text-muted\">(2)</small>",
+            3 => "Stort problem<br /><small class=\"text-muted\">(3)</small>",
+            4 => "Mycket stort problem<br /><small class=\"text-muted\">(4)</small>",
+            _ => "-"
+        };
+    }
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const labels = @Html.Raw(labelsJson);
+            const values = @Html.Raw(valuesJson);
+            renderStaffComparisonPie(labels, values);
+        });
+    </script>
+}

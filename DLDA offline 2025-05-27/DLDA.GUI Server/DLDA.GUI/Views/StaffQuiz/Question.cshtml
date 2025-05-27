@@ -1,0 +1,18 @@
+﻿@using DLDA.GUI.DTOs.Staff
+@model StaffQuestionDto
+
+@{
+    ViewData["Title"] = "Fråga (personal)";
+}
+
+<link rel="stylesheet" href="~/css/StaffQuestion.css" />
+
+<div class="container mt-4">
+    <div class="only-desktop">
+        @await Html.PartialAsync("_DesktopStaffQuestion", Model)
+    </div>
+
+    <div class="only-mobile">
+        @await Html.PartialAsync("_MobileStaffQuestion", Model)
+    </div>
+</div>

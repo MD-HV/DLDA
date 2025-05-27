@@ -1,0 +1,122 @@
+﻿@model DLDA.GUI.DTOs.Question.Question
+
+@{
+    var assessmentId = ViewBag.AssessmentId as int? ?? 0;
+    var scaleType = (Model.ScaleType ?? "Numerisk").ToLower();
+    var prefix = scaleType == "smiley" ? "Smiley" : "Number";
+    var current = Model.Order + 1;
+    var total = ViewBag.TotalQuestions as int? ?? 0;
+    var progressPercent = total > 0 ? (int)((double)current / total * 100) : 0;
+
+    string GetLabel(int value) => value switch
+    {
+        0 => "Inget problem",
+        1 => "Litet problem",
+        2 => "Måttligt problem",
+        3 => "Stort problem",
+        4 => "Mycket stort problem",
+        _ => ""
+    };
+}
+
+<div class="container px-3 mt-3 text-center">
+
+    <!-- Progressbar -->
+    <div class="mb-3">
+        <small class="text-muted">Fråga @current av @total</small>
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar bg-primary" style="width: @progressPercent%;"></div>
+        </div>
+    </div>
+
+    <!-- Frågetext + introduktion -->
+    <div class="rounded bg-light p-3 border border-2 border-primary mb-3 text-start">
+        <small class="text-muted">Fråga @current</small>
+        <p class="fw-semibold mt-2 mb-1">Hur bedömer du din:</p>
+        <h5 class="fw-bold text-primary">@Model.QuestionText</h5>
+    </div>
+
+    <!-- Svarsalternativ -->
+    <form asp-action="SubmitAnswer" method="post">
+        <input type="hidden" name="itemId" value="@Model.AssessmentItemID" />
+        <input type="hidden" name="assessmentId" value="@assessmentId" />
+
+        <div class="d-grid gap-2 mb-3">
+            @for (int i = 0; i <= 4; i++)
+            {
+                var inputId = $"mobile-a{i}";
+                var imagePath = Url.Content($"~/Images/{prefix} {i}.png");
+
+                <div>
+                    <input class="btn-check" type="radio" name="answer" id="@inputId" value="@i"
+                           @(Model.PatientAnswer == i ? "checked" : "") required />
+                    <label class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-start py-2 px-3"
+                           for="@inputId" style="min-height: 60px;">
+                        <img src="@imagePath" alt="@prefix @i" width="40" class="me-3" />
+                        <span class="fw-semibold">@GetLabel(i)</span>
+                    </label>
+                </div>
+            }
+        </div>
+
+        <!-- Nästa-knapp -->
+        <div class="d-grid mb-4">
+            <button type="submit" class="btn btn-primary btn-lg">Nästa</button>
+        </div>
+
+        <!-- Kommentar -->
+        <div class="mb-3">
+            <textarea class="form-control" name="comment" rows="2" placeholder="Kommentar (frivilligt)">@Model.PatientComment</textarea>
+        </div>
+
+        <!-- Informationsknapp med kollapsbar text -->
+        <div class="mb-3 text-start">
+            <button class="btn btn-outline-info w-100" type="button" data-bs-toggle="collapse" data-bs-target="#patientInfo">
+                ℹ️ Visa information om frågorna
+            </button>
+
+            <div class="collapse mt-2" id="patientInfo">
+                <div class="alert alert-info text-start mb-0">
+                    <strong>ℹ️ Information:</strong> Frågorna handlar om din vardag. När du svarat kommer personalen att kunna prata med dig om hur stödet kan planeras på bästa sätt.<br />
+                    Känn dig fri att hoppa över frågor som känns svåra att svara på.<br />
+                    <em>Tänk på hur det varit den senaste veckan.</em>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Knapprad -->
+    <div class="container">
+
+        <!-- Höger sida: Föregående + Hoppa över -->
+        <div class="row mb-3 justify-content-end text-end">
+            <div class="col-12 col-sm-6">
+                <form asp-action="Previous" method="post">
+                    <input type="hidden" name="assessmentId" value="@assessmentId" />
+                    <input type="hidden" name="currentOrder" value="@Model.Order" />
+                    <button type="submit" class="btn btn-outline-secondary w-100 mb-2">⬅ Föregående</button>
+                </form>
+
+                <form asp-action="SkipQuestion" method="post">
+                    <input type="hidden" name="itemId" value="@Model.AssessmentItemID" />
+                    <input type="hidden" name="assessmentId" value="@assessmentId" />
+                    <button type="submit" class="btn btn-outline-secondary w-100">⏭ Hoppa över</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vänster sida: Pausa + Skattningsskala -->
+        <div class="row text-start">
+            <div class="col-12 col-sm-6">
+                <form asp-action="Pause" method="post">
+                    <input type="hidden" name="assessmentId" value="@assessmentId" />
+                    <button type="submit" class="btn btn-outline-warning w-100 mb-2">⏸ Pausa</button>
+                </form>
+
+                <form asp-action="ScaleSelect" asp-route-id="@assessmentId" method="get">
+                    <button type="submit" class="btn btn-outline-info w-100">🔁 Byt skattningsskala</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

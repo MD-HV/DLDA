@@ -1,0 +1,65 @@
+﻿/* Göm alla element markerade med .no-print */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Grundstil för bättre utskriftslayout */
+body {
+    font-family: "Arial", sans-serif;
+    font-size: 12pt;
+    color: #000;
+    background-color: white;
+}
+
+
+
+h2 {
+    font-size: 18pt;
+    margin-bottom: 20px;
+}
+
+.alert-info {
+    border: 1px solid #cce5ff;
+    background-color: #e9f7fe;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+    .table th,
+    .table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: left;
+    }
+
+.table-success {
+    background-color: #d4edda;
+}
+
+.table-warning {
+    background-color: #fff3cd;
+}
+
+.table-danger {
+    background-color: #f8d7da;
+}
+
+.table-orange {
+    background-color: #ffe0b2;
+}
+
+.table-secondary {
+    background-color: #e2e3e5;
+}
+
+tr {
+    page-break-inside: avoid;
+}

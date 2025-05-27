@@ -1,0 +1,23 @@
+﻿@using DLDA.GUI.DTOs.Question
+@model Question
+
+
+@{
+    ViewData["Title"] = "Fråga";
+    var assessmentId = ViewBag.AssessmentId as int? ?? 0;
+}
+
+<!-- Länka till din css -->
+<link rel="stylesheet" href="~/css/Question.css" />
+
+<div class="container mt-5">
+    <!-- Desktopvy -->
+    <div class="only-desktop">
+        @await Html.PartialAsync("_DesktopQuestion", Model)
+    </div>
+
+    <!-- Mobilvy -->
+    <div class="only-mobile">
+        @await Html.PartialAsync("_MobileQuestion", Model)
+    </div>
+</div>
