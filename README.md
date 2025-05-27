@@ -17,3 +17,5 @@ Detta projekt ska endast ge en prototyp som visar vad en digital version av det 
 **PPB302 Grupp DLDA:** _André, Filip, Jesper, Julia, Merhawit, Mikael, Victor_
 
 ## To do list
+
+1. Fixa så att man kan välja förändring över till till patientes svar samt personalens svar för vårdgivaren. och att det tydligt framgår vems svar det visas i vyn

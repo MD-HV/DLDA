@@ -20,6 +20,8 @@
     }
 }
 
+<link rel="stylesheet" href="~/css/StaffQuestion.css" asp-append-version="true" />
+
 <div class="container mt-5">
     <partial name="_AlertPartial" />
     <div class="d-flex justify-content-end">
@@ -125,7 +127,7 @@
         <form asp-action="Pause" method="post">
             <input type="hidden" name="assessmentId" value="@Model.AssessmentID" />
             <input type="hidden" name="userId" value="@Model.UserID" />
-            <button type="submit" class="btn btn-outline-warning">⏸ Pausa</button>
+            <button type="submit" class="btn btn-pause">⏸ Pausa</button>
         </form>
     </div>
 </div>

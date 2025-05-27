@@ -19,6 +19,8 @@
     };
 }
 
+<link rel="stylesheet" href="~/css/PatientQuestion.Mobile.css" asp-append-version="true" />
+
 <div class="container px-3 mt-3 text-center">
 
     <!-- Progressbar -->
@@ -33,7 +35,7 @@
     <div class="rounded bg-light p-3 border border-2 border-primary mb-3 text-start">
         <small class="text-muted">Fråga @current</small>
         <p class="fw-semibold mt-2 mb-1">Hur bedömer du din:</p>
-        <h5 class="fw-bold text-primary">@Model.QuestionText</h5>
+        <h5 class="question-title">@Model.QuestionText</h5>
     </div>
 
     <!-- Svarsalternativ -->
@@ -61,7 +63,7 @@
 
         <!-- Nästa-knapp -->
         <div class="d-grid mb-4">
-            <button type="submit" class="btn btn-primary btn-lg">Nästa</button>
+            <button type="submit" class="btn btn-next-main">💾 Nästa fråga</button>
         </div>
 
         <!-- Kommentar -->
@@ -110,7 +112,7 @@
             <div class="col-12 col-sm-6">
                 <form asp-action="Pause" method="post">
                     <input type="hidden" name="assessmentId" value="@assessmentId" />
-                    <button type="submit" class="btn btn-outline-warning w-100 mb-2">⏸ Pausa</button>
+                    <button type="submit" class="btn btn-pause w-100 mb-2">⏸ Pausa</button>
                 </form>
 
                 <form asp-action="ScaleSelect" asp-route-id="@assessmentId" method="get">

@@ -1,0 +1,51 @@
+﻿/* Grundstil för alla val */
+.scale-option {
+    position: relative;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid #ccc;
+    background-color: #f8f9fa;
+    transition: all 0.25s ease-in-out;
+    border-radius: 10px;
+}
+
+    .scale-option:hover {
+        border-color: #198754;
+        box-shadow: 0 0 8px rgba(25, 135, 84, 0.2);
+    }
+
+    .scale-option img {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .scale-option:hover img {
+        transform: scale(1.05);
+    }
+
+/* När en skala är vald */
+input[name="selectedScale"]:checked + label.scale-option {
+    border: 3px solid #198754;
+    background-color: #e9f6ef;
+    box-shadow: 0 0 12px rgba(25, 135, 84, 0.4);
+    transform: scale(1.01);
+}
+
+    /* Vald – checkmark i hörnet */
+    input[name="selectedScale"]:checked + label.scale-option::after {
+        content: "\2714"; /* detta är ✔ som text, inte emoji */
+        position: absolute;
+        top: 10px;
+        right: 16px;
+        font-size: 1.5rem;
+        color: #198754;
+        font-weight: 900;
+        font-family: Arial, sans-serif; /* säkerställer textstil */
+    }
+
+.scale-option {
+    border: 2px solid #ccc;
+    background-color: #f8f9fa;
+    transition: all 0.25s ease-in-out;
+    border-radius: 10px;
+}
+

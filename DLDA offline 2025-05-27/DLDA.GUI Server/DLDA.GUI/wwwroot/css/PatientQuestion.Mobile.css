@@ -1,0 +1,63 @@
+﻿/* Nästa-knapp – grön stil */
+.btn-next-main {
+    background-color: #198754;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+    .btn-next-main:hover {
+        background-color: #146c43;
+        color: white;
+    }
+
+/* Grön markerad fråga i mobilvy */
+.btn-check:checked + label.btn-outline-secondary {
+    background-color: #eaf6ee !important;
+    border-color: #198754 !important;
+    color: #198754;
+    font-weight: 600;
+}
+
+/* ✅ Markerat svarsalternativ */
+.btn-check:checked + label.btn-outline-secondary {
+    background-color: #eaf6ee !important;
+    border-color: #198754 !important;
+    color: #198754 !important;
+    font-weight: 600;
+}
+
+/* ✅ Hover-effekt för alla svar */
+.btn-outline-secondary:hover {
+    background-color: #f0f8f4 !important;
+    border-color: #198754;
+    color: #198754;
+}
+
+/* ✅ Progressbar grön */
+.progress-bar.bg-primary {
+    background-color: #198754 !important;
+}
+
+/* ✅ Frågetext grön */
+.question-title {
+    color: #198754;
+    font-weight: 700;
+}
+
+.btn-pause {
+    background-color: transparent;
+    color: #d17b00;
+    border: 1px solid #d17b00;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+    .btn-pause:hover {
+        background-color: #d17b00;
+        color: white;
+    }

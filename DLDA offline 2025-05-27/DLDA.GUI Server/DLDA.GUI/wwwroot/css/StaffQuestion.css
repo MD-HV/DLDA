@@ -17,3 +17,22 @@
         display: none !important;
     }
 }
+
+/* Markerad svarsknapp (blå) */
+input[type="radio"].btn-check:checked + label {
+    border: 2px solid #0d6efd;
+    background-color: #eaf0ff;
+}
+
+.btn-pause {
+    background-color: transparent;
+    color: #d17b00;
+    border: 1px solid #d17b00;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+    .btn-pause:hover {
+        background-color: #d17b00;
+        color: white;
+    }

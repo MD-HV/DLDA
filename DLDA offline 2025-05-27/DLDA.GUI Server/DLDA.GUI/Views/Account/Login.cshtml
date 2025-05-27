@@ -4,30 +4,51 @@
     ViewData["Title"] = "Logga in";
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow-sm mt-5">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">Logga in till DLDA</h4>
-            </div>
-            <div class="card-body">
+<link rel="stylesheet" href="~/css/Account.css" />
 
-                <form asp-action="Login" method="post">
-                    <div class="mb-3">
-                        <label asp-for="Username" class="form-label">Användarnamn</label>
-                        <input asp-for="Username" class="form-control" placeholder="Ange ditt användarnamn" />
-                        <span asp-validation-for="Username" class="text-danger"></span>
-                    </div>
-
-                    <div class="mb-3">
-                        <label asp-for="Password" class="form-label">Lösenord</label>
-                        <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" />
-                        <span asp-validation-for="Password" class="text-danger"></span>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary w-100">Logga in</button>
-                </form>
-            </div>
+<div class="login-container">
+    <div class="login-box">
+        <!-- Avatar-ikon -->
+        <div class="login-avatar">
+            <i class="fas fa-user-circle"></i>
         </div>
+
+        <!-- Rubrik och text -->
+        <h2 class="text-center mb-2">DLDA</h2>
+        <p class="text-center text-muted mb-4">Logga in med dina uppgifter</p>
+
+        <form asp-action="Login" method="post">
+            <!-- användarnamn -->
+            <div class="form-group mb-3">
+                <div class="input-with-icon">
+                    <i class="fas fa-user icon-left"></i>
+                    <input asp-for="Username" class="form-control" placeholder="Användarnamn" />
+                </div>
+                <span asp-validation-for="Username" class="text-danger small"></span>
+            </div>
+
+            <!-- Lösenord -->
+            <div class="form-group mb-3">
+                <div class="input-with-icon">
+                    <i class="fas fa-lock icon-left"></i>
+                    <input asp-for="Password" class="form-control" type="password" placeholder="Lösenord" />
+                </div>
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <!-- Kom ihåg mig -->
+            <div class="form-check mb-3">
+                <input type="checkbox" class="form-check-input" id="rememberMe" />
+                <label class="form-check-label" for="rememberMe">Kom ihåg mig</label>
+            </div>
+
+            <!-- Logga in knapp -->
+            <button type="submit" class="btn btn-primary w-100 mb-3">Logga in </button>
+
+            <!-- Glömt lösenord -->
+            <p class="text-center small">
+                <a href="#">Glömt lösenord?</a>
+            </p>
+        </form>
     </div>
 </div>

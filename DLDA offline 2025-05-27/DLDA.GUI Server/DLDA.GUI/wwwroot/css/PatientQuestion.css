@@ -1,0 +1,96 @@
+﻿/* Container för hela frågan */
+.question-box {
+    background-color: #fff;
+    border-left: 5px solid #198754;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+}
+
+    /* Frågetext */
+    .question-box h4 {
+        color: #198754;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .question-box small {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+
+/* Bildknappar */
+.form-check label.btn {
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.form-check input[type="radio"]:checked + label {
+    border-color: #198754;
+    background-color: #eaf6ee;
+}
+
+/* Info-ruta */
+.info-alert {
+    font-size: 0.9rem;
+    background-color: #e9f7fc;
+    border-left: 4px solid #0dcaf0;
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+}
+
+/* Knappsektioner */
+.question-buttons button {
+    min-width: 150px;
+}
+
+button[type="submit"].btn-lg {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Kommentar-ruta */
+textarea.form-control {
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.btn-pause {
+    background-color: transparent;
+    color: #d17b00;
+    border: 1px solid #d17b00;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+}
+
+    .btn-pause:hover {
+        background-color: #d17b00;
+        color: white;
+    }
+
+/* Stor grön knapp för "Nästa fråga" */
+.btn-next-main {
+    background-color: #198754;
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    min-width: 220px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+    .btn-next-main:hover {
+        background-color: #146c43;
+    }
+
+/* Justera mellanrummet under nästa-fråga-knappen */
+.question-buttons {
+    margin-top: 0.5rem;
+}

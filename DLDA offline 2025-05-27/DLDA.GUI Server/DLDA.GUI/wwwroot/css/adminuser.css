@@ -1,0 +1,120 @@
+﻿/* === adminuser.css === */
+
+/* Allmänt */
+body {
+    background-color: #ffffff;
+    color: #212529;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* Rubriker */
+h2 {
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* Formulär */
+.form-label {
+    font-weight: 600;
+}
+
+.form-control,
+.form-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+}
+
+/* Knappar */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 18px;
+    transition: 0.2s ease-in-out;
+}
+
+/* Primär knapp (Skapa, Redigera) */
+.btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        border-color: #004999;
+    }
+
+/* Mintgrön knapp */
+.btn-success {
+    background-color: #3eb489;
+    border-color: #3eb489;
+    color: white;
+}
+
+    .btn-success:hover {
+        background-color: #34a07b;
+        border-color: #2e8f6f;
+    }
+
+/* Sekundär knapp (Avbryt) */
+.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+
+/* Farlig knapp (Ta bort) */
+.btn-danger {
+    border-radius: 8px;
+}
+
+/* Tabell */
+.table {
+    border: 1px solid #dee2e6;
+}
+
+    .table thead {
+        background-color: #e6f2fd;
+        color: #004085;
+        font-weight: 600;
+    }
+
+    .table td, .table th {
+        vertical-align: middle;
+    }
+
+    .table .btn-sm {
+        padding: 4px 12px;
+        font-size: 0.875rem;
+        border-radius: 6px;
+    }
+
+/* Panel runt användartabellen */
+.user-table-panel {
+    background-color: #e6f2fd;
+    border: 2px solid #000;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* För responsiv tabell */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* Anpassad spacing vid små skärmar */
+@media (max-width: 576px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}

@@ -102,6 +102,7 @@
             <div class="container mt-3">
                 @await Html.PartialAsync("_AlertPartial")
             </div>
+            @RenderSection("Styles", required: false)
             @RenderBody()
         </main>
     </div>

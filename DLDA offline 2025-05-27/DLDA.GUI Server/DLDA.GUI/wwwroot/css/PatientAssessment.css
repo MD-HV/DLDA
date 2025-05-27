@@ -1,0 +1,52 @@
+﻿/* Gemensam stil för outline-knappar */
+.btn-outline-style {
+    background-color: transparent;
+    font-weight: 600;
+    border-width: 2px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Starta – grön kant, fylls vid hover */
+.btn-start {
+    background-color: transparent;
+    color: #198754;
+    border: 1px solid #198754;
+    font-weight: 600;
+}
+
+    .btn-start:hover {
+        background-color: #198754;
+        color: white;
+    }
+
+/* Fortsätt – orange kant, fylls vid hover */
+.btn-continue {
+    background-color: transparent;
+    color: #d17b00;
+    border: 1px solid #d17b00;
+    font-weight: 600;
+}
+
+    .btn-continue:hover {
+        background-color: #d17b00;
+        color: white;
+    }
+
+/* Visa – grå kant, fylls vid hover */
+.btn-visa {
+    background-color: transparent;
+    color: #6c757d;
+    border: 1px solid #6c757d;
+    font-weight: 600;
+}
+
+    .btn-visa:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+
+/* Pågående-status */
+.status-ongoing {
+    color: #d17b00;
+    font-weight: 600;
+}

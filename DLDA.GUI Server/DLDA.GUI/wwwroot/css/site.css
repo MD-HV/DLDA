@@ -10,6 +10,18 @@
     }
 }
 
+@media (max-width: 767.98px) {
+    .navbar-collapse {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .navbar-text,
+    .navbar-nav .nav-item {
+        margin-bottom: 0.5rem;
+    }
+}
+
 body {
     margin-bottom: 60px;
 }
