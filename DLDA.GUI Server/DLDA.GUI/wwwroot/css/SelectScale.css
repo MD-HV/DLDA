@@ -49,3 +49,14 @@ input[name="selectedScale"]:checked + label.scale-option {
     border-radius: 10px;
 }
 
+
+    .scale-option img {
+        width: 100%;
+        max-width: 300px; /* eller t.ex. 250px */
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        aspect-ratio: 4 / 3;
+        object-fit: contain;
+    }
+
